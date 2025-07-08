@@ -29,7 +29,7 @@ const BottomNavbar = () => {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[393px] px-[27px] py-[10px] border-t border-gray-400 flex justify-between items-center h-[64px] z-50 bg-white">
+    <nav className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[393px] px-[27px] py-[10px] border-t border-[#5555558C] flex justify-between items-center h-[64px] text-[11px] z-50 bg-white">
       <div className="flex w-full justify-between items-center">
         {navItems.map((item, index) => {
           const isActive = location.pathname === item.path;
@@ -38,7 +38,7 @@ const BottomNavbar = () => {
             <NavLink
               to={item.path}
               key={index}
-              className="flex flex-col items-center justify-center text-xs text-gray-600 flex-1"
+              className="flex flex-col items-center justify-center text-xs text-[#555555D9] flex-1"
             >
               <img
                 src={isActive ? item.selectedIcon : item.icon}
@@ -47,7 +47,7 @@ const BottomNavbar = () => {
               />
               <span
                 className={`h-[21px] mt-[4px] ${
-                  isActive ? "text-[#729A73]" : "text-[#555555]"
+                  isActive ? "text-[#729A73]" : "text-[#555555D9]"
                 }`}
               >
                 {item.label}
