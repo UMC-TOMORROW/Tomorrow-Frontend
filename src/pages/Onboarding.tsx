@@ -1,11 +1,13 @@
 import { useState } from "react";
 import CommonButton from "../components/common/CommonButton";
 import palette from "../styles/theme";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // ✅ 모달 import
+import OnboardingSkipModal from "../components/Onboarding/OnboardingSkipModal";
 
 function Onboarding() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
+  const [showSkipModal, setShowSkipModal] = useState(false);
 
   const ProgressDots = ({
     current,
@@ -13,26 +15,23 @@ function Onboarding() {
   }: {
     current: number;
     total: number;
-  }) => {
-    return (
-      <div className="flex justify-center gap-2 mb-4">
-        {Array.from({ length: total }, (_, i) => (
-          <div
-            key={i}
-            className={`w-[5px] h-[5px] rounded-full ${
-              current === i + 2 ? "bg-[#729A73]" : "bg-[#B8CDB9]"
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
+  }) => (
+    <div className="flex justify-center gap-2 mb-4">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={`w-[5px] h-[5px] rounded-full ${
+            current === i + 2 ? "bg-[#729A73]" : "bg-[#B8CDB9]"
+          }`}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <div>
       {page === 1 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-7">
-          {/* 상단 안내 문구 */}
           <p
             className="text-[24px] text-center mb-10"
             style={{
@@ -44,32 +43,29 @@ function Onboarding() {
             <br />
             일과 활동을 추천해드릴게요.
           </p>
-          {/* 이미지 또는 일러스트 자리 */}
           <div className="w-[298px] h-[203px] bg-gray-300 mb-8 rounded-md" />
-          {/* 설명 텍스트 */}
           <p
-            style={{ fontFamily: "Pretendard" }}
             className="text-center text-black text-[16px] font-bold leading-5 mb-2"
+            style={{ fontFamily: "Pretendard" }}
           >
             ‘내일’은 건강 상태와 선호를 반영하여
             <br />
             보다 편안하고 적합한 일자리와 활동을 추천해드립니다.
           </p>
           <p
-            style={{ fontFamily: "Pretendart" }}
             className="text-center text-[13px] text-[#000000] leading-4 mb-10"
+            style={{ fontFamily: "Pretendard" }}
           >
             본 질문은 의료 진단이나 치료 목적이 아닌,
             <br />
             서비스 추천을 위한 참고 정보로만 사용됩니다.
           </p>
-          {/* 버튼 영역 */}
           <div className="w-full max-w-[320px] flex flex-col gap-3">
             <CommonButton label="계속하기" onClick={() => setPage(2)} />
             <CommonButton
               label="건너뛰기"
               className="!bg-white !text-[#729A73] !border-[#729A73]"
-              onClick={() => console.log("건너뛰기 클릭")}
+              onClick={() => setShowSkipModal(true)}
             />
           </div>
         </div>
@@ -244,6 +240,15 @@ function Onboarding() {
             <CommonButton label="시작하기" onClick={() => navigate("/")} />
           </div>
         </div>
+      )}
+      {showSkipModal && (
+        <OnboardingSkipModal
+          onAccept={() => {
+            setShowSkipModal(false);
+            setPage(2);
+          }}
+          onClose={() => navigate("/")}
+        />
       )}
     </div>
   );
