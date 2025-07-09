@@ -3,10 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import NotFoundPage from "./pages/NotFoundPage";
 import HomeLayout from "./layouts/HomeLayout";
 import HomePage from "./pages/HomePage";
-import MyPage from "./pages/MyPage";
-import ApplyStatus from "./pages/ApplyStatus";
-import ApplyStatusPassed from "./pages/ApplyStatusPassed";
-import ReviewWritting from "./pages/ReviewWritting";
+import MyPage from "./pages/Mypage/MyPage";
 
 const router = createBrowserRouter([
   {
@@ -20,24 +17,6 @@ const router = createBrowserRouter([
     element: <HomeLayout />,
     errorElement: <NotFoundPage />,
     children: [{ index: true, element: <MyPage /> }],
-  },
-  {
-    path: "/MyPage/ApplyStatus",
-    element: <HomeLayout />,
-    errorElement: <NotFoundPage />,
-    children: [{ index: true, element: <ApplyStatus /> }],
-  },
-  {
-    path: "/MyPage/ApplyStatusPassed",
-    element: <HomeLayout />,
-    errorElement: <NotFoundPage />,
-    children: [{ index: true, element: <ApplyStatusPassed /> }],
-  },
-  {
-    path: "/MyPage/ReviewWritting",
-    element: <HomeLayout />,
-    errorElement: <NotFoundPage />,
-    children: [{ index: true, element: <ReviewWritting /> }],
   },
 ]);
 

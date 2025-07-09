@@ -1,9 +1,9 @@
-import BottomNavbar from "../components/BottomNavbar";
-import Header from "../components/Header";
+import BottomNavbar from "../../components/BottomNavbar";
+import Header from "../../components/Header";
 import { SlArrowRight } from "react-icons/sl";
-import resume from "../assets/my/resume.png";
-import suitcase from "../assets/my/suitcase.png";
-import star_filled_black from "../assets/my/star_filled_black.png";
+import resume from "../../assets/my/resume.png";
+import suitcase from "../../assets/my/suitcase.png";
+import star_filled_black from "../../assets/my/star_filled_black.png";
 import { useNavigate } from "react-router-dom";
 
 const MyPage = () => {

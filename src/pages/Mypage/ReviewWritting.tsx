@@ -1,7 +1,7 @@
-import Header from "../components/Header";
+import Header from "../../components/Header";
 import { SlArrowLeft } from "react-icons/sl";
-import star_empty from "../assets/star/star_empty.png";
-import star_filled from "../assets/star/star_filled.png";
+import star_empty from "../../assets/star/star_empty.png";
+import star_filled from "../../assets/star/star_filled.png";
 
 const ReviewWritting = () => {
   return (
@@ -38,11 +38,19 @@ const ReviewWritting = () => {
             <img className="w-[40px] h-[40px]" src={star_empty} />
           </div>
         </section>
-        <section className="flex flex-col justify-center items-center gap-[15px] h-[430px] border-b">
+        <section className="flex flex-col justify-center items-center gap-[15px] h-[430px]">
           <p className="text-[15px]">
             어떤 점이 좋았거나 아쉬웠는지 간단히 작성해 주세요.
           </p>
-          <textarea className="rounded-xl w-[360px] h-[324px] bg-[#D9D9D980]" />
+          <textarea className="rounded-xl w-[360px] h-[324px] bg-[#D9D9D980] resize-none overflow-hidden overflow-y-scroll" />
+        </section>
+        <section className="flex justify-center items-center py-[30px]">
+          <button
+            className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] rounded-full bg-[#729A73]"
+            style={{ fontWeight: 600 }}
+          >
+            완료
+          </button>
         </section>
       </div>
     </div>
