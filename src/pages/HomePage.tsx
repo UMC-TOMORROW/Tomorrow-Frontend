@@ -145,6 +145,7 @@ const HomePage = () => {
       <BottomNavbar />
     </div>
   );
+  return <div>HomePage</div>;
 };
 
 export default HomePage;

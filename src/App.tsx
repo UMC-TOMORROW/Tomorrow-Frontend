@@ -5,6 +5,7 @@ import HomeLayout from "./layouts/HomeLayout";
 import HomePage from "./pages/HomePage";
 import OnboardingScreen from "./pages/Onboarding";
 import SearchPage from "./pages/SearchPage";
+import MyPage from "./pages/Mypage/MyPage";
 
 const router = createBrowserRouter([
   {
@@ -16,6 +17,13 @@ const router = createBrowserRouter([
       { path: "onboarding", element: <OnboardingScreen /> },
       { path: "search", element: <SearchPage /> },
     ],
+    children: [{ index: true, element: <HomePage /> }],
+  },
+  {
+    path: "/MyPage",
+    element: <HomeLayout />,
+    errorElement: <NotFoundPage />,
+    children: [{ index: true, element: <MyPage /> }],
   },
 ]);
 
