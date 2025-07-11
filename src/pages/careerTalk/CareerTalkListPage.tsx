@@ -93,6 +93,7 @@ function CareerTalkListPage() {
           {visibleData.map((item, idx) => (
             <CareerTalkCard
               key={idx}
+              id={item.id}
               category={item.category}
               title={item.title}
               content={item.content}

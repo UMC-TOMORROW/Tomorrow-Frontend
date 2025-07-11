@@ -8,15 +8,15 @@ interface CareerTalkItem {
 const careerTalkData: CareerTalkItem[] = [
   {
     id: 1,
-    category: "무료 자격증 추천",
-    title: "요양보호사 기초과정 | 나이 들수록 필요한 직무",
+    category: "제2 커리어 성공 사례",
+    title: "퇴직 후, 텃밭 관리로 다시 활기를 찾았습니다.",
     content:
       "요양보호사 기초과정을 하며 나이 들수록 필요한 직무라는 생각이 듭니다.",
   },
   {
     id: 2,
-    category: "제2 커리어 성공 사례",
-    title: "퇴직 후, 텃밭 관리로 다시 활기를 찾았습니다.",
+    category: "무료 자격증 추천",
+    title: "요양보호사 기초 과정| 나이 들수록 필요한 직업, 요양보호사로 제 2의 길을 찾았어요.",
     content: `“일은 하고 싶은데, 건강이 따라줄까 걱정이에요.”
 “나이 들어도 안정적으로 일할 수 있는 일이 있을까요?”
 

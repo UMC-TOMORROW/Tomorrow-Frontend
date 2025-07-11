@@ -1,12 +1,16 @@
+import { useNavigate } from "react-router-dom";
 import palette from "../../styles/theme";
 
 interface CareerTalkCardProps {
+  id: number;
   category: string;
   title: string;
   content: string;
 }
 
-function CareerTalkCard({ category, title, content }: CareerTalkCardProps) {
+function CareerTalkCard({ id, category, title, content }: CareerTalkCardProps) {
+  const navigate = useNavigate();
+
   const shouldFill =
     category === "무료 자격증 추천" || category === "커리어 준비 루트";
 
@@ -19,7 +23,8 @@ function CareerTalkCard({ category, title, content }: CareerTalkCardProps) {
 
   return (
     <div
-      className="rounded-xl p-[10px] text-[15px] leading-[22px] shadow-sm"
+      onClick={() => navigate(`/career-talk/${id}`)}
+      className="rounded-xl p-[10px] text-[15px] leading-[22px] shadow-sm cursor-pointer"
       style={{
         backgroundColor: shouldFill
           ? palette.primary.primaryLight75

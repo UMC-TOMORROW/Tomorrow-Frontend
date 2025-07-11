@@ -8,6 +8,7 @@ import OnboardingScreen from "./pages/Onboarding";
 import MyPage from "./pages/Mypage/MyPage";
 import CareerTalkListPage from "./pages/careerTalk/CareerTalkListPage";
 import CareerTalkWritePage from "./pages/careerTalk/CareerTalkWritePage";
+import CareerTalkDetailPage from "./pages/careerTalk/CareerTalkDetailPage";
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
       // { path: "search", element: <SearchPage /> },
       { path: "career-talk", element: <CareerTalkListPage /> },
       { path: "career-talk/write", element: <CareerTalkWritePage /> },
+      { path: "career-talk/:id", element: <CareerTalkDetailPage /> },
       { path: "MyPage", element: <MyPage /> },
     ],
   },
