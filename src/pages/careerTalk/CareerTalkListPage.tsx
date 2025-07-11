@@ -6,6 +6,7 @@ import Header from "../../components/Header";
 import careerTalkData from "../../data/careerTalkData";
 import writeIcon from "../../assets/write.png";
 import palette from "../../styles/theme";
+import SearchBar from "../../components/search/SearchBar";
 
 const BATCH_SIZE = 5;
 
@@ -60,30 +61,7 @@ function CareerTalkListPage() {
       >
         {/* 검색창 (임시)*/}
         <div className="mb-[10px] flex justify-center">
-          <div
-            className="flex items-center gap-[7px] w-full max-w-[306px] h-[34px] px-[10px] py-[7px] rounded-[10px] shadow-sm bg-white"
-            style={{ border: `1.5px solid ${palette.primary.primary}` }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke={palette.primary.primary}
-              className="w-[15px] h-[16px]"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="궁금한 내용을 찾아보세요"
-              className="flex-1 text-[15px] text-[#555] placeholder-[#555555D9] bg-transparent outline-none"
-            />
-          </div>
+          <SearchBar />
         </div>
 
         <div className="h-[1px] bg-[#555555D9] mb-[25px]" />
