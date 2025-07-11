@@ -4,6 +4,7 @@ import JobCard from "../components/Homepage/JobCard";
 import palette from "../styles/theme";
 import Header from "../components/Header";
 import BottomNavbar from "../components/BottomNavbar";
+import SearchBar from "../components/search/SearchBar";
 
 const dummyJobs = [
   {
@@ -91,7 +92,7 @@ const HomePage = () => {
         onClick={() => navigate("/search")}
         className="flex justify-center py-4 cursor-pointer"
       >
-        {/* <SearchBar /> */}
+        <SearchBar />
       </div>
 
       <div className="h-[7px]" />
