@@ -4,11 +4,10 @@ import typeIcon from "/src/assets/filter/type.png";
 import calendarIcon from "/src/assets/filter/calender.png";
 import timeIcon from "/src/assets/filter/time.png";
 import arrowIcon from "/src/assets/jobRegister/icon_arrow_down.png";
-
-import RegionModal from "/src/components/Homepage/HomepageModal/RegionModal";
-import TypeModal from "/src/components/Homepage/HomepageModal/TypeModal";
-import DayModal from "/src/components/Homepage/HomepageModal/DayModal";
-import TimeModal from "/src/components/Homepage/HomepageModal/TimeModal";
+import RegionModal from "./HomepageModal/RegionModal";
+import TypeModal from "./HomepageModal/TypeModal";
+import DayModal from "./HomepageModal/DayModal";
+import TimeModal from "./HomepageModal/TimeModal";
 
 const HomepageTopBar = () => {
   const [modal, setModal] = useState<"region" | "type" | "day" | "time" | null>(

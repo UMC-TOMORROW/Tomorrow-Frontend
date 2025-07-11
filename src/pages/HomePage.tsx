@@ -1,10 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import BottomNavbar from "../components/common/BottomNavbar";
-import Header from "../components/common/Header";
-import SearchBar from "../components/common/SearchBar";
 import HomepageTopBar from "../components/Homepage/HomepageTopBar";
 import JobCard from "../components/Homepage/JobCard";
 import palette from "../styles/theme";
+import Header from "../components/Header";
+import BottomNavbar from "../components/BottomNavbar";
 
 const dummyJobs = [
   {
@@ -92,7 +91,7 @@ const HomePage = () => {
         onClick={() => navigate("/search")}
         className="flex justify-center py-4 cursor-pointer"
       >
-        <SearchBar />
+        {/* <SearchBar /> */}
       </div>
 
       <div className="h-[7px]" />
