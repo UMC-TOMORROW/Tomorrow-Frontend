@@ -23,7 +23,7 @@ function CommonButton({
         w-[328px] h-[50px]
         border rounded-[20px]
         text-[20px] leading-[24px] font-normal
-        cursor-pointer
+        cursor-pointer mx-auto
         ${className}
       `}
       style={{
