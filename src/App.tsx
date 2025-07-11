@@ -4,8 +4,9 @@ import NotFoundPage from "./pages/NotFoundPage";
 import HomeLayout from "./layouts/HomeLayout";
 import HomePage from "./pages/HomePage";
 import OnboardingScreen from "./pages/Onboarding";
-import SearchPage from "./pages/SearchPage";
+// import SearchPage from "./pages/SearchPage";
 import MyPage from "./pages/Mypage/MyPage";
+import SearchBarTest from "./pages/SearchBarTest";
 
 const router = createBrowserRouter([
   {
@@ -15,9 +16,9 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "onboarding", element: <OnboardingScreen /> },
-      { path: "search", element: <SearchPage /> },
+      // { path: "search", element: <SearchPage /> },
+      { path: "search-test", element: <SearchBarTest /> },
     ],
-    children: [{ index: true, element: <HomePage /> }],
   },
   {
     path: "/MyPage",
