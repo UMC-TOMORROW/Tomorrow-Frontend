@@ -47,7 +47,7 @@ function CareerTalkListPage() {
 
   return (
     <div
-      className="flex flex-col min-h-screen relative"
+      className="flex flex-col min-h-screen relative font-[Pretendard]"
       style={{ backgroundColor: palette.gray.light }}
     >
       {/* 상단 헤더 */}
