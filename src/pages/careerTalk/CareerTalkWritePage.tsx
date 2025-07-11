@@ -32,12 +32,10 @@ const CareerTalkWritePage = () => {
 
       {/* X 버튼 */}
       <div className="absolute top-[18px] left-4 mt-[40px]">
-        <button onClick={() => navigate(-1)}>
+        <button className="cursor-pointer" onClick={() => navigate(-1)}>
           <X size={24} />
         </button>
       </div>
-
-      {/* 구분선 */}
       <div className="border-b" style={{ borderColor: palette.gray.default, marginTop: "90px" }} />
 
       {/* 드롭다운 */}
