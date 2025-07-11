@@ -19,7 +19,7 @@ function CareerTalkListPage() {
 
   // 플로팅 버튼 클릭 시 이동
   const handleMoveToWrite = () => {
-    navigate("/careertalk/write");
+    navigate("/career-talk/write");
   };
 
   // 무한 스크롤 로딩 처리
@@ -106,7 +106,7 @@ function CareerTalkListPage() {
       {/* 플로팅 버튼 */}
       <button
         onClick={handleMoveToWrite}
-        className="fixed bottom-[90px] right-4 w-[50px] h-[50px] rounded-full flex items-center justify-center shadow-md z-50"
+        className="fixed bottom-[90px] right-4 w-[50px] h-[50px] rounded-full flex items-center justify-center shadow-md z-50 cursor-pointer"
         style={{ backgroundColor: palette.primary.primary }}
       >
         <img src={writeIcon} alt="작성" className="w-[25px] h-[25px]" />
