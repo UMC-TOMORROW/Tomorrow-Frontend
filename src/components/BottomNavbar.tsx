@@ -14,7 +14,7 @@ const navItems = [
     icon: recommend,
     selectedIcon: recommend_selected,
     label: "내일추천",
-    path: "/",
+    path: "/recommendation",
   },
   {
     icon: talk,
