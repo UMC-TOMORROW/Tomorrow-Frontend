@@ -11,11 +11,16 @@ import CareerTalkWritePage from "./pages/careerTalk/CareerTalkWritePage";
 import CareerTalkDetailPage from "./pages/careerTalk/CareerTalkDetailPage";
 import SearchBarTest from "./pages/SearchBarTest";
 import SplashScreenPage from "./pages/SplashScreenPage";
+import AuthScreen from "./pages/auth/AuthScreen";
 
 const router = createBrowserRouter([
   {
     path: "/splash",
     element: <SplashScreenPage />,
+  },
+  {
+    path: "/auth",
+    element: <AuthScreen />,
   },
   {
     path: "/",
