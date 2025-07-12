@@ -10,6 +10,7 @@ import CareerTalkListPage from "./pages/careerTalk/CareerTalkListPage";
 import CareerTalkWritePage from "./pages/careerTalk/CareerTalkWritePage";
 import CareerTalkDetailPage from "./pages/careerTalk/CareerTalkDetailPage";
 import SearchBarTest from "./pages/SearchBarTest";
+import RecommendationPage from "./pages/RecommendationPage";
 import SplashScreenPage from "./pages/SplashScreenPage";
 import AuthScreen from "./pages/auth/AuthScreen";
 
@@ -35,7 +36,8 @@ const router = createBrowserRouter([
       { path: "career-talk/write", element: <CareerTalkWritePage /> },
       { path: "career-talk/:id", element: <CareerTalkDetailPage /> },
       { path: "MyPage", element: <MyPage /> },
-    ],
+      { path: "recommendation", element: <RecommendationPage /> },
+    ],      
   },
 ]);
 
