@@ -29,12 +29,12 @@ const MyPage = () => {
           </button>
         </section>
         <section className="flex justify-around h-[100px] border-b border-[#5555558C] px-[20px] py-[15px]">
-          <div className="flex flex-col items-center justify-center text-[15px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl">
+          <div className="flex flex-col items-center justify-center text-[15px] gap-[6px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl">
             <p>이력서 관리</p>
             <img src={resume} />
           </div>
           <div
-            className="flex flex-col items-center justify-center text-[15px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
+            className="flex flex-col items-center justify-center text-[15px] gap-[6px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
             onClick={() => navigate("/MyPage/ApplyStatus")}
           >
             <p>지원 현황</p>

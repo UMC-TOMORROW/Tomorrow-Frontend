@@ -4,6 +4,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import HomeLayout from "./layouts/HomeLayout";
 import HomePage from "./pages/HomePage";
 import MyPage from "./pages/Mypage/MyPage";
+import ApplicantDetail from "./pages/Mypage/ApplicantDetail";
 
 const router = createBrowserRouter([
   {
@@ -17,6 +18,12 @@ const router = createBrowserRouter([
     element: <HomeLayout />,
     errorElement: <NotFoundPage />,
     children: [{ index: true, element: <MyPage /> }],
+  },
+  {
+    path: "/MyPage/ApplicantList",
+    element: <HomeLayout />,
+    errorElement: <NotFoundPage />,
+    children: [{ index: true, element: <ApplicantDetail /> }],
   },
 ]);
 
