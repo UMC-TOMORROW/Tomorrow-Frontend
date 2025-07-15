@@ -2,6 +2,7 @@ const palette = {
   primary: {
     primary: '#729A73',
     primaryLight: '#B8CDB9',
+    primaryLight75: 'rgba(184, 205, 185, 0.75)',
   },
   gray: {
     dark: '#000000', 

@@ -43,15 +43,10 @@ const MyPage = () => {
         </section>
         <section className="flex items-center justify-center h-[50px] divide-x">
           <div className="flex w-1/2 items-center justify-center gap-[3px]">
-            <img
-              src={star_filled_black}
-              className="text-[16px] w-[20px] h-[20px]"
-            />
+            <img src={star_filled_black} className="text-[16px] w-[20px] h-[20px]" />
             저장
           </div>
-          <div className="text-[16px] flex w-1/2 items-center justify-center">
-            내 공고 관리
-          </div>
+          <div className="text-[16px] flex w-1/2 items-center justify-center">내 공고 관리</div>
         </section>
         <div className="border border-[#5555558C]"></div>
         <section>

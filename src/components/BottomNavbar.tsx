@@ -14,9 +14,14 @@ const navItems = [
     icon: recommend,
     selectedIcon: recommend_selected,
     label: "내일추천",
-    path: "/",
+    path: "/recommendation",
   },
-  { icon: talk, selectedIcon: talk_selected, label: "커리어톡", path: "/" },
+  {
+    icon: talk,
+    selectedIcon: talk_selected,
+    label: "커리어톡",
+    path: "/career-talk",
+  },
   {
     icon: my,
     selectedIcon: my_selected,
