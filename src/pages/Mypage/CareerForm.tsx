@@ -1,6 +1,19 @@
+import { useState } from "react";
 import Header from "../../components/Header";
 
 const CareerForm = () => {
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
+
+  const labels = [
+    "단기",
+    "3개월 이하",
+    "6개월 이하",
+    "6개월~1년",
+    "1년~2년",
+    "2년~3년",
+    "3년 이상",
+  ];
+
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <Header title="내일" />
@@ -70,18 +83,15 @@ const CareerForm = () => {
             일한 기간
           </p>
           <div className="flex flex-wrap gap-[10px]">
-            {[
-              "단기",
-              "3개월 이하",
-              "6개월 이하",
-              "6개월~1년",
-              "1년~2년",
-              "2년~3년",
-              "3년 이상",
-            ].map((label) => (
+            {labels.map((label) => (
               <button
                 key={label}
-                className="flex items-center justify-center border border-[#729A73] rounded-full h-[20px] px-[14px] py-[6px] text-[12px] text-[#212121]"
+                onClick={() => setSelectedLabel(label)}
+                className={`flex items-center justify-center border rounded-full h-[20px] px-[14px] py-[6px] text-[12px] ${
+                  selectedLabel === label
+                    ? " bg-[#729A73] border-[#729A73] text-[#FFFFFF]"
+                    : "border-[#555555D9] text-[#555555D9]"
+                }`}
               >
                 {label}
               </button>

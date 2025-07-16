@@ -5,9 +5,11 @@ import resume from "../../assets/my/resume.png";
 import suitcase from "../../assets/my/suitcase.png";
 import star_filled_black from "../../assets/my/star_filled_black.png";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 const MyPage = () => {
   const navigate = useNavigate();
+  const [showUnregister, setShowUnregister] = useState(false);
 
   return (
     <div className="bg-white" style={{ fontFamily: "Pretendard" }}>
@@ -29,7 +31,10 @@ const MyPage = () => {
           </button>
         </section>
         <section className="flex justify-around h-[100px] border-b border-[#5555558C] px-[20px] py-[15px]">
-          <div className="flex flex-col items-center justify-center text-[15px] gap-[6px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl">
+          <div
+            onClick={() => navigate("/MyPage/ResumeManage")}
+            className="flex flex-col items-center justify-center text-[15px] gap-[6px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
+          >
             <p>이력서 관리</p>
             <img src={resume} />
           </div>
@@ -41,14 +46,24 @@ const MyPage = () => {
             <img src={suitcase} />
           </div>
         </section>
-        <section className="flex items-center justify-center h-[50px] divide-x">
-          <div className="flex w-1/2 items-center justify-center gap-[3px]">
-            <img src={star_filled_black} className="text-[16px] w-[20px] h-[20px]" />
+        <section className="flex items-center justify-center h-[50px] divide-x border-b-[3px] border-[#5555558C]">
+          <div
+            onClick={() => navigate("/MyPage/SavedJobs")}
+            className="flex w-1/2 items-center justify-center gap-[3px]"
+          >
+            <img
+              src={star_filled_black}
+              className="text-[16px] w-[20px] h-[20px]"
+            />
             저장
           </div>
-          <div className="text-[16px] flex w-1/2 items-center justify-center">내 공고 관리</div>
+          <div
+            onClick={() => navigate("/MyPage/ManageMyJobs")}
+            className="text-[16px] flex w-1/2 items-center justify-center"
+          >
+            내 공고 관리
+          </div>
         </section>
-        <div className="border border-[#5555558C]"></div>
         <section>
           <div
             className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#5555558C]"
@@ -95,9 +110,51 @@ const MyPage = () => {
           <div className="flex justify-center items-center text-[14px] h-[16px] gap-5 my-[70px]">
             <button>로그아웃</button>
             <span>|</span>
-            <button className="text-[#EE0606]">회원 탈퇴</button>
+            <button
+              className="text-[#EE0606]"
+              onClick={() => setShowUnregister(true)}
+            >
+              회원 탈퇴
+            </button>
           </div>
         </section>
+
+        {showUnregister && (
+          <div
+            className="fixed inset-0 z-50 flex justify-center items-center"
+            style={{ borderRadius: "15px" }}
+          >
+            <div
+              className="flex flex-col items-center justify-center gap-[20px] text-center px-[20px] py-[25px] w-[355px] h-[200px] bg-[#B8CDB9] border-[1px] border-[#729A73]"
+              style={{ borderRadius: "15px" }}
+            >
+              <p className="text-[20px]" style={{ fontWeight: 400 }}>
+                정말 탈퇴하시겠어요?
+              </p>
+              <p className="text-[14px]" style={{ fontWeight: 400 }}>
+                탈퇴 시 계정은 14일 동안 유지되며,
+                <br />
+                이후에는 삭제 되어 복구되지 않습니다.
+              </p>
+              <div className="flex items-center justify-center gap-[10px]">
+                <button
+                  onClick={() => setShowUnregister(false)}
+                  className="w-[105px] h-[31px] bg-[#729A73] text-[#FFFFFF]"
+                  style={{ borderRadius: "12px" }}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => alert("회원 탈퇴")}
+                  className="w-[105px] h-[31px] bg-[#ECF0F1]"
+                  style={{ borderRadius: "12px" }}
+                >
+                  탈퇴
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <BottomNavbar />

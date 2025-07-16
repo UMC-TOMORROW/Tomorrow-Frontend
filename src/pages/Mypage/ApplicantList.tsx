@@ -27,13 +27,7 @@ const applicantlist = [
 ];
 
 const ApplicantList = () => {
-  const [applicants, setApplicants] = useState(applicantlist);
-
-  const handleResultChange = (index: number, result: "합격" | "불합") => {
-    const updated = [...applicants];
-    updated[index].result = result;
-    setApplicants(updated);
-  };
+  const [applicants] = useState(applicantlist);
 
   return (
     <div style={{ fontFamily: "Pretendard" }}>
@@ -60,23 +54,24 @@ const ApplicantList = () => {
             {applicants.map((applicant, index) => (
               <li
                 key={index}
-                className="flex gap-[15px] px-[15px] py-[25px] border-b"
+                className="flex h-[123px] items-center gap-[15px] px-[15px] py-[25px] border-b border-[#5555558C]"
               >
-                <div className="w-[60px] h-[60px] rounded-full bg-gray-300"></div>
-                <div className="flex-col">
-                  <div className="flex items-center gap-[10px]">
-                    <p className="text-[18px]" style={{ fontWeight: 800 }}>
-                      {applicant.name}
-                    </p>
-                    <p
-                      className="text-[11px] text-[#555555D9]"
-                      style={{ fontWeight: 400 }}
-                    >
-                      {applicant.phone}
-                    </p>
-                    <div className="flex overflow-hidden rounded-md border border-[#729A73]">
+                <div className="w-[60px] h-[60px] rounded-full bg-gray-300 shrink-0"></div>
+                <div className="flex flex-col gap-[5px]">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-[10px] min-w-[200px]">
+                      <p className="text-[18px]" style={{ fontWeight: 800 }}>
+                        {applicant.name}
+                      </p>
+                      <p
+                        className="text-[11px] text-[#555555D9]"
+                        style={{ fontWeight: 400 }}
+                      >
+                        {applicant.phone}
+                      </p>
+                    </div>
+                    <div className="flex overflow-hidden rounded-md border border-[#729A73] shrink-0">
                       <button
-                        onClick={() => handleResultChange(index, "합격")}
                         className={`flex justify-center items-center w-[39px] h-[26px] text-[11px] gap-[5px] ${
                           applicant.result === "합격"
                             ? "bg-[#729A73] text-[#FFFFFF]"
@@ -86,7 +81,6 @@ const ApplicantList = () => {
                         합격
                       </button>
                       <button
-                        onClick={() => handleResultChange(index, "불합")}
                         className={`flex justify-center items-center w-[39px] h-[26px] text-[11px] gap-[5px] ${
                           applicant.result === "불합"
                             ? "bg-[#EE0606CC] text-[#FFFFFF]"
@@ -115,12 +109,12 @@ const ApplicantList = () => {
           </ul>
         </section>
 
-        <section className="fixed bottom-[10px] px-[30px]">
+        <section className="fixed bottom-0 left-0 w-full px-[30px] py-[30px] z-10 flex justify-center items-center">
           <button
-            className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] rounded-full bg-[#729A73]"
-            style={{ fontWeight: 600 }}
+            className="text-[#FFFFFF] text-[20px] w-[333px] h-[50px] rounded-full bg-[#729A73]"
+            style={{ fontWeight: 400 }}
           >
-            추가하기
+            모집 완료
           </button>
         </section>
       </div>

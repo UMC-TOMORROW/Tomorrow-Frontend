@@ -24,7 +24,7 @@ const SelfIntroductionForm = () => {
             구인자가 더 잘 이해할 수 있어요.
           </p>
           <textarea
-            className="w-full h-[91px] border border-[#729A73] pb-[10px] text-[12px] resize-none"
+            className="w-full h-[91px] border border-[#729A73] pb-[10px] text-[12px] resize-none p-[10px]"
             style={{ borderRadius: "12px" }}
           ></textarea>
           <p className="text-[12px] text-[#EE0606CC]">

@@ -1,7 +1,10 @@
 import Header from "../../components/Header";
 import settings from "../../assets/settings.png";
+import { useNavigate } from "react-router-dom";
 
 const ResumeManage = () => {
+  const navigate = useNavigate();
+
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <Header title="내일" />
@@ -25,7 +28,10 @@ const ResumeManage = () => {
               <p className="text-[13px]">010-1234-5678</p>
             </div>
           </div>
-          <div className="flex gap-1 text-[13px] text-[#707070]">
+          <div
+            onClick={() => navigate("/MyPage/MemberInfo")}
+            className="flex gap-1 text-[13px] text-[#707070]"
+          >
             <img src={settings} />
             회원 정보
           </div>
@@ -36,7 +42,10 @@ const ResumeManage = () => {
           <div className="h-[20px] w-full bg-white"></div>
         </div>
 
-        <div className="flex flex-col h-[144px] px-[15px] py-[15px] gap-[30px]">
+        <div
+          onClick={() => navigate("/MyPage/SelfIntroductionForm")}
+          className="flex flex-col h-[144px] px-[15px] py-[15px] gap-[30px]"
+        >
           <p className="text-[18px]" style={{ fontWeight: 800 }}>
             자기소개
           </p>
@@ -58,6 +67,7 @@ const ResumeManage = () => {
             경력
           </p>
           <button
+            onClick={() => navigate("/MyPage/CareerForm")}
             className="w-full h-[58px] border border-[#729A73] text-[13px] text-[#729A73]"
             style={{ borderRadius: "12px" }}
           >
@@ -70,7 +80,10 @@ const ResumeManage = () => {
           <div className="h-[20px] w-full bg-white"></div>
         </div>
 
-        <div className="flex flex-col h-[144px] px-[15px] py-[15px] gap-[30px]">
+        <div
+          onClick={() => navigate("/MyPage/LicenseForm")}
+          className="flex flex-col h-[144px] px-[15px] py-[15px] gap-[30px]"
+        >
           <p className="text-[18px]" style={{ fontWeight: 800 }}>
             자격증
           </p>
