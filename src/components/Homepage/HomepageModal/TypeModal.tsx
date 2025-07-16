@@ -32,7 +32,7 @@ const TypeModal: React.FC<TypeModalProps> = ({ isOpen, onClose }) => {
     <div
       style={{
         position: "fixed",
-        bottom: "0", // 넷바를 가리도록 화면 바닥에 붙임
+        bottom: "0",
         left: "50%",
         transform: "translateX(-50%)",
         width: "393px",
@@ -48,20 +48,22 @@ const TypeModal: React.FC<TypeModalProps> = ({ isOpen, onClose }) => {
     >
       {/* 상단 바 */}
       <div
+        className="flex h-[55px] relative"
         style={{
-          backgroundColor: "#CFE3CE",
-          height: "55px",
-          display: "flex",
+          backgroundColor: palette.primary.primaryLight,
           alignItems: "center",
           justifyContent: "center",
-          position: "relative",
         }}
       >
-        <span style={{ fontWeight: "bold", fontSize: "18px" }}>하는 일</span>
+        <span
+          className="font-bold text-[15px]"
+          style={{ fontFamily: "Pretendard" }}
+        >
+          하는 일
+        </span>
         <button
           onClick={onClose}
-          className="absolute right-[16px] top-[50%] translate-y-[-50%] text-[16px]"
-          style={{ width: "20px", height: "20px" }}
+          className="absolute right-[16px] top-1/2 transform -translate-y-1/2 w-[10px] h-[10px] text-[16px] flex items-center justify-center"
         >
           ✕
         </button>
@@ -84,18 +86,15 @@ const TypeModal: React.FC<TypeModalProps> = ({ isOpen, onClose }) => {
             <button
               key={job}
               onClick={() => handleClick(job)}
+              className={`h-[25px] px-[10px] text-[12px] rounded-[10px] font-medium cursor-pointer border ${
+                isSelected ? "!text-white" : "text-black border-[#999] bg-white"
+              }`}
               style={{
-                height: "25px",
-                padding: "0 10px",
-                fontSize: "12px",
-                border: `1px solid ${
-                  isSelected ? palette.primary.primary : "#999"
-                }`,
-                borderRadius: "10px",
-                backgroundColor: isSelected ? palette.primary.primary : "#fff",
-                color: isSelected ? "#fff" : "#000",
-                fontWeight: 500,
-                cursor: "pointer",
+                fontFamily: "Pretendard",
+                backgroundColor: isSelected ? palette.primary.primary : "white",
+                borderColor: isSelected
+                  ? palette.primary.primary
+                  : palette.gray.default,
               }}
             >
               {job}

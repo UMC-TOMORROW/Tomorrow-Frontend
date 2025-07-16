@@ -1,7 +1,7 @@
 import { useState } from "react";
 import CommonButton from "../components/common/CommonButton";
 import palette from "../styles/theme";
-import { useNavigate } from "react-router-dom"; // ✅ 모달 import
+import { useNavigate } from "react-router-dom";
 import OnboardingSkipModal from "../components/Onboarding/OnboardingSkipModal";
 
 function Onboarding() {
@@ -31,7 +31,7 @@ function Onboarding() {
   return (
     <div>
       {page === 1 && (
-        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-7">
+        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-11">
           <p
             className="text-[24px] text-center mb-10"
             style={{
@@ -53,7 +53,7 @@ function Onboarding() {
             보다 편안하고 적합한 일자리와 활동을 추천해드립니다.
           </p>
           <p
-            className="text-center text-[13px] text-[#000000] leading-4 mb-10"
+            className="text-center text-[14px] text-balck leading-4 mb-10"
             style={{ fontFamily: "Pretendard" }}
           >
             본 질문은 의료 진단이나 치료 목적이 아닌,
@@ -72,7 +72,7 @@ function Onboarding() {
       )}
 
       {page === 2 && (
-        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-20">
+        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-15">
           <ProgressDots current={page} total={5} />
           {/* 상단 안내 문구 */}
           <p
@@ -101,7 +101,7 @@ function Onboarding() {
       )}
 
       {page === 3 && (
-        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-20">
+        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-15">
           <ProgressDots current={page} total={5} />
           {/* 상단 안내 문구 */}
           <p
@@ -130,7 +130,7 @@ function Onboarding() {
       )}
 
       {page === 4 && (
-        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-20">
+        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-15">
           <ProgressDots current={page} total={5} />
           {/* 상단 안내 문구 */}
           <p
@@ -159,7 +159,7 @@ function Onboarding() {
       )}
 
       {page === 5 && (
-        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-20">
+        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-15">
           <ProgressDots current={page} total={5} />
           {/* 상단 안내 문구 */}
           <p
@@ -188,7 +188,7 @@ function Onboarding() {
       )}
 
       {page === 6 && (
-        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-20">
+        <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-15">
           <ProgressDots current={page} total={5} />
           {/* 상단 안내 문구 */}
           <p
@@ -225,7 +225,7 @@ function Onboarding() {
           {/* 이미지 또는 일러스트 자리 */}
           <div className="w-[348px] h-[259px] bg-gray-300 mb-8 rounded-md" />
           <p
-            className="text-[25px] font-bold text-center"
+            className="text-[25px] font-semibold text-center"
             style={{
               fontFamily: "Pretendard",
               color: palette.primary.primary,

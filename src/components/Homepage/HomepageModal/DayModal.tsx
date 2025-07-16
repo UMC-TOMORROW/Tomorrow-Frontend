@@ -19,77 +19,50 @@ const DayModal = ({ isOpen, onClose }: DayModalProps) => {
 
   return (
     <div
+      className="fixed bottom-0 left-1/2 w-[393px] h-[155px] bg-white rounded-t-[15px] z-[1000]"
       style={{
-        position: "fixed",
-        bottom: 0,
-        left: "50%",
         transform: "translateX(-50%)",
-        width: "393px",
-        height: "155px",
-        backgroundColor: "white",
-        borderTopLeftRadius: "15px",
-        borderTopRightRadius: "15px",
-        boxShadow: "0 -2px 10px rgba(0,0,0,0.1)",
         fontFamily: "Pretendard",
-        zIndex: 1000,
       }}
     >
       {/* 상단 초록색 박스 */}
       <div
+        className="relative flex items-center justify-center h-[55px] text-[15px] font-bold w-full rounded-t-[15px]"
         style={{
-          width: "100%",
-          height: "55px",
           backgroundColor: palette.primary.primaryLight,
-          borderTopLeftRadius: "15px",
-          borderTopRightRadius: "15px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "15px",
-          fontWeight: "bold",
-          position: "relative",
+          fontFamily: "Pretendard",
         }}
       >
         요일
         {/* X 버튼 */}
         <button
           onClick={onClose}
-          className="absolute right-[16px] top-[50%] translate-y-[-50%] text-[16px]"
-          style={{ width: "20px", height: "20px" }}
+          className="absolute right-[16px] top-1/2 transform -translate-y-1/2 w-[10px] h-[10px] text-[16px] flex items-center justify-center"
         >
           ✕
         </button>
       </div>
 
       {/* 버튼 그룹 */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "30px 28px", // 여백 넓힘
-        }}
-      >
-        {days.map((day) => (
-          <button
-            key={day}
-            onClick={() => handleClick(day)}
-            style={{
-              width: "40px",
-              height: "30px",
-              fontSize: "12px",
-              fontFamily: "Pretendard",
-              borderRadius: "8px",
-              border: `1px solid ${palette.primary.primary}`,
-              backgroundColor:
-                selectedDay === day ? palette.primary.primary : "white",
-              color: selectedDay === day ? "white" : "black",
-              cursor: "pointer",
-            }}
-          >
-            {day}
-          </button>
-        ))}
+      <div className="flex justify-between items-center px-[15px] py-[30px]">
+        {days.map((day) => {
+          const isSelected = selectedDay === day;
+          return (
+            <button
+              key={day}
+              onClick={() => handleClick(day)}
+              className={`w-[40px] h-[30px] text-[12px] rounded-[8px] font-medium cursor-pointer border`}
+              style={{
+                fontFamily: "Pretendard",
+                backgroundColor: isSelected ? palette.primary.primary : "white",
+                color: isSelected ? "white" : "black",
+                border: `1px solid ${palette.primary.primary}`,
+              }}
+            >
+              {day}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
