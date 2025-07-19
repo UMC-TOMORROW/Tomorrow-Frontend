@@ -44,71 +44,50 @@ export default function TimeModal({ isOpen, onClose }: TimeModalProps) {
 
   return (
     <div
+      className="fixed bg-white z-100 w-[393px] h-[286px]"
       style={{
-        position: "fixed",
         bottom: 0,
-        width: "100%",
-        maxWidth: "393px",
-        backgroundColor: "white",
         borderTopLeftRadius: "20px",
         borderTopRightRadius: "20px",
         fontFamily: "Pretendard",
-        zIndex: 100,
       }}
     >
       <div
+        className="flex relative justify-center items-center h-[55px]"
         style={{
-          height: "55px",
           backgroundColor: palette.primary.primaryLight,
           borderTopLeftRadius: "20px",
           borderTopRightRadius: "20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          position: "relative",
         }}
       >
-        <span style={{ fontSize: "15px", fontWeight: "bold" }}>시간</span>
+        <span className="text-[15px] font-bold">시간</span>
         <button
           onClick={onClose}
-          className="absolute right-[16px] top-[50%] translate-y-[-50%] text-[16px]"
-          style={{ width: "20px", height: "20px" }}
+          className="absolute right-[16px] top-1/2 transform -translate-y-1/2 w-[10px] h-[10px] text-[16px] flex items-center justify-center"
         >
           ✕
         </button>
       </div>
 
       {/* 시간 선택 리스트 */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          marginTop: "20px",
-          position: "relative",
-        }}
-      >
+      <div className="flex relative justify-center mt-[20px]">
         {/* 오전 시간 */}
         <div
+          className="flex gap-[10px] mr-[81px]"
           style={{
-            display: "flex",
             flexDirection: "column",
-            gap: "10px",
-            marginRight: "40px",
           }}
         >
           {morningTimes.map((time) => (
             <button
               key={time}
-              className="!font-bold"
+              className="!font-bold w-[67px] h-[16px] text-[13px]"
               onClick={() => handleClick(time, "morning")}
               style={{
-                width: "67px",
-                height: "16px",
-                fontSize: "13px",
                 color:
                   selectedMorning === time
                     ? palette.primary.primary
-                    : "#555555",
+                    : palette.gray.default,
               }}
             >
               {time}
@@ -117,20 +96,17 @@ export default function TimeModal({ isOpen, onClose }: TimeModalProps) {
         </div>
 
         {/* 오후 시간 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div className="flex gap-[10px]" style={{ flexDirection: "column" }}>
           {afternoonTimes.map((time) => (
             <button
-              className="!font-bold"
+              className="!font-bold w-[67px] h-[16px] text-[13px]"
               key={time}
               onClick={() => handleClick(time, "afternoon")}
               style={{
-                width: "67px",
-                height: "16px",
-                fontSize: "13px",
                 color:
                   selectedAfternoon === time
                     ? palette.primary.primary
-                    : "#555555",
+                    : palette.gray.default,
               }}
             >
               {time}
@@ -140,12 +116,9 @@ export default function TimeModal({ isOpen, onClose }: TimeModalProps) {
 
         {/* 물결표시 (~) */}
         <div
+          className="absolute left-[50%] top-[60px] text-[13px]"
           style={{
-            position: "absolute",
-            left: "50%",
-            top: "66px", // 오전 09:00(3번째)와 오후 06:00(3번째) 사이 중앙
             transform: "translate(-50%, 0)",
-            fontSize: "13px",
             color: palette.primary.primary,
           }}
         >
@@ -154,22 +127,11 @@ export default function TimeModal({ isOpen, onClose }: TimeModalProps) {
       </div>
 
       {/* 버튼 */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "20px",
-          marginTop: "15px",
-          paddingBottom: "30px",
-        }}
-      >
+      <div className="flex justify-center mt-[20px] pb-[15px] gap-[20px]">
         <button
           onClick={handleReset}
-          className="!font-bold"
+          className="!font-bold w-[120px] h-[40px] text-[15px]"
           style={{
-            width: "120px",
-            height: "40px",
-            fontSize: "15px",
             borderRadius: "10px",
             border: `1px solid ${palette.primary.primary}`,
             color: palette.primary.primary,
@@ -179,11 +141,8 @@ export default function TimeModal({ isOpen, onClose }: TimeModalProps) {
         </button>
         <button
           onClick={handleApply}
-          className="!font-bold"
+          className="!font-bold w-[160px] h-[40px] text-[15px]"
           style={{
-            width: "160px",
-            height: "40px",
-            fontSize: "15px",
             borderRadius: "10px",
             backgroundColor: palette.primary.primary,
             color: "white",
