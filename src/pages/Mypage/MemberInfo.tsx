@@ -6,13 +6,10 @@ const MemberInfo = () => {
     <div style={{ fontFamily: "Pretendard" }}>
       <Header title="내일" />
 
-      <div className=" bg-white min-h-screen">
-        <section className="mt-[50px] flex items-center h-[40px] border-b border-[#5555558C]">
-          <SlArrowLeft className="ml-[20px]" />
-          <div
-            className="flex justify-center items-center text-[15px]"
-            style={{ fontWeight: 700 }}
-          >
+      <div className="mt-[50px] bg-white min-h-screen">
+        <section className="relative flex justify-center items-center h-[40px] border-b border-[#5555558C]">
+          <SlArrowLeft className="absolute left-[15px] " />
+          <div className="text-[15px]" style={{ fontWeight: 700 }}>
             회원 정보
           </div>
         </section>

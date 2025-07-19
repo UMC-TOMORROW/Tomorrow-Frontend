@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import OnboardingScreen from "./pages/Onboarding";
 // import SearchPage from "./pages/SearchPage";
 import MyPage from "./pages/Mypage/MyPage";
+import ResumeManage from "./pages/Mypage/ResumeManage";
 import CareerTalkListPage from "./pages/careerTalk/CareerTalkListPage";
 import CareerTalkWritePage from "./pages/careerTalk/CareerTalkWritePage";
 import CareerTalkDetailPage from "./pages/careerTalk/CareerTalkDetailPage";
@@ -13,6 +14,14 @@ import SearchBarTest from "./pages/SearchBarTest";
 import RecommendationPage from "./pages/RecommendationPage";
 import SplashScreenPage from "./pages/SplashScreenPage";
 import AuthScreen from "./pages/auth/AuthScreen";
+import SelfIntroductionForm from "./pages/Mypage/SelfIntroductionForm";
+import CareerForm from "./pages/Mypage/CareerForm";
+import LicenseForm from "./pages/Mypage/LicenseForm";
+import MemberInfo from "./pages/Mypage/MemberInfo";
+import ApplyStatus from "./pages/Mypage/ApplyStatus";
+import ManageMyJobs from "./pages/Mypage/ManageMyJobs";
+import ReviewWritting from "./pages/Mypage/ReviewWritting";
+import SavedJobs from "./pages/Mypage/SavedJobs";
 
 const router = createBrowserRouter([
   {
@@ -37,7 +46,24 @@ const router = createBrowserRouter([
       { path: "career-talk/:id", element: <CareerTalkDetailPage /> },
       { path: "MyPage", element: <MyPage /> },
       { path: "recommendation", element: <RecommendationPage /> },
-    ],      
+    ],
+  },
+  {
+    path: "/MyPage",
+    element: <HomeLayout />,
+    errorElement: <NotFoundPage />,
+    children: [
+      { index: true, element: <MyPage /> },
+      { path: "ResumeManage", element: <ResumeManage /> },
+      { path: "SelfIntroductionForm", element: <SelfIntroductionForm /> },
+      { path: "CareerForm", element: <CareerForm /> },
+      { path: "LicenseForm", element: <LicenseForm /> },
+      { path: "MemberInfo", element: <MemberInfo /> },
+      { path: "ApplyStatus", element: <ApplyStatus /> },
+      { path: "ManageMyJobs", element: <ManageMyJobs /> },
+      { path: "ReviewWritting", element: <ReviewWritting /> },
+      { path: "SavedJobs", element: <SavedJobs /> },
+    ],
   },
 ]);
 
