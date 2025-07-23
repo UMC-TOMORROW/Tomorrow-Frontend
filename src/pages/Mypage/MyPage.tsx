@@ -46,7 +46,7 @@ const MyPage = () => {
             <img src={suitcase} />
           </div>
         </section>
-        <section className="flex items-center justify-center h-[50px] divide-x border-b-[3px] border-[#5555558C]">
+        <section className="flex items-center justify-center h-[50px] divide-x border-b-[5px] border-[#CACACA]">
           <div
             onClick={() => navigate("/MyPage/SavedJobs")}
             className="flex w-1/2 items-center justify-center gap-[3px]"

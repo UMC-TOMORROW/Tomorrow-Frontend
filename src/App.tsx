@@ -14,9 +14,6 @@ import SearchBarTest from "./pages/SearchBarTest";
 import RecommendationPage from "./pages/RecommendationPage";
 import SplashScreenPage from "./pages/SplashScreenPage";
 import AuthScreen from "./pages/auth/AuthScreen";
-import SelfIntroductionForm from "./pages/Mypage/SelfIntroductionForm";
-import CareerForm from "./pages/Mypage/CareerForm";
-import LicenseForm from "./pages/Mypage/LicenseForm";
 import MemberInfo from "./pages/Mypage/MemberInfo";
 import ApplyStatus from "./pages/Mypage/ApplyStatus";
 import ManageMyJobs from "./pages/Mypage/ManageMyJobs";
@@ -55,9 +52,6 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <MyPage /> },
       { path: "ResumeManage", element: <ResumeManage /> },
-      { path: "SelfIntroductionForm", element: <SelfIntroductionForm /> },
-      { path: "CareerForm", element: <CareerForm /> },
-      { path: "LicenseForm", element: <LicenseForm /> },
       { path: "MemberInfo", element: <MemberInfo /> },
       { path: "ApplyStatus", element: <ApplyStatus /> },
       { path: "ManageMyJobs", element: <ManageMyJobs /> },
