@@ -1,7 +1,9 @@
 import { useState } from "react";
 import Header from "../../components/Header";
+import { useNavigate } from "react-router-dom";
 
 const ManageMyJobs = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"모집중" | "모집완료">("모집중");
 
   const jobList = [
@@ -87,7 +89,7 @@ const ManageMyJobs = () => {
         </div>
         <ul>
           {filteredJobs.map((job, index) => (
-            <div key={index}>
+            <div key={index} onClick={() => navigate("/MyPage/ApplicantList")}>
               <div className="h-[25px]"></div>
               <p className="flex items-end text-[12px] px-[20px] h-[25px]">
                 {job.date}

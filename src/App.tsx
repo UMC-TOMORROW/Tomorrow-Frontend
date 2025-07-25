@@ -19,6 +19,9 @@ import ApplyStatus from "./pages/Mypage/ApplyStatus";
 import ManageMyJobs from "./pages/Mypage/ManageMyJobs";
 import ReviewWritting from "./pages/Mypage/ReviewWritting";
 import SavedJobs from "./pages/Mypage/SavedJobs";
+import ApplicantList from "./pages/Mypage/ApplicantList";
+import ApplicantDetail from "./pages/Mypage/ApplicantDetail";
+import EmployerMyPage from "./pages/Mypage/EmployerMyPage";
 
 const router = createBrowserRouter([
   {
@@ -51,12 +54,15 @@ const router = createBrowserRouter([
     errorElement: <NotFoundPage />,
     children: [
       { index: true, element: <MyPage /> },
+      { path: "EmployerMyPage", element: <EmployerMyPage /> },
       { path: "ResumeManage", element: <ResumeManage /> },
       { path: "MemberInfo", element: <MemberInfo /> },
       { path: "ApplyStatus", element: <ApplyStatus /> },
       { path: "ManageMyJobs", element: <ManageMyJobs /> },
       { path: "ReviewWritting", element: <ReviewWritting /> },
       { path: "SavedJobs", element: <SavedJobs /> },
+      { path: "ApplicantList", element: <ApplicantList /> },
+      { path: "ApplicantDetail", element: <ApplicantDetail /> },
     ],
   },
 ]);
