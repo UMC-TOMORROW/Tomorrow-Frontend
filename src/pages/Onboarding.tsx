@@ -132,16 +132,44 @@ function Onboarding() {
             className="w-full max-w-[320px] font-bold text-[18px] flex flex-col gap-[15px] !mt-10"
             style={{ fontFamily: "Pretendard" }}
           >
-            <CommonButton
-              label="계속하기"
-              className="w-[316px] h-[48px] !rounded-[15px]"
-              onClick={() => setPage(3)}
-            />
-            <CommonButton
-              label="건너뛰기"
-              className="!bg-white !text-[#729A73] !border-[#729A73] w-[316px] h-[48px] !rounded-[15px]"
-              onClick={() => setShowSkipModal(true)}
-            />
+            {[
+              { label: "계속하기", onClick: () => setPage(3) },
+              {
+                label: "건너뛰기",
+                onClick: () => setShowSkipModal(true),
+              },
+            ].map(({ label, onClick }) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className="border leading-[32.36px] tracking-[4%] bg-white w-[316px] h-[48px] rounded-[15px]"
+                style={{
+                  borderColor: palette.primary.primary,
+                  color: palette.primary.primary,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.color = palette.primary.primary;
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -167,17 +195,48 @@ function Onboarding() {
             className="w-[340px] h-[300px]"
           />
           {/* 버튼 영역 */}
-          <div className="w-full max-w-[320px] items-center flex flex-col gap-3">
-            <CommonButton
-              label="예"
-              className="!w-[230px] !h-[44px] !rounded-[15px]"
-              onClick={() => setPage(4)}
-            />
-            <CommonButton
-              label="아니오"
-              className="!bg-white !text-[#729A73] !border-[#729A73] !w-[230px] !h-[44px] !rounded-[15px]"
-              onClick={() => setPage(4)}
-            />
+          <div
+            className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
+            style={{ fontFamily: "Pretendard" }}
+          >
+            {[
+              { label: "예", onClick: () => setPage(4) },
+              {
+                label: "아니오",
+                onClick: () => setPage(4),
+              },
+            ].map(({ label, onClick }) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className="border leading-[32.36px] tracking-[4%] bg-white w-[230px] h-[44px] rounded-[15px]"
+                style={{
+                  borderColor: palette.primary.primary,
+                  color: palette.primary.primary,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.color = palette.primary.primary;
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -203,17 +262,48 @@ function Onboarding() {
             className="w-[340px] h-[300px]"
           />
           {/* 버튼 영역 */}
-          <div className="w-full max-w-[320px] items-center flex flex-col gap-3">
-            <CommonButton
-              label="예"
-              className="!w-[230px] !h-[44px] !rounded-[15px]"
-              onClick={() => setPage(5)}
-            />
-            <CommonButton
-              label="아니오"
-              className="!bg-white !text-[#729A73] !border-[#729A73] !w-[230px] !h-[44px] !rounded-[15px]"
-              onClick={() => setPage(5)}
-            />
+          <div
+            className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
+            style={{ fontFamily: "Pretendard" }}
+          >
+            {[
+              { label: "예", onClick: () => setPage(5) },
+              {
+                label: "아니오",
+                onClick: () => setPage(5),
+              },
+            ].map(({ label, onClick }) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className="border leading-[32.36px] tracking-[4%] bg-white w-[230px] h-[44px] rounded-[15px]"
+                style={{
+                  borderColor: palette.primary.primary,
+                  color: palette.primary.primary,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.color = palette.primary.primary;
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -239,17 +329,48 @@ function Onboarding() {
             className="w-[340px] h-[300px]"
           />{" "}
           {/* 버튼 영역 */}
-          <div className="w-full max-w-[320px] items-center flex flex-col gap-3">
-            <CommonButton
-              label="예"
-              className="!w-[230px] !h-[44px] !rounded-[15px]"
-              onClick={() => setPage(6)}
-            />
-            <CommonButton
-              label="아니오"
-              className="!bg-white !text-[#729A73] !border-[#729A73] !w-[230px] !h-[44px] !rounded-[15px]"
-              onClick={() => setPage(6)}
-            />
+          <div
+            className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
+            style={{ fontFamily: "Pretendard" }}
+          >
+            {[
+              { label: "예", onClick: () => setPage(6) },
+              {
+                label: "아니오",
+                onClick: () => setPage(6),
+              },
+            ].map(({ label, onClick }) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className="border leading-[32.36px] tracking-[4%] bg-white w-[230px] h-[44px] rounded-[15px]"
+                style={{
+                  borderColor: palette.primary.primary,
+                  color: palette.primary.primary,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.color = palette.primary.primary;
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -275,17 +396,48 @@ function Onboarding() {
             className="w-[340px] h-[300px]"
           />{" "}
           {/* 버튼 영역 */}
-          <div className="w-full max-w-[320px] items-center flex flex-col gap-3">
-            <CommonButton
-              label="예"
-              className="!w-[230px] !h-[44px] !rounded-[15px]"
-              onClick={() => setPage(7)}
-            />
-            <CommonButton
-              label="아니오"
-              className="!bg-white !text-[#729A73] !border-[#729A73] !w-[230px] !h-[44px] !rounded-[15px]"
-              onClick={() => setPage(7)}
-            />
+          <div
+            className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
+            style={{ fontFamily: "Pretendard" }}
+          >
+            {[
+              { label: "예", onClick: () => setPage(7) },
+              {
+                label: "아니오",
+                onClick: () => setPage(7),
+              },
+            ].map(({ label, onClick }) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className="border leading-[32.36px] tracking-[4%] bg-white w-[230px] h-[44px] rounded-[15px]"
+                style={{
+                  borderColor: palette.primary.primary,
+                  color: palette.primary.primary,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.color = palette.primary.primary;
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -311,17 +463,48 @@ function Onboarding() {
             className="w-[340px] h-[300px]"
           />{" "}
           {/* 버튼 영역 */}
-          <div className="w-full max-w-[320px] items-center flex flex-col gap-3">
-            <CommonButton
-              label="예"
-              className="!w-[230px] !h-[44px] !rounded-[15px]"
-              onClick={() => setPage(8)}
-            />
-            <CommonButton
-              label="아니오"
-              className="!bg-white !text-[#729A73] !border-[#729A73] !w-[230px] !h-[44px] !rounded-[15px]"
-              onClick={() => setPage(8)}
-            />
+          <div
+            className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
+            style={{ fontFamily: "Pretendard" }}
+          >
+            {[
+              { label: "예", onClick: () => setPage(8) },
+              {
+                label: "아니오",
+                onClick: () => setPage(8),
+              },
+            ].map(({ label, onClick }) => (
+              <button
+                key={label}
+                onClick={onClick}
+                className="border leading-[32.36px] tracking-[4%] bg-white w-[230px] h-[44px] rounded-[15px]"
+                style={{
+                  borderColor: palette.primary.primary,
+                  color: palette.primary.primary,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.color = palette.primary.primary;
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    palette.primary.primary;
+                  e.currentTarget.style.color = "white";
+                }}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -351,7 +534,7 @@ function Onboarding() {
             '내일'을 위해 '내 일' 찾기
           </p>
           {/* 버튼 영역 */}
-          <div className="w-full max-w-[320px] items-center flex flex-col gap-3">
+          <div className="w-full max-w-[320px] font-bold items-center flex flex-col gap-3">
             <CommonButton
               label="시작하기"
               className="!w-[250px] !h-[50px] !bg-white !text-[#729A73]"
