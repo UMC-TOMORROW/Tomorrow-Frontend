@@ -9,7 +9,6 @@ const SearchBar = () => {
         type="text"
         placeholder="궁금한 내용을 찾아보세요"
         className="w-full bg-transparent text-gray-700 placeholder-gray-400 outline-none"
-        disabled // 기능 없이 UI만 표시
       />
     </div>
   );

@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import Header from "../components/common/Header";
-import SearchBar from "../components/common/SearchBar";
 import { useEffect, useRef, useState } from "react";
 import palette from "../styles/theme";
+import Header from "../components/Header";
+import SearchBar from "../components/search/SearchBar";
 
 const SearchPage = () => {
   const navigate = useNavigate();
@@ -11,25 +11,45 @@ const SearchPage = () => {
 
   useEffect(() => {
     const input = document.querySelector("input[type='text']");
-    if (input) {
-      inputRef.current = input as HTMLInputElement;
+    if (!input) return;
 
-      const handleKeyPress = (e: Event) => {
-        const event = e as KeyboardEvent;
-        if (event.key === "Enter" && inputRef.current?.value.trim()) {
-          const newSearch = inputRef.current.value.trim();
-          setRecentSearches((prev) => {
-            const updated = [newSearch, ...prev.filter((s) => s !== newSearch)];
-            return updated.slice(0, 5);
-          });
-          inputRef.current.value = "";
-        }
-      };
+    inputRef.current = input as HTMLInputElement;
 
-      input.addEventListener("keydown", handleKeyPress as EventListener);
-      return () =>
-        input.removeEventListener("keydown", handleKeyPress as EventListener);
-    }
+    let isComposing = false;
+
+    const handleCompositionStart = () => {
+      isComposing = true;
+    };
+
+    const handleCompositionEnd = () => {
+      isComposing = false;
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        if (isComposing) return;
+        const value = inputRef.current?.value.trim();
+        if (!value) return;
+
+        setRecentSearches((prev) => {
+          if (prev[0] === value) return prev;
+          const updated = [value, ...prev.filter((s) => s !== value)];
+          return updated.slice(0, 5);
+        });
+
+        inputRef.current!.value = "";
+      }
+    };
+
+    input.addEventListener("compositionstart", handleCompositionStart);
+    input.addEventListener("compositionend", handleCompositionEnd);
+    input.addEventListener("keydown", handleKeyDown as EventListener);
+
+    return () => {
+      input.removeEventListener("compositionstart", handleCompositionStart);
+      input.removeEventListener("compositionend", handleCompositionEnd);
+      input.removeEventListener("keydown", handleKeyDown as EventListener);
+    };
   }, []);
 
   const removeSearch = (index: number) => {
@@ -51,7 +71,7 @@ const SearchPage = () => {
       <div className="flex items-center justify-start px-4 gap-[8px] mt-4 max-w-[393px] mx-auto">
         <button
           className="flex items-center text-[25px] ml-[18px] text-[#555555] cursor-pointer"
-          onClick={() => navigate(`/`)}
+          onClick={() => navigate("/")}
         >
           {"<"}
         </button>
