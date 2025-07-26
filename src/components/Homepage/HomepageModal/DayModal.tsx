@@ -19,77 +19,60 @@ const DayModal = ({ isOpen, onClose }: DayModalProps) => {
 
   return (
     <div
-      style={{
-        position: "fixed",
-        bottom: 0,
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "393px",
-        height: "155px",
-        backgroundColor: "white",
-        borderTopLeftRadius: "15px",
-        borderTopRightRadius: "15px",
-        boxShadow: "0 -2px 10px rgba(0,0,0,0.1)",
-        fontFamily: "Pretendard",
-        zIndex: 1000,
-      }}
+      className="fixed inset-0 z-[9999] flex justify-center items-end bg-black/30"
+      style={{ fontFamily: "Pretendard" }}
     >
-      {/* 상단 초록색 박스 */}
-      <div
-        style={{
-          width: "100%",
-          height: "55px",
-          backgroundColor: palette.primary.primaryLight,
-          borderTopLeftRadius: "15px",
-          borderTopRightRadius: "15px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: "15px",
-          fontWeight: "bold",
-          position: "relative",
-        }}
-      >
-        요일
-        {/* X 버튼 */}
-        <button
-          onClick={onClose}
-          className="absolute right-[16px] top-[50%] translate-y-[-50%] text-[16px]"
-          style={{ width: "20px", height: "20px" }}
+      {/* 모달 박스 */}
+      <div className="w-[393px] bg-white rounded-[20px] -translate-y-5">
+        {/* 상단 초록색 박스 */}
+        <div
+          className="relative flex items-center justify-center h-[55px] text-[18px] font-bold w-full rounded-t-[20px]"
+          style={{ backgroundColor: palette.primary.primaryLight }}
         >
-          ✕
-        </button>
-      </div>
-
-      {/* 버튼 그룹 */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "30px 28px", // 여백 넓힘
-        }}
-      >
-        {days.map((day) => (
+          근무 요일 선택
+          {/* X 버튼 */}
           <button
-            key={day}
-            onClick={() => handleClick(day)}
-            style={{
-              width: "40px",
-              height: "30px",
-              fontSize: "12px",
-              fontFamily: "Pretendard",
-              borderRadius: "8px",
-              border: `1px solid ${palette.primary.primary}`,
-              backgroundColor:
-                selectedDay === day ? palette.primary.primary : "white",
-              color: selectedDay === day ? "white" : "black",
-              cursor: "pointer",
-            }}
+            onClick={onClose}
+            className="absolute right-[16px] top-1/2 transform -translate-y-1/2 w-[10px] h-[10px] text-[16px] flex items-center justify-center"
           >
-            {day}
+            ✕
           </button>
-        ))}
+        </div>
+
+        {/* 버튼 그룹 */}
+        <div className="flex justify-between items-center px-[15px] py-[30px]">
+          {days.map((day) => {
+            const isSelected = selectedDay === day;
+            return (
+              <button
+                key={day}
+                onClick={() => handleClick(day)}
+                className="w-[40px] h-[30px] text-[16px] rounded-[8px] font-medium cursor-pointer border"
+                style={{
+                  fontFamily: "Pretendard",
+                  backgroundColor: isSelected
+                    ? palette.primary.primary
+                    : "white",
+                  color: isSelected ? "white" : "black",
+                  border: `1px solid ${palette.primary.primary}`,
+                }}
+              >
+                {day}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className="w-full !mb-6 flex justify-center">
+          <button
+            onClick={onClose}
+            className="w-[316px] h-[50px] rounded-[12px] text-[18px] font-bold !text-white"
+            style={{ backgroundColor: palette.primary.primary }}
+          >
+            선택 완료
+          </button>
+        </div>
       </div>
     </div>
   );
