@@ -2,12 +2,11 @@ import BottomNavbar from "../../components/BottomNavbar";
 import Header from "../../components/Header";
 import { SlArrowRight } from "react-icons/sl";
 import resume from "../../assets/my/resume.png";
-import star_filled_black from "../../assets/my/star_filled_black.png";
+import suitcase from "../../assets/my/suitcase.png";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import recommend from "../../assets/recommend.png";
 
-const MyPage = () => {
+const EmployerMyPage = () => {
   const navigate = useNavigate();
   const [showUnregister, setShowUnregister] = useState(false);
 
@@ -21,48 +20,46 @@ const MyPage = () => {
             <div className="w-[60px] h-[60px] rounded-full bg-gray-200" />
             <div>
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
-                이OO
+                이내일
               </p>
-              <p className="text-[16px]">몸도 마음도 건강한 하루 되세요!</p>
+              <p className="text-[13px]">
+                서로를 이어주는 내일, 지금 시작해보세요
+              </p>
             </div>
           </div>
-          <button>
+          <button onClick={() => navigate("/MyPage/MemberInfo")}>
             <SlArrowRight className="w-[15px] h-[15px]" />
           </button>
         </section>
         <section className="flex justify-around h-[100px] border-b border-[#5555558C] px-[20px] py-[15px]">
           <div
-            onClick={() => navigate("/MyPage/ResumeManage")}
+            onClick={() => navigate("/MyPage/ManageMyJobs")}
             className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
           >
-            <p>이력서 관리</p>
+            <p>공고 관리</p>
             <img src={resume} />
           </div>
           <div
             className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
             onClick={() => navigate("")}
           >
-            <p>내일 추천 관리</p>
-            <img src={recommend} />
+            <p>일자리 등록</p>
+            <img src={suitcase} />
           </div>
         </section>
-        <section className="flex items-center justify-center h-[50px] divide-x border-b-[3px] border-[#CACACA]">
+        <section>
           <div
-            onClick={() => navigate("/MyPage/ApplyStatus")}
-            className="text-[16px] flex w-1/2 items-center justify-center"
+            className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#5555558C]"
+            style={{ fontWeight: 800 }}
           >
-            지원 현황
+            사업자 정보
           </div>
-          <div
-            onClick={() => navigate("/MyPage/SavedJobs")}
-            className="flex w-1/2 items-center justify-center gap-[3px]"
-          >
-            <img
-              src={star_filled_black}
-              className="text-[16px] w-[20px] h-[20px]"
-            />
-            저장
-          </div>
+          <ul>
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+              <span>사업자 정보 등록</span>
+              <SlArrowRight />
+            </li>
+          </ul>
         </section>
         <section>
           <div
@@ -162,4 +159,4 @@ const MyPage = () => {
   );
 };
 
-export default MyPage;
+export default EmployerMyPage;

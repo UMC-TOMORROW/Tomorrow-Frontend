@@ -1,7 +1,10 @@
+import { useState } from "react";
 import Header from "../../components/Header";
 import { SlArrowLeft } from "react-icons/sl";
 
 const MemberInfo = () => {
+  const [gender, setGender] = useState<"남자" | "여자">("남자");
+
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <Header title="내일" />
@@ -29,7 +32,7 @@ const MemberInfo = () => {
             </p>
             <input
               type="text"
-              className="w-full h-[42px] px-[5px] mb-[5px] border border-[#729A73]"
+              className="w-full h-[42px] px-[5px] mb-[5px] border border-[#729A73] text-[13px]"
               style={{ borderRadius: "12px" }}
             />
             <p className="text-[12px] h-[22px] text-[#555555D9] mb-[25px]">
@@ -44,7 +47,7 @@ const MemberInfo = () => {
             </p>
             <input
               type="text"
-              className="w-full h-[42px] px-[5px] border border-[#729A73] mb-[25px]"
+              className="w-full h-[42px] px-[5px] border border-[#729A73] mb-[25px] text-[13px]"
               style={{ borderRadius: "12px" }}
             />
 
@@ -56,15 +59,25 @@ const MemberInfo = () => {
             </p>
             <div className="flex gap-8 w-full mb-[25px]">
               <button
+                onClick={() => setGender("남자")}
                 type="button"
-                className="w-full h-[42px] border border-[#729A73] text-[13px] text-[#555555D9]"
+                className={`w-full h-[42px] text-[13px] ${
+                  gender === "남자"
+                    ? "bg-[#729A73] text-[#FFFFFF]"
+                    : "border border-[#729A73] text-[#555555D9]"
+                }`}
                 style={{ borderRadius: "12px" }}
               >
                 남자
               </button>
               <button
+                onClick={() => setGender("여자")}
                 type="button"
-                className="w-full h-[42px] border border-[#729A73] text-[13px] text-[#555555D9]"
+                className={`w-full h-[42px] text-[13px] ${
+                  gender === "여자"
+                    ? "bg-[#729A73] text-[#FFFFFF]"
+                    : "border border-[#729A73] text-[#555555D9]"
+                }`}
                 style={{ borderRadius: "12px" }}
               >
                 여자
@@ -81,7 +94,7 @@ const MemberInfo = () => {
               <input
                 type="tel"
                 placeholder="010-1234-5678"
-                className="flex-1 w-[266px] h-[42px] px-[5px] border border-[#729A73] text-[13px]"
+                className="flex-1 w-[266px] h-[42px] px-[10px] border border-[#729A73] text-[13px]"
                 style={{ borderRadius: "12px" }}
               />
               <button
@@ -103,7 +116,7 @@ const MemberInfo = () => {
               <input
                 type="tel"
                 placeholder="서울시 00구 00동"
-                className="flex-1 w-[266px] h-[42px] px-[5px] border border-[#729A73] text-[13px]"
+                className="flex-1 w-[266px] h-[42px] px-[10px] border border-[#729A73] text-[13px]"
                 style={{ borderRadius: "12px" }}
               />
               <button
