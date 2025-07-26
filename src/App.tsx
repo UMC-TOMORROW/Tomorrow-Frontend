@@ -19,6 +19,10 @@ import ApplyStatus from "./pages/Mypage/ApplyStatus";
 import ManageMyJobs from "./pages/Mypage/ManageMyJobs";
 import ReviewWritting from "./pages/Mypage/ReviewWritting";
 import SavedJobs from "./pages/Mypage/SavedJobs";
+import ApplicantList from "./pages/Mypage/ApplicantList";
+import ApplicantDetail from "./pages/Mypage/ApplicantDetail";
+import EmployerMyPage from "./pages/Mypage/EmployerMyPage";
+import SearchPage from "./pages/SearchPage";
 
 const router = createBrowserRouter([
   {
@@ -36,7 +40,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "onboarding", element: <OnboardingScreen /> },
-      // { path: "search", element: <SearchPage /> },
+      { path: "search", element: <SearchPage /> },
       { path: "search-test", element: <SearchBarTest /> },
       { path: "career-talk", element: <CareerTalkListPage /> },
       { path: "career-talk/write", element: <CareerTalkWritePage /> },
@@ -51,12 +55,15 @@ const router = createBrowserRouter([
     errorElement: <NotFoundPage />,
     children: [
       { index: true, element: <MyPage /> },
+      { path: "EmployerMyPage", element: <EmployerMyPage /> },
       { path: "ResumeManage", element: <ResumeManage /> },
       { path: "MemberInfo", element: <MemberInfo /> },
       { path: "ApplyStatus", element: <ApplyStatus /> },
       { path: "ManageMyJobs", element: <ManageMyJobs /> },
       { path: "ReviewWritting", element: <ReviewWritting /> },
       { path: "SavedJobs", element: <SavedJobs /> },
+      { path: "ApplicantList", element: <ApplicantList /> },
+      { path: "ApplicantDetail", element: <ApplicantDetail /> },
     ],
   },
 ]);

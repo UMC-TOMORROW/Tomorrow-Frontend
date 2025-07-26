@@ -1,6 +1,7 @@
 import Header from "../../components/Header";
 import { SlArrowLeft } from "react-icons/sl";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const applicantlist = [
   {
@@ -27,6 +28,7 @@ const applicantlist = [
 ];
 
 const ApplicantList = () => {
+  const navigate = useNavigate();
   const [applicants] = useState(applicantlist);
 
   return (
@@ -53,6 +55,7 @@ const ApplicantList = () => {
           <ul>
             {applicants.map((applicant, index) => (
               <li
+                onClick={() => navigate("/MyPage/ApplicantDetail")}
                 key={index}
                 className="flex h-[123px] items-center gap-[15px] px-[15px] py-[25px] border-b border-[#5555558C]"
               >

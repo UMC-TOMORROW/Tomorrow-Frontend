@@ -76,72 +76,63 @@ const HomePage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="pt-[50px] pb-[64px] min-h-screen font-[Pretendard]">
-      <Header title="내일" />
+    <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px]">
+      {/* 상단 고정 영역 */}
+      <div className="flex-shrink-0 pt-[50px]">
+        <Header title="내일" />
+        <HomepageTopBar />
 
-      <HomepageTopBar />
-
-      <div
-        className="w-full my-6"
-        style={{ height: "1px", backgroundColor: palette.gray.default }}
-      />
-      <div className="h-[7px]" />
-
-      {/* 검색바 */}
-      <div
-        onClick={() => navigate("/search")}
-        className="flex justify-center py-4 cursor-pointer"
-      >
-        <SearchBar />
-      </div>
-
-      <div className="h-[7px]" />
-      <div
-        className="w-full my-6"
-        style={{ height: "1px", backgroundColor: palette.gray.default }}
-      />
-
-      <div className="bg-white max-w-[393px] mx-auto">
-        {/* 100건 + 버튼 영역 */}
         <div
-          className="flex justify-between items-center"
-          style={{ height: "25px" }}
-        >
-          <span
-            className="!ml-7"
-            style={{
-              fontSize: "12px",
-              color: "#555555D9",
-              fontFamily: "Pretendard",
-            }}
-          >
-            100건
-          </span>
+          className="w-full h-[1px]"
+          style={{ backgroundColor: palette.gray.default }}
+        />
+        <div className="h-[7px]" />
 
-          <button
-            className="bg-[#5555558C] w-[75px] h-[21px] !text-white mt-[2px] mb-[2px] mr-[15px]"
-            style={{
-              fontSize: "12px",
-              fontFamily: "Pretendard",
-              borderRadius: "7px",
-            }}
-          >
-            일자리 등록
-          </button>
+        {/* 검색바 */}
+        <div
+          onClick={() => navigate("/search")}
+          className="flex justify-center py-4 cursor-pointer"
+        >
+          <SearchBar />
         </div>
 
-        {/* 하단 구분선 */}
+        <div className="h-[7px]" />
         <div
-          className="w-full"
-          style={{ height: "1px", backgroundColor: palette.gray.default }}
+          className="w-full h-[1px]"
+          style={{ backgroundColor: palette.gray.default }}
         />
+
+        <div className="bg-white">
+          {/* 100건 */}
+          <div className="flex justify-between items-center h-[25px]">
+            <span
+              className="!ml-7 text-[12px]"
+              style={{
+                color: palette.gray.default,
+                fontFamily: "Pretendard",
+              }}
+            >
+              100건
+            </span>
+          </div>
+
+          {/* 하단 구분선 */}
+          <div
+            className="w-full h-[1px]"
+            style={{ backgroundColor: palette.gray.default }}
+          />
+        </div>
       </div>
 
-      {/* 일자리 리스트 */}
-      {dummyJobs.map((job, index) => (
-        <JobCard key={index} {...job} />
-      ))}
+      {/* 🔽 중앙 스크롤 영역 */}
+      <div className="flex-1 overflow-y-scroll bg-white">
+        {dummyJobs.map((job, index) => (
+          <JobCard key={index} {...job} />
+        ))}
+        <div className="h-[63px]" />
+      </div>
 
+      {/* 하단 고정 바 */}
       <BottomNavbar />
     </div>
   );
