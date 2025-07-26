@@ -23,27 +23,30 @@ const AuthScreen = () => {
         </div> */}
 
         {/* 네이버 */}
-        <div className="flex flex-col items-center gap-5 ">
-          <button className="flex items-center justify-center w-[300px] h-[50px] rounded-[10px] bg-[#03C75A] text-white font-semibold text-sm px-[30px] gap-[20px] mb-3">
-            <img src={naverIcon} alt="Naver" className="w-5 h-5" />
-            네이버로 시작하기
-          </button>
+        {/* 로그인 버튼 영역 */}
+        <div className="grow flex flex-col justify-start pt-10">
+          <div className="flex flex-col items-center gap-5">
+            {/* 네이버 */}
+            <button className="flex items-center justify-center w-[300px] h-[50px] rounded-[10px] bg-[#03C75A] text-white font-semibold text-sm px-[30px] gap-[20px]">
+              <img src={naverIcon} alt="Naver" className="w-5 h-5" />
+              네이버로 시작하기
+            </button>
 
-          {/* 카카오 */}
-          <button className="flex items-center justify-center w-[300px] h-[50px] rounded-[10px] bg-[#FEE500] text-[#3C1E1E] font-semibold text-sm px-[30px] gap-[20px] mb-3">
-            <img src={kakaoIcon} alt="Kakao" className="w-5 h-5" />
-            카카오로 시작하기
-          </button>
+            {/* 카카오 */}
+            <button className="flex items-center justify-center w-[300px] h-[50px] rounded-[10px] bg-[#FEE500] text-[#3C1E1E] font-semibold text-sm px-[30px] gap-[20px]">
+              <img src={kakaoIcon} alt="Kakao" className="w-5 h-5" />
+              카카오로 시작하기
+            </button>
 
-          {/* 구글 */}
-          <button className="flex items-center justify-center w-[300px] h-[50px] rounded-[10px] bg-white border border-[#ccc] text-[#3C4043] font-semibold text-sm px-[30px] gap-[40px]">
-            <img src={googleIcon} alt="Google" className="w-5 h-5" />
-            Google로 시작하기
-          </button>
+            {/* 구글 */}
+            <button className="flex items-center justify-center w-[300px] h-[50px] rounded-[10px] bg-white border border-[#eee] text-[#3C4043] font-semibold text-sm px-[30px] gap-[20px]">
+              <img src={googleIcon} alt="Google" className="w-5 h-5" />
+              Google로 시작하기
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
-
 export default AuthScreen;
