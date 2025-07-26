@@ -15,8 +15,9 @@ const RecommendationCard = ({ job }: Props) => {
         className="text-[16px] leading-[18px] mb-[15px] mt-[12px] text-center font-[Pretendard]"
         style={{ color: palette.gray.light }}
       >
-        실내외에서 가볍게 활동하는 일이<br />잘 맞는 OO님께 추천드려요!
+        OO님의 근무 스타일에 맞춘<br />일자리를 추천드려요.
       </p>
+
 
       <div
         className="max-w-[180px] rounded-[20px] px-[16px] py-[12px] mb-[10px] mx-auto"
@@ -56,7 +57,7 @@ const RecommendationCard = ({ job }: Props) => {
 
       <p
         className="text-[12px] mb-[12px] text-center font-[Pretendard]"
-        style={{ color: palette.gray.light }}
+        style={{ color: palette.gray.dark }}
       >
         <span className="text-[12px]">★</span> 후기 {job.reviewsCount}건
       </p>
