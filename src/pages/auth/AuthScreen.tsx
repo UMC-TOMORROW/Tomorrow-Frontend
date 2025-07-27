@@ -1,4 +1,3 @@
-import React from "react";
 import logo from "../../assets/logo/logo.png";
 import naverIcon from "../../assets/login/naver2.png";
 import kakaoIcon from "../../assets/login/kakao2.png";
