@@ -49,7 +49,10 @@ function Onboarding() {
             style={{ fontFamily: "Pretendard" }}
           >
             {[
-              { label: "👥 직원을 찾고 있어요", onClick: () => setPage(2) },
+              {
+                label: "👥 직원을 찾고 있어요",
+                onClick: () => navigate("../MyPage/EmployerMyPage"),
+              },
               {
                 label: "💼 일을 찾고 있어요",
                 onClick: () => setPage(2),

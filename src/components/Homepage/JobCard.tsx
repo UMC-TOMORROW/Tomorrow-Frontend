@@ -67,7 +67,7 @@ const JobCard = ({
           </p>
           <button
             onClick={() => setClicked(!clicked)}
-            className="w-[80px] h-[28px] text-[14px] mt-1 border rounded-full"
+            className="w-[80px] h-[28px] text-[14px] mt-1 border rounded-[7px]"
             style={{
               color: clicked ? "#fff" : palette.gray.default,
               backgroundColor: clicked
