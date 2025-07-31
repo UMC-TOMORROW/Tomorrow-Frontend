@@ -49,7 +49,10 @@ function Onboarding() {
             style={{ fontFamily: "Pretendard" }}
           >
             {[
-              { label: "👥 직원을 찾고 있어요", onClick: () => setPage(2) },
+              {
+                label: "👥 직원을 찾고 있어요",
+                onClick: () => navigate("../MyPage/EmployerMyPage"),
+              },
               {
                 label: "💼 일을 찾고 있어요",
                 onClick: () => setPage(2),
@@ -58,7 +61,7 @@ function Onboarding() {
               <button
                 key={label}
                 onClick={onClick}
-                className="w-[316px] h-[56px] rounded-[20px] text-[20px] flex items-center justify-center border font-bold transition duration-200"
+                className="w-[316px] h-[56px] rounded-[10px] text-[20px] flex items-center justify-center border font-bold transition duration-200"
                 style={{
                   borderColor: palette.primary.primary,
                   color: palette.primary.primary,
@@ -142,7 +145,7 @@ function Onboarding() {
               <button
                 key={label}
                 onClick={onClick}
-                className="border leading-[32.36px] tracking-[4%] bg-white w-[316px] h-[48px] rounded-[15px]"
+                className="border leading-[32.36px] tracking-[4%] bg-white w-[316px] h-[48px] rounded-[10px]"
                 style={{
                   borderColor: palette.primary.primary,
                   color: palette.primary.primary,
@@ -209,7 +212,7 @@ function Onboarding() {
               <button
                 key={label}
                 onClick={onClick}
-                className="border leading-[32.36px] tracking-[4%] bg-white w-[230px] h-[44px] rounded-[15px]"
+                className="border leading-[32.36px] tracking-[4%] bg-white w-[315px] h-[52px] rounded-[10px]"
                 style={{
                   borderColor: palette.primary.primary,
                   color: palette.primary.primary,
@@ -276,7 +279,7 @@ function Onboarding() {
               <button
                 key={label}
                 onClick={onClick}
-                className="border leading-[32.36px] tracking-[4%] bg-white w-[230px] h-[44px] rounded-[15px]"
+                className="border leading-[32.36px] tracking-[4%] bg-white  w-[315px] h-[52px] rounded-[10px]"
                 style={{
                   borderColor: palette.primary.primary,
                   color: palette.primary.primary,
@@ -343,7 +346,7 @@ function Onboarding() {
               <button
                 key={label}
                 onClick={onClick}
-                className="border leading-[32.36px] tracking-[4%] bg-white w-[230px] h-[44px] rounded-[15px]"
+                className="border leading-[32.36px] tracking-[4%] bg-white  w-[315px] h-[52px] rounded-[10px]"
                 style={{
                   borderColor: palette.primary.primary,
                   color: palette.primary.primary,
@@ -410,7 +413,7 @@ function Onboarding() {
               <button
                 key={label}
                 onClick={onClick}
-                className="border leading-[32.36px] tracking-[4%] bg-white w-[230px] h-[44px] rounded-[15px]"
+                className="border leading-[32.36px] tracking-[4%] bg-white  w-[315px] h-[52px] rounded-[10px]"
                 style={{
                   borderColor: palette.primary.primary,
                   color: palette.primary.primary,
@@ -477,7 +480,7 @@ function Onboarding() {
               <button
                 key={label}
                 onClick={onClick}
-                className="border leading-[32.36px] tracking-[4%] bg-white w-[230px] h-[44px] rounded-[15px]"
+                className="border leading-[32.36px] tracking-[4%] bg-white  w-[315px] h-[52px] rounded-[10px]"
                 style={{
                   borderColor: palette.primary.primary,
                   color: palette.primary.primary,
@@ -537,7 +540,7 @@ function Onboarding() {
           <div className="w-full max-w-[320px] font-bold items-center flex flex-col gap-3">
             <CommonButton
               label="시작하기"
-              className="!w-[250px] !h-[50px] !bg-white !text-[#729A73]"
+              className="!w-[315px] !h-[52px] !rounded-[10px] !bg-white !text-[#729A73]"
               onClick={() => navigate("/")}
             />
           </div>
