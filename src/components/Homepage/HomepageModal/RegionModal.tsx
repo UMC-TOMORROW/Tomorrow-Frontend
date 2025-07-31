@@ -24,6 +24,18 @@ const RegionModal = ({
     "동작구",
     "마포구",
     "서대문구",
+    "서초구",
+    "성동구",
+    "성북구",
+    "송파구",
+    "양천구",
+    "영등포구",
+    "용산구",
+    "은평구",
+    "종로구",
+    "중구",
+    "중랑구",
+    "",
   ];
 
   const [selectedRegion, setSelectedRegion] = useState("");
@@ -52,7 +64,7 @@ const RegionModal = ({
 
         {/* 선택 경로 */}
         <div
-          className="w-[300px] h-[52px] mt-[15px] mb-[15px] flex items-center justify-center rounded-[12px] text-[16px] font-bold text-black gap-[8px]"
+          className="w-[300px] h-[52px] mt-[15px] mb-[25px] flex items-center justify-center rounded-[12px] text-[16px] font-bold text-black gap-[8px]"
           style={{
             backgroundColor: palette.primary.primaryLight,
             fontFamily: "Pretendard",
@@ -63,7 +75,7 @@ const RegionModal = ({
           <span className="font-bold">{selectedRegion || "전체"}</span>
         </div>
         {/* 동 리스트 */}
-        <div className="overflow-hidden">
+        <div className="overflow-y-scroll h-[300px]">
           <div className="grid grid-cols-3">
             {regions.map((dong, index) => {
               let radiusClass = "";
