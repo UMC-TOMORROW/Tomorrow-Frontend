@@ -38,3 +38,15 @@ export const postCareerTalk = async (
   );
   return response.data;
 };
+
+// 커리어톡 게시글 수정
+export const putCareerTalk = async (
+  id: number,
+  putData: PostCareerTalkRequest
+): Promise<PostCareerTalkResponse> => {
+  const response = await axiosInstance.put<PostCareerTalkResponse>(
+    `/api/v1/careertalks/${id}`,
+    putData
+  );
+  return response.data;
+};

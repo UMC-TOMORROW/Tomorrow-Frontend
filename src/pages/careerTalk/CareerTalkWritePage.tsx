@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import CommonButton from "../../components/common/CommonButton";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import palette from "../../styles/theme";
-import { postCareerTalk } from "../../apis/careerTalk";
+import { postCareerTalk, putCareerTalk, getCareerTalkDetail } from "../../apis/careerTalk";
 
 const categoryOptions = [
   "무료 자격증 추천",
@@ -15,12 +15,37 @@ const categoryOptions = [
 
 const CareerTalkWritePage = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // 수정 모드일 경우 존재
+  const isEditMode = !!id;
+
   const [isOpen, setIsOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  const toggleDropdown = () => setIsOpen(!isOpen);
+  // 수정 모드일 경우 게시글 데이터 로딩
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const fetchDetail = async () => {
+      try {
+        const res = await getCareerTalkDetail(Number(id));
+        const data = res.result;
+
+        setSelectedCategory(data.category ?? "");
+        setTitle(data.title ?? "");
+        setContent(data.content ?? "");
+      } catch (error) {
+        console.error("게시글 로딩 실패:", error);
+        alert("게시글을 불러오는 중 오류가 발생했습니다.");
+        navigate(-1);
+      }
+    };
+
+    fetchDetail();
+  }, [id]);
+
+  const toggleDropdown = () => setIsOpen((prev) => !prev);
 
   const handleSelectCategory = (category: string) => {
     setSelectedCategory(category);
@@ -46,17 +71,24 @@ const CareerTalkWritePage = () => {
     // const category = categoryMap[selectedCategory];
 
     try {
-      const res = await postCareerTalk({
-        category,
-        title,
-        content,
-      });
-
-      const newId = res.result.id;
-      navigate(`/career-talk/${newId}`);
+      if (isEditMode) {
+        const res = await putCareerTalk(Number(id), {
+          category,
+          title,
+          content,
+        });
+        navigate(`/career-talk/${res.result.id}`);
+      } else {
+        const res = await postCareerTalk({
+          category,
+          title,
+          content,
+        });
+        navigate(`/career-talk/${res.result.id}`);
+      }
     } catch (err) {
-      console.error("게시글 작성 실패:", err);
-      alert("게시글 작성 중 오류가 발생했습니다.");
+      console.error("저장 실패:", err);
+      alert("게시글 저장 중 오류가 발생했습니다.");
     }
   };
 
@@ -70,6 +102,7 @@ const CareerTalkWritePage = () => {
           <X size={24} />
         </button>
       </div>
+
       <div className="border-b" style={{ borderColor: palette.gray.default, marginTop: "90px" }} />
 
       {/* 드롭다운 */}
@@ -150,9 +183,9 @@ const CareerTalkWritePage = () => {
         }}
       />
 
-      {/* 등록 버튼 */}
+      {/* 버튼 */}
       <div className="fixed bottom-6 left-0 w-full px-4">
-        <CommonButton label="등록하기" onClick={handleSubmit} />
+        <CommonButton label={isEditMode ? "수정하기" : "등록하기"} onClick={handleSubmit} />
       </div>
     </div>
   );

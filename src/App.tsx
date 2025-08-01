@@ -45,6 +45,7 @@ const router = createBrowserRouter([
       { path: "career-talk", element: <CareerTalkListPage /> },
       { path: "career-talk/write", element: <CareerTalkWritePage /> },
       { path: "career-talk/:id", element: <CareerTalkDetailPage /> },
+      { path: "career-talk/edit/:id", element: <CareerTalkWritePage /> },
       { path: "MyPage", element: <MyPage /> },
       { path: "recommendation", element: <RecommendationPage /> },
     ],

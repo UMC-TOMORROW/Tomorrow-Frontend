@@ -87,7 +87,7 @@ const CareerTalkDetailPage = () => {
                 <div className="absolute top-[75%] -right-[5px] w-0 h-0 border-t-6 border-b-6 border-l-[6px] border-t-transparent border-b-transparent border-l-[#EAEAEA]" />
                 <button
                   className="w-full h-[41px] flex items-center justify-center text-[10px] text-black hover:bg-gray-200 rounded-t-md"
-                  onClick={() => console.log("수정")}
+                  onClick={() => navigate(`/career-talk/edit/${career.id}`)}
                 >
                   수정
                 </button>
