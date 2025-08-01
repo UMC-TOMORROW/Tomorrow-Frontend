@@ -5,7 +5,7 @@ import Header from "../../components/Header";
 import palette from "../../styles/theme";
 import talk from "../../assets/talk.png";
 import type { CareerTalk } from "../../types/careerTalk";
-import { getCareerTalkDetail } from "../../apis/careerTalk";
+import { deleteCareerTalk, getCareerTalkDetail } from "../../apis/careerTalk";
 
 const CareerTalkDetailPage = () => {
   const { id } = useParams();
@@ -13,6 +13,23 @@ const CareerTalkDetailPage = () => {
   const [career, setCareer] = useState<CareerTalk | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleDelete = async () => {
+  if (!career) return;
+
+  const confirmDelete = window.confirm("정말 이 게시글을 삭제하시겠습니까?");
+  if (!confirmDelete) return;
+
+  try {
+    await deleteCareerTalk(career.id);
+    alert("게시글이 삭제되었습니다.");
+    navigate("/career-talk");
+  } catch (error) {
+    console.error("게시글 삭제 실패:", error);
+    alert("게시글 삭제 중 오류가 발생했습니다.");
+  }
+};
+
 
   useEffect(() => {
     if (!id) return;
@@ -94,7 +111,7 @@ const CareerTalkDetailPage = () => {
                 <div className="h-[1px] w-full bg-[#D4D4D4]" />
                 <button
                   className="w-full h-[41px] flex items-center justify-center text-[10px] text-[#C84141] hover:bg-gray-200 rounded-b-md"
-                  onClick={() => console.log("삭제")}
+                  onClick={handleDelete}
                 >
                   삭제
                 </button>

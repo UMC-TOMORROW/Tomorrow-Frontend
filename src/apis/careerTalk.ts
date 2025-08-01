@@ -50,3 +50,8 @@ export const putCareerTalk = async (
   );
   return response.data;
 };
+
+// 커리어톡 게시글 삭제
+export const deleteCareerTalk = async (id: number): Promise<void> => {
+  await axiosInstance.delete(`/api/v1/careertalks/${id}`);
+};
