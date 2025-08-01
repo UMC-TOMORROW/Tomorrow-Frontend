@@ -55,3 +55,17 @@ export const putCareerTalk = async (
 export const deleteCareerTalk = async (id: number): Promise<void> => {
   await axiosInstance.delete(`/api/v1/careertalks/${id}`);
 };
+
+// 커리어톡 제목으로 검색
+export const searchCareerTalksByTitle = async (
+  title: string,
+  size: number,
+  cursor?: number
+): Promise<GetCareerTalksResponse> => {
+  const params = { title, size, ...(cursor !== undefined && { cursor }) };
+  const response = await axiosInstance.get<GetCareerTalksResponse>(
+    "/api/v1/careertalks/search/title",
+    { params }
+  );
+  return response.data;
+};
