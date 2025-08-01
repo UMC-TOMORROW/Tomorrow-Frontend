@@ -23,16 +23,12 @@ import ApplicantList from "./pages/Mypage/ApplicantList";
 import ApplicantDetail from "./pages/Mypage/ApplicantDetail";
 import EmployerMyPage from "./pages/Mypage/EmployerMyPage";
 import SearchPage from "./pages/SearchPage";
+import UserInfoForm from "./pages/auth/UserInfoForm";
 
 const router = createBrowserRouter([
-  {
-    path: "/splash",
-    element: <SplashScreenPage />,
-  },
-  {
-    path: "/auth",
-    element: <AuthScreen />,
-  },
+  { path: "/splash", element: <SplashScreenPage /> }, // 1) 스플래시
+  { path: "/auth", element: <AuthScreen /> }, // 2) 로그인
+  { path: "/auth/user-info", element: <UserInfoForm /> }, // 3) 회원정보 입력
   {
     path: "/",
     element: <HomeLayout />,
