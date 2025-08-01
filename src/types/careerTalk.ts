@@ -15,3 +15,11 @@ export interface GetCareerTalksResponse {
     hasNext: boolean;
   };
 }
+
+export interface GetCareerTalkDetailResponse {
+  timestamp: string;
+  code: string;
+  message: string;
+  result: CareerTalk;
+}
+
