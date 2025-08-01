@@ -15,7 +15,7 @@ function CareerTalkCard({ id, category, title, content }: CareerTalkCardProps) {
     category === "무료 자격증 추천" || category === "커리어 준비 루트";
 
   const maxLength = 30; // 제목 + 내용 길이 제한
-  const fullText = `${title} ${content}`;
+  const fullText = ` ${title} | ${content}`;
   const trimmedText =
     fullText.length > maxLength
       ? fullText.slice(0, maxLength) + "..."
