@@ -1,10 +1,10 @@
-export interface PostPreferenceRequest {
+export type PostPreferenceRequest = {
   preferences: string[];
-}
+};
 
-export interface PostPreferenceResponse {
+export type PostPreferenceResponse = {
   timestamp: string;
   code: string;
   message: string;
-  result: Record<string, never>;
-}
+  result: Record<string, unknown>;
+};

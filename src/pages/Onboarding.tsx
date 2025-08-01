@@ -4,6 +4,7 @@ import palette from "../styles/theme";
 import { useNavigate } from "react-router-dom";
 import OnboardingSkipModal from "../components/Onboarding/OnboardingSkipModal";
 import { postPreferences } from "../apis/Onboarding";
+import axios from "axios";
 
 function Onboarding() {
   const navigate = useNavigate();
@@ -576,16 +577,25 @@ function Onboarding() {
               onClick={async () => {
                 try {
                   const response = await postPreferences({
-                    preferences: selectedTags,
+                    preferenceList: selectedTags,
                   });
 
-                  if (response && response.code === "COMMON200") {
+                  console.log("보낸 데이터", {
+                    preferences: selectedTags,
+                  });
+                  console.log("받은 응답", response);
+
+                  if (response.result.saved) {
                     navigate("/");
-                  } else {
-                    alert("저장 실패: 서버 응답이 실패입니다.");
                   }
                 } catch (e) {
                   console.error("선호 저장 실패", e);
+
+                  // 👉 여기에 서버 응답 상세 출력 추가
+                  if (axios.isAxiosError(e) && e.response) {
+                    console.log("서버 응답 내용", e.response.data); // 👈 이 줄이 핵심
+                  }
+
                   alert("선호 정보 저장에 실패했습니다.");
                 }
               }}
