@@ -30,28 +30,33 @@ export default function UserInfoForm() {
   }, []);
 
   return (
-    <div className="w-full flex justify-center bg-white min-h-screen py-6">
+    <div className="w-full flex flex-col items-center bg-white min-h-screen">
+      {/* 헤더 영역을 form 밖으로 분리 */}
+      <div className="w-[375px]">
+        {/* 상단 헤더 영역 */}
+        <div className="relative flex items-center justify-center h-12 px-4 py-6">
+          {/* 왼쪽 뒤로가기 버튼 */}
+          <button onClick={() => navigate(-1)} className="absolute left-4 text-[20px]">
+            &lt;
+          </button>
+
+          {/* 가운데 제목 */}
+          <h1 className="text-[20px] font-bold">회원 정보</h1>
+        </div>
+
+        {/* 전체 너비 회색 줄 - 화면 전체를 채움 */}
+        <div className="w-screen h-[1px] bg-[#DEDEDE] -mx-4" />
+      </div>
+
       <form
-        className="w-[375px] flex flex-col items-center px-4 gap-y-6 text-[#333333]"
+        className="w-[375px] flex flex-col items-center px-4 gap-y-6 text-[#333333] mt-6"
         onSubmit={(e) => e.preventDefault()}
       >
-        <div className="w-full">
-          {/* 상단 헤더 영역 */}
-          <div className="flex items-center justify-center h-12">
-            {/* 왼쪽 뒤로가기 버튼 */}
-            <button onClick={() => navigate(-1)} className="text-[20px]">
-              &lt;
-            </button>
-
-            {/* 가운데 제목 */}
-            <h1 className="text-[20px] font-bold">회원 정보</h1>
-          </div>
-
-          {/* 전체 너비 회색 줄 */}
-          <div className="w-full h-[1px] bg-[#DEDEDE]" />
-        </div>
         {/* 이메일 */}
         <div className="w-full">
+          <h1 className=" text-[18px] font-extrabold leading-[22px] tracking-[-0.41px] mb-2 text-[#333333]">
+            기본 정보
+          </h1>
           <label className="text-sm font-medium mb-1 flex">
             이메일<span className="text-red-500 ml-1">*</span>
           </label>
