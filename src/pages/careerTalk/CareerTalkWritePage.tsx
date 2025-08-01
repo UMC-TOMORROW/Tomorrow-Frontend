@@ -4,6 +4,7 @@ import Header from "../../components/Header";
 import CommonButton from "../../components/common/CommonButton";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import palette from "../../styles/theme";
+import { postCareerTalk } from "../../apis/careerTalk";
 
 const categoryOptions = [
   "무료 자격증 추천",
@@ -26,6 +27,39 @@ const CareerTalkWritePage = () => {
     setIsOpen(false);
   };
 
+  const handleSubmit = async () => {
+    if (!selectedCategory || !title.trim() || !content.trim()) {
+      alert("카테고리, 제목, 내용을 모두 입력해주세요.");
+      return;
+    }
+
+    // 일단 카테고리 문자열 그대로 사용
+    const category = selectedCategory;
+
+    // 추후 백엔드 ENUM 필요 시 매핑 예시..
+    // const categoryMap: Record<string, string> = {
+    //   "무료 자격증 추천": "CERTIFICATE",
+    //   "커리어 준비 루트": "ROUTE",
+    //   "제2 커리어 성공 사례": "SUCCESS",
+    //   "내일 서비스 후기": "REVIEW",
+    // };
+    // const category = categoryMap[selectedCategory];
+
+    try {
+      const res = await postCareerTalk({
+        category,
+        title,
+        content,
+      });
+
+      const newId = res.result.id;
+      navigate(`/career-talk/${newId}`);
+    } catch (err) {
+      console.error("게시글 작성 실패:", err);
+      alert("게시글 작성 중 오류가 발생했습니다.");
+    }
+  };
+
   return (
     <div className="relative min-h-screen pb-[110px] px-4 font-[Pretendard]">
       <Header title="내일" />
@@ -46,7 +80,7 @@ const CareerTalkWritePage = () => {
         >
           {selectedCategory ? (
             <span
-              className={`absolute left-1/2 transform -translate-x-1/2 text-[16px]`}
+              className="absolute left-1/2 transform -translate-x-1/2 text-[16px]"
               style={{
                 color:
                   selectedCategory === "무료 자격증 추천" || selectedCategory === "커리어 준비 루트"
@@ -80,9 +114,7 @@ const CareerTalkWritePage = () => {
                     isSelected ? "underline font-semibold" : ""
                   }`}
                   style={{
-                    color: isGreen
-                      ? palette.primary.primary
-                      : palette.gray.default,
+                    color: isGreen ? palette.primary.primary : palette.gray.default,
                   }}
                   onClick={() => handleSelectCategory(option)}
                 >
@@ -120,7 +152,7 @@ const CareerTalkWritePage = () => {
 
       {/* 등록 버튼 */}
       <div className="fixed bottom-6 left-0 w-full px-4">
-        <CommonButton label="등록하기" onClick={() => {}} />
+        <CommonButton label="등록하기" onClick={handleSubmit} />
       </div>
     </div>
   );

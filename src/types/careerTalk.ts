@@ -23,3 +23,17 @@ export interface GetCareerTalkDetailResponse {
   result: CareerTalk;
 }
 
+export interface PostCareerTalkRequest {
+  category: string;
+  title: string;
+  content: string;
+}
+
+export interface PostCareerTalkResponse {
+  timestamp: string;
+  code: string;
+  message: string;
+  result: {
+    id: number;
+  };
+}
