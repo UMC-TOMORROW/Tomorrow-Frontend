@@ -15,12 +15,12 @@ import RecommendationPage from "./pages/RecommendationPage";
 import SplashScreenPage from "./pages/SplashScreenPage";
 import AuthScreen from "./pages/auth/AuthScreen";
 import MemberInfo from "./pages/Mypage/MemberInfo";
-// import ApplyStatus from "./pages/Mypage/ApplyStatus";
-// import ManageMyJobs from "./pages/Mypage/ManageMyJobs";
-// import ReviewWritting from "./pages/Mypage/ReviewWritting";
-// import SavedJobs from "./pages/Mypage/SavedJobs";
-// import ApplicantList from "./pages/Mypage/ApplicantList";
-// import ApplicantDetail from "./pages/Mypage/ApplicantDetail";
+import ApplyStatus from "./pages/Mypage/ApplyStatus";
+import ManageMyJobs from "./pages/Mypage/ManageMyJobs";
+import ReviewWritting from "./pages/Mypage/ReviewWritting";
+import SavedJobs from "./pages/Mypage/SavedJobs";
+import ApplicantList from "./pages/Mypage/ApplicantList";
+import ApplicantDetail from "./pages/Mypage/ApplicantDetail";
 import EmployerMyPage from "./pages/Mypage/EmployerMyPage";
 import SearchPage from "./pages/SearchPage";
 import UserInfoForm from "./pages/auth/UserInfoForm";
@@ -54,12 +54,12 @@ const router = createBrowserRouter([
       { path: "EmployerMyPage", element: <EmployerMyPage /> },
       { path: "ResumeManage", element: <ResumeManage /> },
       { path: "MemberInfo", element: <MemberInfo /> },
-      // { path: "ApplyStatus", element: <ApplyStatus /> },
-      // { path: "ManageMyJobs", element: <ManageMyJobs /> },
-      // { path: "ReviewWritting", element: <ReviewWritting /> },
-      // { path: "SavedJobs", element: <SavedJobs /> },
-      // { path: "ApplicantList", element: <ApplicantList /> },
-      // { path: "ApplicantDetail", element: <ApplicantDetail /> },
+      { path: "ApplyStatus", element: <ApplyStatus /> },
+      { path: "ManageMyJobs", element: <ManageMyJobs /> },
+      { path: "ReviewWritting", element: <ReviewWritting /> },
+      { path: "SavedJobs", element: <SavedJobs /> },
+      { path: "ApplicantList", element: <ApplicantList /> },
+      { path: "ApplicantDetail", element: <ApplicantDetail /> },
     ],
   },
 ]);
