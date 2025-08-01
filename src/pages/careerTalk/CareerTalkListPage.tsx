@@ -20,41 +20,37 @@ function CareerTalkListPage() {
   const [cursor, setCursor] = useState<number | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [searchKeyword, setSearchKeyword] = useState<string | null>(null);
 
-const handleSearch = async (keyword: string) => {
-  const trimmedKeyword = keyword.trim();
+  const handleSearch = async (keyword: string) => {
+    const trimmedKeyword = keyword.trim();
 
-  if (!trimmedKeyword) {
-    // 검색 초기화
-    setSearchKeyword(null);
+    if (!trimmedKeyword) {
+      // 검색 초기화
+      setCursor(undefined);
+      setTalks([]);
+      setHasMore(true);
+      fetchCareerTalks();
+      return;
+    }
+
+    setLoading(true);
     setCursor(undefined);
     setTalks([]);
-    setHasMore(true);
-    fetchCareerTalks(); 
-    return;
-  }
 
-  setSearchKeyword(trimmedKeyword);
-  setLoading(true);
-  setCursor(undefined);
-  setTalks([]);
-
-  try {
-    const res = await searchCareerTalksByTitle(trimmedKeyword, BATCH_SIZE);
-    setTalks(res.result.careertalkList);
-    setHasMore(res.result.hasNext);
-    if (res.result.careertalkList.length > 0) {
-      const lastId = res.result.careertalkList[res.result.careertalkList.length - 1].id;
-      setCursor(lastId);
+    try {
+      const res = await searchCareerTalksByTitle(trimmedKeyword, BATCH_SIZE);
+      setTalks(res.result.careertalkList);
+      setHasMore(res.result.hasNext);
+      if (res.result.careertalkList.length > 0) {
+        const lastId = res.result.careertalkList[res.result.careertalkList.length - 1].id;
+        setCursor(lastId);
+      }
+    } catch (err) {
+      console.error("검색 실패", err);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("검색 실패", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleMoveToWrite = () => {
     navigate("/career-talk/write");
@@ -125,7 +121,6 @@ const handleSearch = async (keyword: string) => {
       >
         <div className="mb-[10px] flex justify-center">
           <SearchBar onSearch={handleSearch} />
-
         </div>
 
         <div className="h-[1px] bg-[#555555D9] mb-[25px]" />
