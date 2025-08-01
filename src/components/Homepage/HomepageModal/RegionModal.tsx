@@ -10,20 +10,32 @@ const RegionModal = ({
 }) => {
   const regions = [
     "전체",
-    "개포동",
-    "논현동",
-    "대치동",
-    "도곡동",
-    "삼성동",
-    "새곡동",
-    "수서동",
-    "신사동",
-    "압구정동",
-    "역삼동",
-    "율현동",
-    "일원동",
-    "자곡동",
-    "청담동",
+    "강남구",
+    "강동구",
+    "강북구",
+    "강서구",
+    "관악구",
+    "광진구",
+    "구로구",
+    "금천구",
+    "노원구",
+    "도봉구",
+    "동대문구",
+    "동작구",
+    "마포구",
+    "서대문구",
+    "서초구",
+    "성동구",
+    "성북구",
+    "송파구",
+    "양천구",
+    "영등포구",
+    "용산구",
+    "은평구",
+    "종로구",
+    "중구",
+    "중랑구",
+    "",
   ];
 
   const [selectedRegion, setSelectedRegion] = useState("");
@@ -35,7 +47,7 @@ const RegionModal = ({
       className="fixed inset-0 bg-black/30 flex justify-center items-end"
       style={{ zIndex: 9999, fontFamily: "Pretendard" }}
     >
-      <div className="w-[393px] h-[589px] bg-white rounded-[20px] flex flex-col items-center relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.1)] -translate-y-5">
+      <div className="w-[360px] h-[562px] bg-white rounded-[20px] flex flex-col items-center relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.1)] -translate-y-5">
         {/* 상단 헤더 */}
         <div
           className="w-full h-[55px] flex items-center justify-center text-[18px] font-bold text-black relative"
@@ -52,27 +64,43 @@ const RegionModal = ({
 
         {/* 선택 경로 */}
         <div
-          className="w-[360px] h-[52px] mt-[15px] mb-[15px] flex items-center justify-center rounded-[12px] text-[16px] font-bold text-black"
-          style={{ backgroundColor: palette.primary.primaryLight }}
+          className="w-[300px] h-[52px] mt-[15px] mb-[25px] flex items-center justify-center rounded-[12px] text-[16px] font-bold text-black gap-[8px]"
+          style={{
+            backgroundColor: palette.primary.primaryLight,
+            fontFamily: "Pretendard",
+          }}
         >
-          서울 &gt; 강남구 &gt;&nbsp;
+          <span className="font-bold">서울</span>
+          <span className="text-[18px] font-medium">&gt;</span>
           <span className="font-bold">{selectedRegion || "전체"}</span>
         </div>
-
         {/* 동 리스트 */}
-        <div className="grid grid-cols-3 gap-[0px] w-[360px]">
-          {regions.map((dong) => (
-            <button
-              key={dong}
-              onClick={() => setSelectedRegion(dong)}
-              style={{ fontFamily: "Pretendard" }}
-              className={`w-[120px] h-[70px] text-[14px] border border-[#ccc] ${
-                selectedRegion === dong ? "bg-[#B8CDB9] !font-bold" : "bg-white"
-              }`}
-            >
-              {dong}
-            </button>
-          ))}
+        <div className="overflow-y-scroll h-[300px]">
+          <div className="grid grid-cols-3">
+            {regions.map((dong, index) => {
+              let radiusClass = "";
+              if (index === 0) radiusClass = "rounded-tl-[12px]";
+              if (index === 2) radiusClass = "rounded-tr-[12px]";
+              if (index === regions.length - 3)
+                radiusClass = "rounded-bl-[12px]";
+              if (index === regions.length - 1)
+                radiusClass = "rounded-br-[12px]";
+
+              return (
+                <button
+                  key={dong}
+                  onClick={() => setSelectedRegion(dong)}
+                  className={`w-[110px] h-[60px] text-[14px] border border-[#ccc] font-[Pretendard] ${radiusClass} ${
+                    selectedRegion === dong
+                      ? "bg-[#B8CDB9] !font-bold"
+                      : "bg-white"
+                  }`}
+                >
+                  {dong}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* 선택 완료 버튼 */}

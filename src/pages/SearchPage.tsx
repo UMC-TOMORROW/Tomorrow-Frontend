@@ -90,7 +90,7 @@ const SearchPage = () => {
           {recentSearches.map((word, idx) => (
             <div
               key={idx}
-              className="flex items-center h-[22px] !px-2 border rounded-md"
+              className="flex items-center h-[22px] !px-2 border rounded-[5px]"
               style={{
                 borderColor: palette.gray.default,
                 color: palette.gray.default,

@@ -8,6 +8,11 @@ import RegionModal from "./HomepageModal/RegionModal";
 import TypeModal from "./HomepageModal/TypeModal";
 import DayModal from "./HomepageModal/DayModal";
 import TimeModal from "./HomepageModal/TimeModal";
+import locationIconWhite from "/src/assets/filter/location_white.png";
+import typeIconWhite from "/src/assets/filter/type_white.png";
+import calendarIconWhite from "/src/assets/filter/calender_white.png";
+import timeIconWhite from "/src/assets/filter/time_white.png";
+import arrowIconWhite from "/src/assets/jobRegister/icon_arrow_down_white.png";
 
 const HomepageTopBar = () => {
   const [modal, setModal] = useState<"region" | "type" | "day" | "time" | null>(
@@ -24,26 +29,38 @@ const HomepageTopBar = () => {
         <FilterButton
           label="서울 전체"
           img={locationIcon}
+          imgActive={locationIconWhite}
           arrow={arrowIcon}
+          arrowActive={arrowIconWhite}
           onClick={() => setModal("region")}
+          isActive={modal === "region"}
         />
         <FilterButton
           label="업무 유형"
           img={typeIcon}
+          imgActive={typeIconWhite}
           arrow={arrowIcon}
+          arrowActive={arrowIconWhite}
           onClick={() => setModal("type")}
+          isActive={modal === "type"}
         />
         <FilterButton
           label="요일"
           img={calendarIcon}
+          imgActive={calendarIconWhite}
           arrow={arrowIcon}
+          arrowActive={arrowIconWhite}
           onClick={() => setModal("day")}
+          isActive={modal === "day"}
         />
         <FilterButton
           label="시간"
           img={timeIcon}
+          imgActive={timeIconWhite}
           arrow={arrowIcon}
+          arrowActive={arrowIconWhite}
           onClick={() => setModal("time")}
+          isActive={modal === "time"}
         />
       </div>
 
@@ -59,38 +76,51 @@ const FilterButton = ({
   label,
   className = "",
   img,
+  imgActive,
   arrow,
+  arrowActive,
   onClick,
+  isActive = false,
 }: {
   label: string;
   className?: string;
   img: string;
+  imgActive?: string;
   arrow: string;
+  arrowActive?: string;
   onClick?: () => void;
+  isActive?: boolean;
 }) => {
+  const iconSrc = isActive && imgActive ? imgActive : img;
+  const arrowSrc = isActive && arrowActive ? arrowActive : arrow;
+
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-center gap-[4px] h-[25px] px-[8px] rounded-full text-[12px] text-[#333] border border-[#ccc] bg-white ${className}`}
+      className={`
+  flex items-center justify-center gap-[4px] h-[25px] px-[8px] rounded-full text-[12px] border 
+  ${
+    isActive
+      ? "bg-[#729A73] !text-white border-[#729A73]"
+      : "bg-white text-[#555555D9] border-[#ccc]"
+  } 
+  ${className}
+`}
       style={{
         fontFamily: "Pretendard",
         minWidth: label.length <= 3 ? "70px" : "90px",
       }}
     >
-      {img && (
+      {iconSrc && (
         <img
-          src={img}
+          src={iconSrc}
           alt=""
-          className="w-[14px] h-[14px] object-contain opacity-50"
+          className="w-[14px] h-[14px] object-contain"
         />
       )}
       <span className="leading-[1]">{label}</span>
       {arrow && (
-        <img
-          src={arrow}
-          alt=""
-          className="w-[9px] h-[9px] object-contain opacity-50"
-        />
+        <img src={arrowSrc} alt="" className="w-[9px] h-[9px] object-contain" />
       )}
     </button>
   );

@@ -23,6 +23,9 @@ const JobCard = ({
   isFirst,
 }: JobCardProps) => {
   const [clicked, setClicked] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  const isActive = clicked || hovered;
 
   return (
     <div className={`bg-white w-[393px] mx-auto ${isFirst ? "" : ""}`}>
@@ -67,14 +70,14 @@ const JobCard = ({
           </p>
           <button
             onClick={() => setClicked(!clicked)}
-            className="w-[80px] h-[28px] text-[14px] mt-1 border rounded-full"
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            className="w-[80px] h-[28px] text-[14px] mt-1 border rounded-[7px] transition-colors duration-200"
             style={{
-              color: clicked ? "#fff" : palette.gray.default,
-              backgroundColor: clicked
-                ? palette.primary.primary
-                : "transparent",
-              borderColor: clicked ? palette.primary.primary : "#888",
               fontFamily: "Pretendard",
+              backgroundColor: isActive ? "#729A73" : "transparent",
+              color: isActive ? "#fff" : "#555555D9",
+              borderColor: isActive ? "#729A73" : "#555555D9",
             }}
           >
             지원하기
