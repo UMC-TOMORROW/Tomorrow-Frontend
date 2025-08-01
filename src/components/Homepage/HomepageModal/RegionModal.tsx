@@ -1,5 +1,6 @@
 import { useState } from "react";
 import palette from "../../../styles/theme";
+import { getJobsByRegion } from "../../../apis/HomePage"; // 경로는 너의 파일 위치에 맞게 조정
 
 const RegionModal = ({
   isOpen,
@@ -41,6 +42,18 @@ const RegionModal = ({
   const [selectedRegion, setSelectedRegion] = useState("");
 
   if (!isOpen) return null;
+
+  const handleSubmit = async () => {
+    const regions = ["서울특별시"];
+    if (selectedRegion && selectedRegion !== "전체") {
+      regions.push(selectedRegion);
+    }
+
+    const jobList = await getJobsByRegion(regions);
+    console.log("조회된 일자리 목록:", jobList);
+
+    onClose(); // 모달 닫기
+  };
 
   return (
     <div
@@ -108,7 +121,7 @@ const RegionModal = ({
           <button
             className="w-[316px] h-[50px] rounded-[12px] !text-white text-[18px] !font-bold"
             style={{ backgroundColor: palette.primary.primary }}
-            onClick={onClose}
+            onClick={handleSubmit}
           >
             선택 완료
           </button>

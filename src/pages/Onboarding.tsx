@@ -3,11 +3,13 @@ import CommonButton from "../components/common/CommonButton";
 import palette from "../styles/theme";
 import { useNavigate } from "react-router-dom";
 import OnboardingSkipModal from "../components/Onboarding/OnboardingSkipModal";
+import { postPreferences } from "../apis/Onboarding";
 
 function Onboarding() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [showSkipModal, setShowSkipModal] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const ProgressDots = ({
     current,
@@ -203,7 +205,13 @@ function Onboarding() {
             style={{ fontFamily: "Pretendard" }}
           >
             {[
-              { label: "예", onClick: () => setPage(4) },
+              {
+                label: "예",
+                onClick: () => {
+                  setSelectedTags((prev) => [...prev, "앉아서 근무 중심"]);
+                  setPage(4);
+                },
+              },
               {
                 label: "아니오",
                 onClick: () => setPage(4),
@@ -270,7 +278,13 @@ function Onboarding() {
             style={{ fontFamily: "Pretendard" }}
           >
             {[
-              { label: "예", onClick: () => setPage(5) },
+              {
+                label: "예",
+                onClick: () => {
+                  setSelectedTags((prev) => [...prev, "서서 근무 중심"]);
+                  setPage(5);
+                },
+              },
               {
                 label: "아니오",
                 onClick: () => setPage(5),
@@ -337,7 +351,13 @@ function Onboarding() {
             style={{ fontFamily: "Pretendard" }}
           >
             {[
-              { label: "예", onClick: () => setPage(6) },
+              {
+                label: "예",
+                onClick: () => {
+                  setSelectedTags((prev) => [...prev, "물건 운반 근무 중심"]);
+                  setPage(6);
+                },
+              },
               {
                 label: "아니오",
                 onClick: () => setPage(6),
@@ -404,7 +424,13 @@ function Onboarding() {
             style={{ fontFamily: "Pretendard" }}
           >
             {[
-              { label: "예", onClick: () => setPage(7) },
+              {
+                label: "예",
+                onClick: () => {
+                  setSelectedTags((prev) => [...prev, "가벼운 활동 근무 중심"]);
+                  setPage(7);
+                },
+              },
               {
                 label: "아니오",
                 onClick: () => setPage(7),
@@ -471,7 +497,13 @@ function Onboarding() {
             style={{ fontFamily: "Pretendard" }}
           >
             {[
-              { label: "예", onClick: () => setPage(8) },
+              {
+                label: "예",
+                onClick: () => {
+                  setSelectedTags((prev) => [...prev, "사람 응대 근무 중심"]);
+                  setPage(8);
+                },
+              },
               {
                 label: "아니오",
                 onClick: () => setPage(8),
@@ -541,7 +573,22 @@ function Onboarding() {
             <CommonButton
               label="시작하기"
               className="!w-[315px] !h-[52px] !rounded-[10px] !bg-white !text-[#729A73]"
-              onClick={() => navigate("/")}
+              onClick={async () => {
+                try {
+                  const response = await postPreferences({
+                    preferences: selectedTags,
+                  });
+
+                  if (response && response.code === "COMMON200") {
+                    navigate("/");
+                  } else {
+                    alert("저장 실패: 서버 응답이 실패입니다.");
+                  }
+                } catch (e) {
+                  console.error("선호 저장 실패", e);
+                  alert("선호 정보 저장에 실패했습니다.");
+                }
+              }}
             />
           </div>
         </div>
