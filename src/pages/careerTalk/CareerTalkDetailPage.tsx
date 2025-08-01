@@ -39,8 +39,6 @@ const CareerTalkDetailPage = () => {
     return <div className="px-4 pt-14 pb-10">존재하지 않는 게시글입니다.</div>;
   }
 
-  const isAuthor = true; // TODO : 추후 수정
-
   return (
     <div
       className="relative px-4 pt-14 pb-10 min-h-screen font-[Pretendard]"
@@ -78,7 +76,7 @@ const CareerTalkDetailPage = () => {
           {career.title}
         </strong>
 
-        {isAuthor && (
+        {career.author && (
           <div className="absolute right-0 top-0">
             <button onClick={() => setShowMenu(!showMenu)}>
               <MoreVertical size={20} />

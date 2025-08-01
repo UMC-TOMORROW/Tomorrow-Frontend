@@ -4,6 +4,7 @@ export interface CareerTalk {
   title: string;
   content: string | null;
   createdAt: string;
+  author: boolean;
 }
 
 export interface GetCareerTalksResponse {
