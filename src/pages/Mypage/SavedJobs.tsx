@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Header from "../../components/Header";
 
 const savedJobs = [
@@ -38,6 +39,12 @@ const savedJobs = [
 ];
 
 const SavedJobs = () => {
+  const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
+
+  const handleApplyClick = (index: number) => {
+    setAppliedJobs((prev) => (prev.includes(index) ? prev : [...prev, index]));
+  };
+
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <Header title="내일" />
@@ -57,10 +64,10 @@ const SavedJobs = () => {
 
         {savedJobs.map((job, index) => (
           <section key={index}>
-            <div className="flex border-b border-[#5555558C] h-[104px] px-[20px] justify-between items-center">
+            <div className="flex border-b border-[#5555558C] h-[102px] px-[20px] justify-between items-center">
               <div className="flex flex-col">
                 <p className="text-[12px]">{job.company}</p>
-                <p className="text-[14px]" style={{ fontWeight: 800 }}>
+                <p className="text-[16px]" style={{ fontWeight: 800 }}>
                   {job.title}
                 </p>
                 <p className="text-[12px] text-[#729A73]">
@@ -77,13 +84,21 @@ const SavedJobs = () => {
               </div>
               <div className="w-[79px] h-[79px] border border-[#2121210]"></div>
             </div>
-            <div className="flex justify-between items-center border-b border-[#5555558C] h-[30px] px-[20px]">
+            <div className="flex justify-between items-center border-b border-[#5555558C] h-[43px] px-[20px]">
               <div className="flex">
                 <p className="text-[12px]">{job.location}</p>
                 <p className="text-[12px] ml-[10px]">{job.pay}</p>
               </div>
               <div className="">
-                <button className="flex rounded-full border border-[#555555D9] w-[75px] h-[21px] justify-center text-[12px]">
+                <button
+                  onClick={() => handleApplyClick(index)}
+                  className={`flex border w-[75px] h-[28px] items-center justify-center text-[14px] ${
+                    appliedJobs.includes(index)
+                      ? "bg-[#729A73] text-[#FFFFFF]"
+                      : "border-[#555555D9] text-[#555555D9]"
+                  }`}
+                  style={{ borderRadius: "5px" }}
+                >
                   지원하기
                 </button>
               </div>

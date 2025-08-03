@@ -1,18 +1,15 @@
 import { useState } from "react";
-import Header from "../../components/Header";
 import { SlArrowLeft } from "react-icons/sl";
 
 const MemberInfo = () => {
-  const [gender, setGender] = useState<"남자" | "여자">("남자");
+  const [gender, setGender] = useState<"남자" | "여자">();
 
   return (
     <div style={{ fontFamily: "Pretendard" }}>
-      <Header title="내일" />
-
-      <div className="mt-[50px] bg-white min-h-screen">
-        <section className="relative flex justify-center items-center h-[40px] border-b border-[#5555558C]">
+      <div className="bg-white min-h-screen">
+        <section className="relative flex justify-center items-center h-[52px] border-b border-[#DEDEDE]">
           <SlArrowLeft className="absolute left-[15px] " />
-          <div className="text-[15px]" style={{ fontWeight: 700 }}>
+          <div className="text-[20px]" style={{ fontWeight: 600 }}>
             회원 정보
           </div>
         </section>
@@ -28,7 +25,7 @@ const MemberInfo = () => {
               className="text-[13px] h-[22px] mb-[5px]"
               style={{ fontWeight: 600 }}
             >
-              아이디
+              이메일 <span style={{ color: "#EE0606CC" }}>*</span>
             </p>
             <input
               type="text"
@@ -43,7 +40,7 @@ const MemberInfo = () => {
               className="text-[13px] h-[22px] mb-[5px]"
               style={{ fontWeight: 600 }}
             >
-              이름
+              이름 <span style={{ color: "#EE0606CC" }}>*</span>
             </p>
             <input
               type="text"
@@ -131,8 +128,8 @@ const MemberInfo = () => {
         </section>
         <section className="flex justify-center items-center py-[30px]">
           <button
-            className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] rounded-full bg-[#729A73]"
-            style={{ fontWeight: 600 }}
+            className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] bg-[#729A73]"
+            style={{ fontWeight: 600, borderRadius: "12px" }}
           >
             수정 완료
           </button>
