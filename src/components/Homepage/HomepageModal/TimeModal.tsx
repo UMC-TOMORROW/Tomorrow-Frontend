@@ -1,12 +1,19 @@
 import { useState } from "react";
+import axios from "axios";
 import palette from "../../../styles/theme";
+import type { Job } from "../../../types/homepage";
 
 interface TimeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  setJobList: (jobs: Job[]) => void;
 }
 
-export default function TimeModal({ isOpen, onClose }: TimeModalProps) {
+export default function TimeModal({
+  isOpen,
+  onClose,
+  setJobList,
+}: TimeModalProps) {
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [selectedRight, setSelectedRight] = useState<string | null>(null);
 
@@ -22,19 +29,50 @@ export default function TimeModal({ isOpen, onClose }: TimeModalProps) {
     }
   }
 
+  const to24HourFormat = (time: string): string => {
+    const [period, rest] = time.split(" ");
+    const [hourStr, minute] = rest.split(":");
+    let hour = parseInt(hourStr, 10);
+    if (period === "오후" && hour !== 12) hour += 12;
+    if (period === "오전" && hour === 12) hour = 0;
+    return `${hour.toString().padStart(2, "0")}:${minute}`;
+  };
+
   const handleReset = () => {
     setSelectedLeft(null);
     setSelectedRight(null);
   };
 
-  const handleApply = () => {
+  const handleApply = async () => {
+    if (selectedLeft && selectedRight) {
+      const work_start = to24HourFormat(selectedLeft);
+      const work_end = to24HourFormat(selectedRight);
+
+      try {
+        const response = await axios.get(
+          `https://umctomorrow.shop/api/v1/jobViews`,
+          {
+            params: {
+              work_start,
+              work_end,
+            },
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
+          }
+        );
+        setJobList(response.data.result);
+      } catch (error) {
+        console.error("시간별 일자리 조회 실패:", error);
+      }
+    }
+
     onClose();
   };
 
   return (
     <div className="fixed inset-0 z-[9999] flex justify-center items-end bg-black/30 font-[Pretendard]">
       <div className="w-[393px] h-[286px] bg-white rounded-[20px] -translate-y-5 shadow-[0_4px_20px_rgba(0,0,0,0.1)]">
-        {/* 상단 박스 */}
         <div
           className="h-[55px] flex items-center justify-center relative rounded-t-[20px]"
           style={{ backgroundColor: palette.primary.primaryLight }}
@@ -48,7 +86,6 @@ export default function TimeModal({ isOpen, onClose }: TimeModalProps) {
           </button>
         </div>
 
-        {/* 시간 선택 리스트 */}
         <div className="flex justify-center mt-[20px] relative">
           <div className="h-[120px] overflow-y-scroll flex flex-col gap-[10px] mr-[81px]">
             {times.map((time) => (
@@ -97,7 +134,6 @@ export default function TimeModal({ isOpen, onClose }: TimeModalProps) {
           </div>
         </div>
 
-        {/* 버튼 영역 */}
         <div className="flex justify-center gap-[20px] mt-[20px] pb-[15px]">
           <button
             onClick={handleReset}

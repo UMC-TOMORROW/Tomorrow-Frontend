@@ -86,7 +86,11 @@ const HomepageTopBar = ({
         onClose={closeModal}
         setJobList={onRegionSelect}
       />
-      <TimeModal isOpen={modal === "time"} onClose={closeModal} />
+      <TimeModal
+        isOpen={modal === "time"}
+        onClose={closeModal}
+        setJobList={onRegionSelect}
+      />
     </>
   );
 };
