@@ -38,3 +38,9 @@ export const getJobsByDay = async (days: string[]) => {
   );
   return response.data.result;
 };
+
+// 기본 전체 일자리 목록 조회
+export const getJobsDefault = async () => {
+  const response = await axiosInstance.get("/api/v1/jobsView");
+  return response.data.result;
+};
