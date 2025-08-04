@@ -81,7 +81,11 @@ const HomepageTopBar = ({
         setJobList={onRegionSelect}
       />
 
-      <DayModal isOpen={modal === "day"} onClose={closeModal} />
+      <DayModal
+        isOpen={modal === "day"}
+        onClose={closeModal}
+        setJobList={onRegionSelect}
+      />
       <TimeModal isOpen={modal === "time"} onClose={closeModal} />
     </>
   );

@@ -25,3 +25,16 @@ export const getJobsByType = async (jobCategories: string[]) => {
   );
   return response.data.result;
 };
+
+// 요일 기반 일자리 조회
+export const getJobsByDay = async (days: string[]) => {
+  const params = new URLSearchParams();
+  days.forEach((day) => {
+    if (day) params.append("work_days", day);
+  });
+
+  const response = await axiosInstance.get(
+    `/api/v1/jobsView?${params.toString()}`
+  );
+  return response.data.result;
+};

@@ -1,18 +1,45 @@
 import { useState } from "react";
 import palette from "../../../styles/theme";
+import type { Job } from "../../../types/homepage";
+import { getJobsByDay } from "../../../apis/HomePage";
 
 interface DayModalProps {
   isOpen: boolean;
   onClose: () => void;
+  setJobList: (jobs: Job[]) => void;
 }
 
 const days = ["월", "화", "수", "목", "금", "토", "일"];
+const dayToEng = {
+  월: "MON",
+  화: "TUE",
+  수: "WED",
+  목: "THU",
+  금: "FRI",
+  토: "SAT",
+  일: "SUN",
+};
 
-const DayModal = ({ isOpen, onClose }: DayModalProps) => {
+const DayModal = ({ isOpen, onClose, setJobList }: DayModalProps) => {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const handleClick = (day: string) => {
     setSelectedDay((prev) => (prev === day ? null : day));
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedDay) return;
+
+    const query = [dayToEng[selectedDay as keyof typeof dayToEng]];
+
+    try {
+      const jobList = await getJobsByDay(query);
+      setJobList(jobList);
+    } catch (e) {
+      console.error("근무 요일별 일자리 조회 실패:", e);
+    }
+
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -30,7 +57,6 @@ const DayModal = ({ isOpen, onClose }: DayModalProps) => {
           style={{ backgroundColor: palette.primary.primaryLight }}
         >
           근무 요일 선택
-          {/* X 버튼 */}
           <button
             onClick={onClose}
             className="absolute right-[16px] top-1/2 transform -translate-y-1/2 w-[10px] h-[10px] text-[16px] flex items-center justify-center"
@@ -66,7 +92,7 @@ const DayModal = ({ isOpen, onClose }: DayModalProps) => {
         {/* 하단 버튼 */}
         <div className="w-full !mb-6 flex justify-center">
           <button
-            onClick={onClose}
+            onClick={handleSubmit}
             className="w-[316px] h-[50px] rounded-[12px] text-[18px] font-bold !text-white"
             style={{ backgroundColor: palette.primary.primary }}
           >
