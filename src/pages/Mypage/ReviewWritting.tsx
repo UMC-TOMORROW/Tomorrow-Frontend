@@ -54,8 +54,8 @@ const ReviewWritting = () => {
         </section>
         <section className="flex justify-center items-center py-[30px]">
           <button
-            className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] rounded-full bg-[#729A73]"
-            style={{ fontWeight: 600 }}
+            className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] bg-[#729A73]"
+            style={{ fontWeight: 600, borderRadius: "12px" }}
           >
             완료
           </button>

@@ -1,39 +1,89 @@
 import Header from "../../components/Header";
-import settings from "../../assets/settings.png";
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import Vector from "../../assets/Vector.png";
 import { SlOptionsVertical } from "react-icons/sl";
+import CareerForm from "../../components/CareerForm";
+import CareerItem from "../../components/CareerItem";
+import LicenseForm from "../../components/LicenseForm";
+import LicenseItem from "../../components/LicenseItem";
+import memberplus from "../../assets/memberplus.png";
 
 const ResumeManage = () => {
-  const navigate = useNavigate();
   const [selfIntro, setSelfIntro] = useState("");
   const [showSelfIntroBox, setShowSelfIntroBox] = useState(false);
-  const [workPlace, setWorkPlace] = useState("");
-  const [workDescription, setWorkDescription] = useState("");
-  const [workYear, setWorkYear] = useState("");
-  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
   const [showCareerBox, setShowCareerBox] = useState(false);
   const [licenseFile, setLicenseFile] = useState<File[]>([]);
-  // 저장 버튼 누르기 전 자격증 미리보기
-  const [licensePreview, setLicensePreview] = useState(false);
   const [showLicenseBox, setShowLicenseBox] = useState(false);
-  const [careerMenuOpen, setCareerMenuOpen] = useState(true);
-  const [licenseMenuOpen, setLicenseMenuOpen] = useState(true);
+  const [careerMenuOpen, setCareerMenuOpen] = useState(false);
+  const [licenseMenuOpen, setLicenseMenuOpen] = useState(false);
+  const [licenseForm, setLicenseForm] = useState<number[]>([0]);
+
+  const [careers, setCareers] = useState<
+    {
+      workPlace: string;
+      workYear: string;
+      workDescription: string;
+      selectedLabel: string;
+    }[]
+  >([]);
+
+  const [currentCareer, setCurrentCareer] = useState({
+    workPlace: "",
+    workYear: "",
+    workDescription: "",
+    selectedLabel: "",
+  });
+
+  const handleAddCareer = () => {
+    const { workPlace, workYear, workDescription, selectedLabel } =
+      currentCareer;
+    if (!workPlace || !workYear || !workDescription || !selectedLabel) return;
+
+    setCareers((prev) => [...prev, currentCareer]);
+    setCurrentCareer({
+      workPlace: "",
+      workYear: "",
+      workDescription: "",
+      selectedLabel: "",
+    });
+  };
 
   const handleSaveResume = () => {
     if (selfIntro.trim()) setShowSelfIntroBox(true);
-    if (workPlace && workDescription && workYear && selectedLabel)
+    if (
+      currentCareer.workPlace &&
+      currentCareer.workYear &&
+      currentCareer.workDescription &&
+      currentCareer.selectedLabel
+    ) {
+      setCareers((prev) => [...prev, currentCareer]);
+      setCurrentCareer({
+        workPlace: "",
+        workYear: "",
+        workDescription: "",
+        selectedLabel: "",
+      });
+    }
+    if (
+      careers.length > 0 ||
+      (currentCareer.workPlace &&
+        currentCareer.workYear &&
+        currentCareer.workDescription &&
+        currentCareer.selectedLabel)
+    ) {
       setShowCareerBox(true);
+    }
     if (licenseFile.length > 0) setShowLicenseBox(true);
   };
 
-  const handleLicenseFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLicenseFileChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
-      setLicenseFile([files[0]]);
-      setLicensePreview(true);
-    }
+    if (!files || files.length === 0) return;
+    if (licenseFile.length >= 3) return;
+    setLicenseFile((prev) => [...prev, files[0]]);
+    setLicenseForm((prev) => prev.filter((_, i) => i !== index));
   };
 
   const labels = [
@@ -61,20 +111,13 @@ const ResumeManage = () => {
         </section>
         <section className="flex items-center justify-between px-[20px] py-[15px] h-[110px]">
           <div className="flex items-center gap-4">
-            <div className="w-[60px] h-[60px] rounded-full bg-gray-200" />
+            <img src={memberplus} />
             <div>
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
                 이내일
               </p>
               <p className="text-[13px]">010-1234-5678</p>
             </div>
-          </div>
-          <div
-            onClick={() => navigate("/MyPage/MemberInfo")}
-            className="flex gap-1 text-[13px] text-[#707070]"
-          >
-            <img src={settings} />
-            회원 정보
           </div>
         </section>
 
@@ -101,7 +144,7 @@ const ResumeManage = () => {
                 </div>
                 <div className="flex flex-col gap-[7px]">
                   <textarea
-                    className="w-full h-[98px] border border-[#555555D9] pb-[10px] text-[12px] resize-none p-[10px]"
+                    className="w-full h-[98px] border border-[#555555D9] pb-[10px] text-[14px] resize-none p-[10px]"
                     style={{ borderRadius: "12px" }}
                     value={selfIntro}
                     onChange={(e) => setSelfIntro(e.target.value)}
@@ -134,7 +177,7 @@ const ResumeManage = () => {
                   }}
                 >
                   <p
-                    className="text-[12px] p-[8px]"
+                    className="text-[14px] p-[8px]"
                     style={{ fontWeight: 400 }}
                   >
                     {selfIntro}
@@ -151,75 +194,63 @@ const ResumeManage = () => {
         </div>
 
         {!showCareerBox ? (
-          <div className="flex flex-col h-[529px] px-[15px] py-[15px] gap-[16px]">
+          <div className="flex flex-col px-[15px] py-[15px] gap-[16px]">
             <p className="text-[16px]" style={{ fontWeight: 700 }}>
               경력
             </p>
-            <div className="flex flex-col gap-[30px]">
-              <div className="flex flex-col gap-[16px]">
-                <p className="text-[14px]" style={{ fontWeight: 700 }}>
-                  일한 곳
-                </p>
-                <textarea
-                  className="w-full h-[51px] border border-[#555555D9] text-[12px] resize-none pl-[10px] py-[10px]"
-                  style={{ borderRadius: "12px" }}
-                  value={workPlace}
-                  onChange={(e) => setWorkPlace(e.target.value)}
-                ></textarea>
-              </div>
-              <div className="flex flex-col gap-[16px]">
-                <p className="text-[14px]" style={{ fontWeight: 700 }}>
-                  했던 일
-                </p>
-                <textarea
-                  className="w-full h-[51px] border border-[#555555D9] text-[12px] resize-none pl-[10px] py-[10px]"
-                  style={{ borderRadius: "12px" }}
-                  value={workDescription}
-                  onChange={(e) => setWorkDescription(e.target.value)}
-                ></textarea>
-              </div>
-              <div className="flex flex-col gap-[16px]">
-                <p className="text-[14px]" style={{ fontWeight: 700 }}>
-                  일한 연도
-                </p>
-                <textarea
-                  className="w-full h-[51px] border border-[#555555D9] text-[12px] resize-none pl-[10px] py-[10px]"
-                  placeholder="예. 2025년"
-                  style={{ borderRadius: "12px" }}
-                  value={workYear}
-                  onChange={(e) => setWorkYear(e.target.value)}
-                ></textarea>
-              </div>
-              <div className="flex flex-col gap-[16px]">
-                <p className="text-[14px]" style={{ fontWeight: 700 }}>
-                  일한 기간
-                </p>
-                <div className="flex flex-wrap gap-[10px]">
-                  {labels.map((label) => (
-                    <button
-                      key={label}
-                      onClick={() => setSelectedLabel(label)}
-                      className={`flex items-center justify-center border rounded-full h-[20px] px-[14px] py-[6px] text-[12px] ${
-                        selectedLabel === label
-                          ? " bg-[#729A73] border-[#729A73] text-[#FFFFFF]"
-                          : "border-[#555555D9] text-[#555555D9]"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            {careers.map((career, index) => (
+              <CareerItem
+                key={index}
+                workPlace={career.workPlace}
+                workYear={career.workYear}
+                selectedLabel={career.selectedLabel}
+                workDescription={career.workDescription}
+              />
+            ))}
+            <CareerForm
+              workPlace={currentCareer.workPlace}
+              setWorkPlace={(v) =>
+                setCurrentCareer((prev) => ({ ...prev, workPlace: v }))
+              }
+              workDescription={currentCareer.workDescription}
+              setWorkDescription={(v) =>
+                setCurrentCareer((prev) => ({ ...prev, workDescription: v }))
+              }
+              workYear={currentCareer.workYear}
+              setWorkYear={(v) =>
+                setCurrentCareer((prev) => ({ ...prev, workYear: v }))
+              }
+              selectedLabel={currentCareer.selectedLabel}
+              setSelectedLabel={(v) =>
+                setCurrentCareer((prev) => ({ ...prev, selectedLabel: v }))
+              }
+              labels={labels}
+            />
+            <button
+              className="h-[42px] border border-[#729A73] text-[#729A73] text-14px mt-[20px]"
+              style={{ borderRadius: "12px" }}
+              onClick={handleAddCareer}
+            >
+              + 추가하기
+            </button>
           </div>
         ) : (
-          <div className="flex flex-col h-[172px] p-[15px]">
+          <div className="flex flex-col p-[15px]">
             <p className="text-[18px]" style={{ fontWeight: 800 }}>
               경력
             </p>
             <div className=" flex flex-col gap-[6px]">
-              <div className="relative flex justify-end gap-[14px]">
+              <div className="relative flex justify-end gap-[14px] h-[36px]">
                 <button
+                  onClick={() => {
+                    setShowCareerBox(false);
+                    setCurrentCareer({
+                      workPlace: "",
+                      workYear: "",
+                      workDescription: "",
+                      selectedLabel: "",
+                    });
+                  }}
                   className="text-[13px] text-[#729A73]"
                   style={{ fontWeight: 600 }}
                 >
@@ -234,45 +265,27 @@ const ResumeManage = () => {
                 </button>
                 {careerMenuOpen && (
                   <div
-                    className="flex flex-col w-[66px] h-[84px] bg-[#EAEAEA] items-center justify-center gap-[10px] absolute right-0 mt-[20px] z-10"
+                    className="flex flex-col w-[43px] h-[32px] bg-[#EDEDED] items-center justify-center gap-[10px] absolute right-0 mt-[30px] z-10"
                     style={{ borderRadius: "8px" }}
                   >
                     <button
-                      onClick={() => setShowCareerBox(false)}
-                      className="text-[10px]"
-                      style={{ fontWeight: 500 }}
-                    >
-                      수정
-                    </button>
-                    <hr className="border-[#B1B1B1] w-[58px]" />
-                    <button
-                      className="text-[10px] text-[#C84141]"
-                      style={{ fontWeight: 500 }}
+                      className="text-[12px] text-[#EE0606CC]"
+                      style={{ fontWeight: 600 }}
                     >
                       삭제
                     </button>
                   </div>
                 )}
               </div>
-              <div
-                className="flex flex-col text-[12px] h-[84px] border border-[#729A73] p-[10px]"
-                style={{ borderRadius: "12px" }}
-              >
-                <div className="flex flex-col pl-[8px] gap-[5px]">
-                  <p className="text-[12px]" style={{ fontWeight: 800 }}>
-                    {workPlace}
-                  </p>
-                  <p
-                    className="text-[12px] text-[#555555D9]"
-                    style={{ fontWeight: 400 }}
-                  >
-                    {workYear}/{selectedLabel}
-                  </p>
-                  <p className="text-[12px]" style={{ fontWeight: 400 }}>
-                    {workDescription}
-                  </p>
-                </div>
-              </div>
+              {careers.map((career, index) => (
+                <CareerItem
+                  key={index}
+                  workPlace={career.workPlace}
+                  workYear={career.workYear}
+                  selectedLabel={career.selectedLabel}
+                  workDescription={career.workDescription}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -283,7 +296,7 @@ const ResumeManage = () => {
         </div>
 
         {!showLicenseBox ? (
-          <div className="flex flex-col h-[229px] px-[15px] pt-[15px] pb-[15px] gap-[16px]">
+          <div className="flex flex-col px-[15px] pt-[15px] pb-[15px] gap-[16px]">
             <p className="text-[16px]" style={{ fontWeight: 700 }}>
               자격증
             </p>
@@ -297,49 +310,30 @@ const ResumeManage = () => {
                 </p>
               </div>
               <div className="flex flex-col gap-[7px]">
-                {licenseFile.length > 0 && licensePreview ? (
-                  <div
-                    className="flex flex-col w-full h-[135px] border border-[#729A73] p-[15px] gap-[4px]"
-                    style={{ borderRadius: "12px" }}
-                  >
-                    <img
-                      src={URL.createObjectURL(licenseFile[0])}
-                      className="w-[79px] h-[79px]"
-                    />
-                    <p className="text-[12px]" style={{ fontWeight: 400 }}>
-                      {licenseFile[0].name}
-                    </p>
-                  </div>
-                ) : (
-                  <label>
-                    <input
-                      type="file"
-                      accept=".pdf, .jpg, .png"
-                      multiple
-                      className="hidden"
-                      onChange={handleLicenseFileChange}
-                    />
-                    <div
-                      className="flex w-full h-[44px] border border-[#555555D9] text-[#555555D9] justify-between items-center px-[15px]"
-                      style={{ borderRadius: "12px" }}
-                    >
-                      <span className="text-[14px]">파일 선택</span>
-                      <img src={Vector} className="w-[14px] h-[14.9px]" />
-                    </div>
-                  </label>
-                )}
-
-                <p
-                  className="text-[13px] text-[#EE0606CC]"
-                  style={{ fontWeight: 400 }}
-                >
-                  첨부 파일은 최대 3개, 30MB까지 등록 가능합니다.
-                </p>
+                {licenseFile.map((file, idx) => (
+                  <LicenseItem key={`preview-${idx}`} file={file} />
+                ))}
+                {licenseForm.map((_, idx) => (
+                  <LicenseForm
+                    key={`form-${idx}`}
+                    onFileSelect={(e) => handleLicenseFileChange(e, idx)}
+                  />
+                ))}
               </div>
             </div>
+            <button
+              onClick={() => {
+                if (licenseFile.length + licenseForm.length < 4)
+                  setLicenseForm((prev) => [...prev, prev.length]);
+              }}
+              className="h-[42px] border border-[#729A73] text-[#729A73] text-14px mt-[30px]"
+              style={{ borderRadius: "12px" }}
+            >
+              + 추가하기
+            </button>
           </div>
         ) : (
-          <div className="flex flex-col h-[229px] px-[15px] pt-[15px] pb-[15px]">
+          <div className="flex flex-col px-[15px] pt-[15px] pb-[15px]">
             <p className="text-[18px]" style={{ fontWeight: 800 }}>
               자격증
             </p>
@@ -347,6 +341,7 @@ const ResumeManage = () => {
               <button
                 className="text-[13px] text-[#729A73]"
                 style={{ fontWeight: 600 }}
+                onClick={() => setShowLicenseBox(false)}
               >
                 +추가
               </button>
@@ -359,37 +354,22 @@ const ResumeManage = () => {
               </button>
               {licenseMenuOpen && (
                 <div
-                  className="flex flex-col w-[66px] h-[84px] bg-[#EAEAEA] items-center justify-center gap-[10px] absolute right-0 mt-[25px] z-10"
+                  className="flex flex-col w-[43px] h-[32px] bg-[#EDEDED] items-center justify-center gap-[10px] absolute right-0 mt-[30px] z-10"
                   style={{ borderRadius: "8px" }}
                 >
                   <button
-                    onClick={() => setShowLicenseBox(false)}
-                    className="text-[10px]"
-                    style={{ fontWeight: 500 }}
-                  >
-                    수정
-                  </button>
-                  <hr className="border-[#B1B1B1] w-[58px]" />
-                  <button
-                    className="text-[10px] text-[#C84141]"
-                    style={{ fontWeight: 500 }}
+                    className="text-[12px] text-[#EE0606CC]"
+                    style={{ fontWeight: 600 }}
                   >
                     삭제
                   </button>
                 </div>
               )}
             </div>
-            <div
-              className="flex flex-col w-full h-[135px] border border-[#729A73] p-[15px] gap-[4px]"
-              style={{ borderRadius: "12px" }}
-            >
-              <img
-                src={URL.createObjectURL(licenseFile[0])}
-                className="w-[79px] h-[79px]"
-              />
-              <p className="text-[12px]" style={{ fontWeight: 400 }}>
-                {licenseFile[0].name}
-              </p>
+            <div className="flex flex-col gap-[15px]">
+              {licenseFile.map((file, idx) => (
+                <LicenseItem key={idx} file={file} />
+              ))}
             </div>
           </div>
         )}
@@ -397,8 +377,8 @@ const ResumeManage = () => {
         <section className="flex justify-center items-center py-[100px]">
           <button
             onClick={handleSaveResume}
-            className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] rounded-full bg-[#729A73]"
-            style={{ fontWeight: 600 }}
+            className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] bg-[#729A73]"
+            style={{ fontWeight: 600, borderRadius: "12px" }}
           >
             이력서 저장
           </button>

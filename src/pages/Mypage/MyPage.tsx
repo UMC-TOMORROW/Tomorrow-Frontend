@@ -6,6 +6,7 @@ import star_filled_black from "../../assets/my/star_filled_black.png";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import recommend from "../../assets/recommend.png";
+import member from "../../assets/member.png";
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const MyPage = () => {
       <div className="min-h-screen pb-[100px] overflow-y-auto mt-[50px]">
         <section className="flex items-center justify-between px-[20px] py-[15px] h-[90px] border-b border-[#5555558C]">
           <div className="flex items-center gap-4">
-            <div className="w-[60px] h-[60px] rounded-full bg-gray-200" />
+            <img src={member} />
             <div>
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
                 이OO
@@ -26,7 +27,7 @@ const MyPage = () => {
               <p className="text-[16px]">몸도 마음도 건강한 하루 되세요!</p>
             </div>
           </div>
-          <button>
+          <button onClick={() => navigate("/MyPage/MemberInfo")}>
             <SlArrowRight className="w-[15px] h-[15px]" />
           </button>
         </section>
@@ -121,33 +122,38 @@ const MyPage = () => {
 
         {showUnregister && (
           <div
-            className="fixed inset-0 z-50 flex justify-center items-center"
+            className="fixed inset-0 z-50 flex justify-center items-center bg-[#70707080]/50"
             style={{ borderRadius: "15px" }}
           >
             <div
-              className="flex flex-col items-center justify-center gap-[20px] text-center px-[20px] py-[25px] w-[355px] h-[200px] bg-[#B8CDB9] border-[1px] border-[#729A73]"
+              className="flex flex-col items-center justify-center text-center w-[330px] bg-[#FFFFFF]"
               style={{ borderRadius: "15px" }}
             >
-              <p className="text-[20px]" style={{ fontWeight: 400 }}>
-                정말 탈퇴하시겠어요?
-              </p>
-              <p className="text-[14px]" style={{ fontWeight: 400 }}>
-                탈퇴 시 계정은 14일 동안 유지되며,
-                <br />
-                이후에는 삭제 되어 복구되지 않습니다.
-              </p>
-              <div className="flex items-center justify-center gap-[10px]">
+              <div className="flex flex-col gap-[25px] py-[30px] h-[158px] w-full border-b border-[#729A73]">
+                <p
+                  className="text-[20px] text-[#729A73]"
+                  style={{ fontWeight: 700 }}
+                >
+                  정말 탈퇴하시겠어요?
+                </p>
+                <p className="text-[16px]" style={{ fontWeight: 400 }}>
+                  탈퇴 시 계정은 14일 동안 유지되며,
+                  <br />
+                  이후에는 삭제 되어 복구되지 않습니다.
+                </p>
+              </div>
+              <div className="flex items-center justify-center py-[15px] gap-[17px] h-[75px]">
                 <button
                   onClick={() => setShowUnregister(false)}
-                  className="w-[105px] h-[31px] bg-[#729A73] text-[#FFFFFF]"
-                  style={{ borderRadius: "12px" }}
+                  className="w-[140px] h-[48px] bg-[#729A73] text-[#FFFFFF] text-[16px]"
+                  style={{ borderRadius: "10px" }}
                 >
                   취소
                 </button>
                 <button
                   onClick={() => alert("회원 탈퇴")}
-                  className="w-[105px] h-[31px] bg-[#ECF0F1]"
-                  style={{ borderRadius: "12px" }}
+                  className="w-[140px] h-[48px] border border-[#729A73] text-[#729A73] text-[16px]"
+                  style={{ borderRadius: "10px" }}
                 >
                   탈퇴
                 </button>
