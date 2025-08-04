@@ -21,7 +21,7 @@ const HomePage = () => {
         {/* 필터바에서 jobList setter 전달 */}
         <HomepageTopBar
           onRegionSelect={(jobs) => {
-            console.log("🟩 Homepage에 전달된 jobs:", jobs); // 전달 확인
+            console.log("🟩 Homepage에 전달된 jobs:", jobs); // api 전달 확인
             setJobList(jobs);
           }}
         />
