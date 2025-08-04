@@ -13,8 +13,13 @@ import typeIconWhite from "/src/assets/filter/type_white.png";
 import calendarIconWhite from "/src/assets/filter/calender_white.png";
 import timeIconWhite from "/src/assets/filter/time_white.png";
 import arrowIconWhite from "/src/assets/jobRegister/icon_arrow_down_white.png";
+import type { Job } from "../../types/homepage";
 
-const HomepageTopBar = () => {
+const HomepageTopBar = ({
+  onRegionSelect,
+}: {
+  onRegionSelect: (jobs: Job[]) => void;
+}) => {
   const [modal, setModal] = useState<"region" | "type" | "day" | "time" | null>(
     null
   );
@@ -64,7 +69,12 @@ const HomepageTopBar = () => {
         />
       </div>
 
-      <RegionModal isOpen={modal === "region"} onClose={closeModal} />
+      {/* 모달들 */}
+      <RegionModal
+        isOpen={modal === "region"}
+        onClose={closeModal}
+        setJobList={onRegionSelect}
+      />
       <TypeModal isOpen={modal === "type"} onClose={closeModal} />
       <DayModal isOpen={modal === "day"} onClose={closeModal} />
       <TimeModal isOpen={modal === "time"} onClose={closeModal} />

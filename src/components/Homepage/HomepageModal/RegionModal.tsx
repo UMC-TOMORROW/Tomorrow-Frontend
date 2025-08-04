@@ -1,13 +1,16 @@
 import { useState } from "react";
 import palette from "../../../styles/theme";
-import { getJobsByRegion } from "../../../apis/HomePage"; // 경로는 너의 파일 위치에 맞게 조정
+import { getJobsByRegion } from "../../../apis/HomePage";
+import type { Job } from "../../../types/homepage";
 
 const RegionModal = ({
   isOpen,
   onClose,
+  setJobList,
 }: {
   isOpen: boolean;
   onClose: () => void;
+  setJobList: (jobs: Job[]) => void;
 }) => {
   const regions = [
     "전체",
@@ -36,7 +39,6 @@ const RegionModal = ({
     "종로구",
     "중구",
     "중랑구",
-    "",
   ];
 
   const [selectedRegion, setSelectedRegion] = useState("");
@@ -44,15 +46,19 @@ const RegionModal = ({
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
-    const regions = ["서울특별시"];
+    const queryRegions = ["서울특별시"];
     if (selectedRegion && selectedRegion !== "전체") {
-      regions.push(selectedRegion);
+      queryRegions.push(selectedRegion);
     }
 
-    const jobList = await getJobsByRegion(regions);
-    console.log("조회된 일자리 목록:", jobList);
+    try {
+      const jobList = await getJobsByRegion(queryRegions);
+      setJobList(jobList);
+    } catch (e) {
+      console.error("일자리 목록 불러오기 실패:", e);
+    }
 
-    onClose(); // 모달 닫기
+    onClose();
   };
 
   return (
@@ -60,33 +66,31 @@ const RegionModal = ({
       className="fixed inset-0 bg-black/30 flex justify-center items-end"
       style={{ zIndex: 9999, fontFamily: "Pretendard" }}
     >
-      <div className="w-[360px] h-[562px] bg-white rounded-[20px] flex flex-col items-center relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.1)] -translate-y-5">
-        {/* 상단 헤더 */}
+      <div className="w-[360px] h-[562px] bg-white rounded-t-[20px] flex flex-col items-center relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.1)]">
+        {/* 상단 바 */}
         <div
-          className="w-full h-[55px] flex items-center justify-center text-[18px] font-bold text-black relative"
+          className="w-full h-[55px] flex items-center justify-center text-[15px] font-semibold text-black relative"
           style={{ backgroundColor: palette.primary.primaryLight }}
         >
           근무 지역 선택
           <button
             onClick={onClose}
-            className="absolute right-[16px] top-1/2 transform -translate-y-1/2 w-[10px] h-[10px] text-[16px] flex items-center justify-center"
+            className="absolute right-[16px] top-1/2 transform -translate-y-1/2 text-[10px] w-[20px] h-[20px] flex items-center justify-center"
           >
             ✕
           </button>
         </div>
 
-        {/* 선택 경로 */}
+        {/* 선택 경로 박스 */}
         <div
-          className="w-[300px] h-[52px] mt-[15px] mb-[25px] flex items-center justify-center rounded-[12px] text-[16px] font-bold text-black gap-[8px]"
-          style={{
-            backgroundColor: palette.primary.primaryLight,
-            fontFamily: "Pretendard",
-          }}
+          className="w-[300px] h-[52px] mt-[15px] mb-[25px] rounded-[12px] flex items-center justify-center gap-[8px] text-[16px] font-bold"
+          style={{ backgroundColor: palette.primary.primaryLight }}
         >
-          <span className="font-bold">서울</span>
-          <span className="text-[18px] font-medium">&gt;</span>
-          <span className="font-bold">{selectedRegion || "전체"}</span>
+          <span>서울</span>
+          <span className="text-[18px]">&gt;</span>
+          <span>{selectedRegion || "전체"}</span>
         </div>
+
         {/* 동 리스트 */}
         <div className="overflow-y-scroll h-[300px]">
           <div className="grid grid-cols-3">
@@ -103,11 +107,16 @@ const RegionModal = ({
                 <button
                   key={dong}
                   onClick={() => setSelectedRegion(dong)}
-                  className={`w-[110px] h-[60px] text-[14px] border border-[#ccc] font-[Pretendard] ${radiusClass} ${
+                  className={`w-[110px] h-[60px] text-[14px] border font-bold ${radiusClass} ${
                     selectedRegion === dong
-                      ? "bg-[#B8CDB9] !font-bold"
-                      : "bg-white"
+                      ? "bg-[#B8CDB9] text-black"
+                      : "bg-white text-black"
                   }`}
+                  style={{
+                    borderColor:
+                      selectedRegion === dong ? "#B8CDB9" : "#DDDDDD",
+                    fontWeight: selectedRegion === dong ? "700" : "500",
+                  }}
                 >
                   {dong}
                 </button>
@@ -119,7 +128,7 @@ const RegionModal = ({
         {/* 선택 완료 버튼 */}
         <div className="w-full mt-auto mb-[30px] flex justify-center">
           <button
-            className="w-[316px] h-[50px] rounded-[12px] !text-white text-[18px] !font-bold"
+            className="w-[316px] h-[50px] rounded-[12px] text-white text-[16px] font-bold"
             style={{ backgroundColor: palette.primary.primary }}
             onClick={handleSubmit}
           >
