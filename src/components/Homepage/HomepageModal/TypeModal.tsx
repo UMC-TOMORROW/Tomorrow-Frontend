@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import palette from "../../../styles/theme";
+import { getJobsByType } from "../../../apis/HomePage"; // ✅ 이 부분 필요
+import type { Job } from "../../../types/homepage";
 
 interface TypeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  setJobList: (jobs: Job[]) => void;
 }
 
 const jobs = [
@@ -19,13 +22,29 @@ const jobs = [
   "사무보조",
 ];
 
-const TypeModal: React.FC<TypeModalProps> = ({ isOpen, onClose }) => {
+const TypeModal: React.FC<TypeModalProps> = ({
+  isOpen,
+  onClose,
+  setJobList,
+}) => {
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleClick = (job: string) => {
     setSelectedJob((prev) => (prev === job ? null : job));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const jobList = await getJobsByType(
+        selectedJob && selectedJob !== "전체" ? [selectedJob] : []
+      );
+      setJobList(jobList);
+    } catch (error) {
+      console.error("업무 유형별 일자리 조회 실패:", error);
+    }
+    onClose();
   };
 
   return (
@@ -80,7 +99,7 @@ const TypeModal: React.FC<TypeModalProps> = ({ isOpen, onClose }) => {
         {/* 하단 버튼 + 여백 포함 */}
         <div className="w-full !mt-2 !mb-6 flex justify-center">
           <button
-            onClick={onClose}
+            onClick={handleSubmit}
             className="w-[316px] h-[50px] rounded-[12px] text-[18px] font-bold !text-white"
             style={{ backgroundColor: palette.primary.primary }}
           >
