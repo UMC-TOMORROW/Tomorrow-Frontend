@@ -1,12 +1,10 @@
 import { useState } from "react";
 import palette from "../../../styles/theme";
-import type { Job } from "../../../types/homepage";
-import { getJobsByDay } from "../../../apis/HomePage";
 
 interface DayModalProps {
   isOpen: boolean;
   onClose: () => void;
-  setJobList: (jobs: Job[]) => void;
+  onSubmit: (days: string[]) => void;
 }
 
 const days = ["월", "화", "수", "목", "금", "토", "일"];
@@ -20,25 +18,17 @@ const dayToEng = {
   일: "SUN",
 };
 
-const DayModal = ({ isOpen, onClose, setJobList }: DayModalProps) => {
+const DayModal = ({ isOpen, onClose, onSubmit }: DayModalProps) => {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const handleClick = (day: string) => {
     setSelectedDay((prev) => (prev === day ? null : day));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!selectedDay) return;
-
     const query = [dayToEng[selectedDay as keyof typeof dayToEng]];
-
-    try {
-      const jobList = await getJobsByDay(query);
-      setJobList(jobList);
-    } catch (e) {
-      console.error("근무 요일별 일자리 조회 실패:", e);
-    }
-
+    onSubmit(query);
     onClose();
   };
 

@@ -1,12 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import palette from "../../../styles/theme";
-import { getJobsByType } from "../../../apis/HomePage"; // ✅ 이 부분 필요
-import type { Job } from "../../../types/homepage";
 
 interface TypeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  setJobList: (jobs: Job[]) => void;
+  onSubmit: (types: string[]) => void;
 }
 
 const jobs = [
@@ -22,11 +20,7 @@ const jobs = [
   "사무보조",
 ];
 
-const TypeModal: React.FC<TypeModalProps> = ({
-  isOpen,
-  onClose,
-  setJobList,
-}) => {
+const TypeModal = ({ isOpen, onClose, onSubmit }: TypeModalProps) => {
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -35,26 +29,14 @@ const TypeModal: React.FC<TypeModalProps> = ({
     setSelectedJob((prev) => (prev === job ? null : job));
   };
 
-  const handleSubmit = async () => {
-    try {
-      const jobList = await getJobsByType(
-        selectedJob && selectedJob !== "전체" ? [selectedJob] : []
-      );
-      setJobList(jobList);
-    } catch (error) {
-      console.error("업무 유형별 일자리 조회 실패:", error);
-    }
+  const handleSubmit = () => {
+    onSubmit(selectedJob ? [selectedJob] : []);
     onClose();
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[9999] flex justify-center items-end bg-black/30"
-      style={{ fontFamily: "Pretendard" }}
-    >
-      {/* 모달 내용 */}
+    <div className="fixed inset-0 z-[9999] flex justify-center items-end bg-black/30 font-[Pretendard]">
       <div className="w-[380px] bg-white rounded-[20px] flex flex-col shadow-[0_4px_20px_rgba(0,0,0,0.1)] -translate-y-5">
-        {/* 상단 영역 */}
         <div
           className="w-full h-[55px] flex items-center justify-center relative rounded-t-[20px]"
           style={{ backgroundColor: palette.primary.primaryLight }}
@@ -68,7 +50,6 @@ const TypeModal: React.FC<TypeModalProps> = ({
           </button>
         </div>
 
-        {/* 버튼들 */}
         <div className="flex flex-wrap !px-3 !py-5 gap-x-[10px] gap-y-[20px] justify-start">
           {jobs.map((job) => {
             const isSelected = selectedJob === job;
@@ -96,7 +77,6 @@ const TypeModal: React.FC<TypeModalProps> = ({
           })}
         </div>
 
-        {/* 하단 버튼 + 여백 포함 */}
         <div className="w-full !mt-2 !mb-6 flex justify-center">
           <button
             onClick={handleSubmit}

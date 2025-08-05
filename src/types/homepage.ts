@@ -1,15 +1,15 @@
 export interface Job {
   jobId: number;
-  title: string;
   company_name: string;
+  title: string;
+  job_category: string[];
+  isPeriodNegotiable: boolean;
+  review_count: number;
   location: string;
   salary: number;
-  review_count: number;
-  job_image_url: string;
-  payment_type: "DAILY" | "MONTHLY";
-  isTimeNegotiable: boolean;
-  isPeriodNegotiable: boolean;
-  job_category: string[];
+  work_days?: string[];
+  work_start?: string;
+  work_end?: string;
 }
 
 export interface GetJobsResponse {

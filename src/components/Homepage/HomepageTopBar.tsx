@@ -4,22 +4,32 @@ import typeIcon from "/src/assets/filter/type.png";
 import calendarIcon from "/src/assets/filter/calender.png";
 import timeIcon from "/src/assets/filter/time.png";
 import arrowIcon from "/src/assets/jobRegister/icon_arrow_down.png";
-import RegionModal from "./HomepageModal/RegionModal";
-import TypeModal from "./HomepageModal/TypeModal";
-import DayModal from "./HomepageModal/DayModal";
-import TimeModal from "./HomepageModal/TimeModal";
 import locationIconWhite from "/src/assets/filter/location_white.png";
 import typeIconWhite from "/src/assets/filter/type_white.png";
 import calendarIconWhite from "/src/assets/filter/calender_white.png";
 import timeIconWhite from "/src/assets/filter/time_white.png";
 import arrowIconWhite from "/src/assets/jobRegister/icon_arrow_down_white.png";
+
+import RegionModal from "./HomepageModal/RegionModal";
+import TypeModal from "./HomepageModal/TypeModal";
+import DayModal from "./HomepageModal/DayModal";
+import TimeModal from "./HomepageModal/TimeModal";
 import type { Job } from "../../types/homepage";
 
+interface Props {
+  setJobList: (jobs: Job[]) => void;
+  onRegionSelect: (regions: string[]) => void;
+  onTypeSelect: (types: string[]) => void;
+  onDaySelect: (days: string[]) => void;
+  onTimeSelect: (time: { start?: string; end?: string }) => void;
+}
+
 const HomepageTopBar = ({
-  onRegionSelect,
-}: {
-  onRegionSelect: (jobs: Job[]) => void;
-}) => {
+  setJobList,
+  onTypeSelect,
+  onDaySelect,
+  onTimeSelect,
+}: Props) => {
   const [modal, setModal] = useState<"region" | "type" | "day" | "time" | null>(
     null
   );
@@ -73,23 +83,22 @@ const HomepageTopBar = ({
       <RegionModal
         isOpen={modal === "region"}
         onClose={closeModal}
-        setJobList={onRegionSelect}
+        setJobList={setJobList}
       />
       <TypeModal
         isOpen={modal === "type"}
         onClose={closeModal}
-        setJobList={onRegionSelect}
+        onSubmit={onTypeSelect}
       />
-
       <DayModal
         isOpen={modal === "day"}
         onClose={closeModal}
-        setJobList={onRegionSelect}
+        onSubmit={onDaySelect}
       />
       <TimeModal
         isOpen={modal === "time"}
         onClose={closeModal}
-        setJobList={onRegionSelect}
+        onSubmit={onTimeSelect}
       />
     </>
   );
@@ -121,14 +130,14 @@ const FilterButton = ({
     <button
       onClick={onClick}
       className={`
-  flex items-center justify-center gap-[4px] h-[25px] px-[8px] rounded-full text-[12px] border 
-  ${
-    isActive
-      ? "bg-[#729A73] !text-white border-[#729A73]"
-      : "bg-white text-[#555555D9] border-[#ccc]"
-  } 
-  ${className}
-`}
+        flex items-center justify-center gap-[4px] h-[25px] px-[8px] rounded-full text-[12px] border 
+        ${
+          isActive
+            ? "bg-[#729A73] !text-white border-[#729A73]"
+            : "bg-white text-[#555555D9] border-[#ccc]"
+        } 
+        ${className}
+      `}
       style={{
         fontFamily: "Pretendard",
         minWidth: label.length <= 3 ? "70px" : "90px",

@@ -1,3 +1,5 @@
+import axios from "axios";
+import type { Job } from "../types/homepage";
 import { axiosInstance } from "./axios";
 
 // 일자리 목록 조회 (지역 기반)
@@ -40,7 +42,12 @@ export const getJobsByDay = async (days: string[]) => {
 };
 
 // 기본 전체 일자리 목록 조회
-export const getJobsDefault = async () => {
-  const response = await axiosInstance.get("/api/v1/jobsView");
+export const getJobsDefault = async (): Promise<Job[]> => {
+  const response = await axios.get("https://umctomorrow.shop/api/v1/jobsView", {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+    },
+  });
+
   return response.data.result;
 };

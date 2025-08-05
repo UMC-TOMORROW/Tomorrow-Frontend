@@ -3,15 +3,13 @@ import palette from "../../../styles/theme";
 import { getJobsByRegion } from "../../../apis/HomePage";
 import type { Job } from "../../../types/homepage";
 
-const RegionModal = ({
-  isOpen,
-  onClose,
-  setJobList,
-}: {
+interface RegionModalProps {
   isOpen: boolean;
   onClose: () => void;
   setJobList: (jobs: Job[]) => void;
-}) => {
+}
+
+const RegionModal = ({ isOpen, onClose, setJobList }: RegionModalProps) => {
   const regions = [
     "전체",
     "강남구",
@@ -41,7 +39,7 @@ const RegionModal = ({
     "중랑구",
   ];
 
-  const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
 
   if (!isOpen) return null;
 

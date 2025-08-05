@@ -1,18 +1,16 @@
 import { useState } from "react";
-import axios from "axios";
 import palette from "../../../styles/theme";
-import type { Job } from "../../../types/homepage";
 
 interface TimeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  setJobList: (jobs: Job[]) => void;
+  onSubmit: (time: { start?: string; end?: string }) => void;
 }
 
 export default function TimeModal({
   isOpen,
   onClose,
-  setJobList,
+  onSubmit,
 }: TimeModalProps) {
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
   const [selectedRight, setSelectedRight] = useState<string | null>(null);
@@ -43,30 +41,12 @@ export default function TimeModal({
     setSelectedRight(null);
   };
 
-  const handleApply = async () => {
+  const handleApply = () => {
     if (selectedLeft && selectedRight) {
       const work_start = to24HourFormat(selectedLeft);
       const work_end = to24HourFormat(selectedRight);
-
-      try {
-        const response = await axios.get(
-          `https://umctomorrow.shop/api/v1/jobViews`,
-          {
-            params: {
-              work_start,
-              work_end,
-            },
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-            },
-          }
-        );
-        setJobList(response.data.result);
-      } catch (error) {
-        console.error("시간별 일자리 조회 실패:", error);
-      }
+      onSubmit({ start: work_start, end: work_end });
     }
-
     onClose();
   };
 
