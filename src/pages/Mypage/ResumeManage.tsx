@@ -13,12 +13,12 @@ const ResumeManage = () => {
   const [showCareerBox, setShowCareerBox] = useState(false);
   const [licenseFile, setLicenseFile] = useState<File[]>([]);
   const [showLicenseBox, setShowLicenseBox] = useState(false);
-  const [careerMenuOpen, setCareerMenuOpen] = useState(false);
   const [licenseMenuOpen, setLicenseMenuOpen] = useState(false);
   const [licenseForm, setLicenseForm] = useState<number[]>([0]);
 
   const [careers, setCareers] = useState<
     {
+      id: number;
       workPlace: string;
       workYear: string;
       workDescription: string;
@@ -38,7 +38,15 @@ const ResumeManage = () => {
       currentCareer;
     if (!workPlace || !workYear || !workDescription || !selectedLabel) return;
 
-    setCareers((prev) => [...prev, currentCareer]);
+    const newCareer = {
+      id: Date.now(),
+      workPlace,
+      workYear,
+      workDescription,
+      selectedLabel,
+    };
+
+    setCareers((prev) => [...prev, newCareer]);
     setCurrentCareer({
       workPlace: "",
       workYear: "",
@@ -49,13 +57,19 @@ const ResumeManage = () => {
 
   const handleSaveResume = () => {
     if (selfIntro.trim()) setShowSelfIntroBox(true);
-    if (
-      currentCareer.workPlace &&
-      currentCareer.workYear &&
-      currentCareer.workDescription &&
-      currentCareer.selectedLabel
-    ) {
-      setCareers((prev) => [...prev, currentCareer]);
+
+    const { workPlace, workYear, workDescription, selectedLabel } =
+      currentCareer;
+    if (workPlace && workYear && workDescription && selectedLabel) {
+      const newCareer = {
+        id: Date.now(),
+        workPlace,
+        workYear,
+        workDescription,
+        selectedLabel,
+      };
+
+      setCareers((prev) => [...prev, newCareer]);
       setCurrentCareer({
         workPlace: "",
         workYear: "",
@@ -63,15 +77,14 @@ const ResumeManage = () => {
         selectedLabel: "",
       });
     }
+
     if (
       careers.length > 0 ||
-      (currentCareer.workPlace &&
-        currentCareer.workYear &&
-        currentCareer.workDescription &&
-        currentCareer.selectedLabel)
+      (workPlace && workYear && workDescription && selectedLabel)
     ) {
       setShowCareerBox(true);
     }
+
     if (licenseFile.length > 0) setShowLicenseBox(true);
   };
 
@@ -84,6 +97,14 @@ const ResumeManage = () => {
     if (licenseFile.length >= 3) return;
     setLicenseFile((prev) => [...prev, files[0]]);
     setLicenseForm((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDeleteCareer = (id: number) => {
+    setCareers((prev) => prev.filter((career) => career.id !== id));
+  };
+
+  const handleDeleteLicense = (index: number) => {
+    setLicenseFile((prev) => prev.filter((_, i) => i !== index));
   };
 
   const labels = [
@@ -198,13 +219,14 @@ const ResumeManage = () => {
             <p className="text-[16px]" style={{ fontWeight: 700 }}>
               경력
             </p>
-            {careers.map((career, index) => (
+            {careers.map((career) => (
               <CareerItem
-                key={index}
+                key={career.id}
                 workPlace={career.workPlace}
                 workYear={career.workYear}
                 selectedLabel={career.selectedLabel}
                 workDescription={career.workDescription}
+                onDelete={() => handleDeleteCareer(career.id)}
               />
             ))}
             <CareerForm
@@ -240,7 +262,7 @@ const ResumeManage = () => {
               경력
             </p>
             <div className=" flex flex-col gap-[6px]">
-              <div className="relative flex justify-end gap-[14px] h-[36px]">
+              <div className="relative flex justify-end h-[36px]">
                 <button
                   onClick={() => {
                     setShowCareerBox(false);
@@ -256,34 +278,15 @@ const ResumeManage = () => {
                 >
                   +추가
                 </button>
-                <button
-                  onClick={() => setCareerMenuOpen(!careerMenuOpen)}
-                  className="text-[13px] text-[#729A73]"
-                  style={{ fontWeight: 600 }}
-                >
-                  <SlOptionsVertical />
-                </button>
-                {careerMenuOpen && (
-                  <div
-                    className="flex flex-col w-[43px] h-[32px] bg-[#EDEDED] items-center justify-center gap-[10px] absolute right-0 mt-[30px] z-10"
-                    style={{ borderRadius: "8px" }}
-                  >
-                    <button
-                      className="text-[12px] text-[#EE0606CC]"
-                      style={{ fontWeight: 600 }}
-                    >
-                      삭제
-                    </button>
-                  </div>
-                )}
               </div>
-              {careers.map((career, index) => (
+              {careers.map((career) => (
                 <CareerItem
-                  key={index}
+                  key={career.id}
                   workPlace={career.workPlace}
                   workYear={career.workYear}
                   selectedLabel={career.selectedLabel}
                   workDescription={career.workDescription}
+                  onDelete={() => handleDeleteCareer(career.id)}
                 />
               ))}
             </div>
@@ -311,7 +314,11 @@ const ResumeManage = () => {
               </div>
               <div className="flex flex-col gap-[7px]">
                 {licenseFile.map((file, idx) => (
-                  <LicenseItem key={`preview-${idx}`} file={file} />
+                  <LicenseItem
+                    key={`preview-${idx}`}
+                    file={file}
+                    onDelete={() => handleDeleteLicense(idx)}
+                  />
                 ))}
                 {licenseForm.map((_, idx) => (
                   <LicenseForm
@@ -368,7 +375,11 @@ const ResumeManage = () => {
             </div>
             <div className="flex flex-col gap-[15px]">
               {licenseFile.map((file, idx) => (
-                <LicenseItem key={idx} file={file} />
+                <LicenseItem
+                  key={idx}
+                  file={file}
+                  onDelete={() => handleDeleteLicense(idx)}
+                />
               ))}
             </div>
           </div>
