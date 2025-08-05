@@ -1,8 +1,12 @@
+import { useState } from "react";
+import { SlOptionsVertical } from "react-icons/sl";
+
 interface CareerItemProps {
   workPlace: string;
   workYear: string;
   selectedLabel: string;
   workDescription: string;
+  onDelete: () => void;
 }
 
 const CareerItem: React.FC<CareerItemProps> = ({
@@ -10,13 +14,23 @@ const CareerItem: React.FC<CareerItemProps> = ({
   workYear,
   selectedLabel,
   workDescription,
+  onDelete,
 }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <div
-      className="flex flex-col text-[14px] h-[92px] border border-[#729A73] p-[10px] overflow-y-auto"
+      className="relative flex text-[14px] h-[92px] border border-[#729A73] p-[10px] "
       style={{ borderRadius: "12px", maxHeight: "92px" }}
     >
-      <div className="flex flex-col pl-[8px] gap-[5px]">
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="absolute text-[13px] text-[#729A73] top-[10px] right-[10px]"
+        style={{ fontWeight: 600 }}
+      >
+        <SlOptionsVertical />
+      </button>
+      <div className="flex flex-col w-full mr-[10px] pl-[8px] gap-[5px] overflow-y-auto">
         <p className="text-[14px]" style={{ fontWeight: 800 }}>
           {workPlace}
         </p>
@@ -27,6 +41,21 @@ const CareerItem: React.FC<CareerItemProps> = ({
           {workDescription}
         </p>
       </div>
+
+      {menuOpen && (
+        <div
+          className="flex flex-col w-[43px] h-[32px] bg-[#EDEDED] items-center justify-center gap-[10px] absolute right-[20px] z-10"
+          style={{ borderRadius: "8px" }}
+        >
+          <button
+            onClick={onDelete}
+            className="text-[12px] text-[#EE0606CC]"
+            style={{ fontWeight: 600 }}
+          >
+            삭제
+          </button>
+        </div>
+      )}
     </div>
   );
 };
