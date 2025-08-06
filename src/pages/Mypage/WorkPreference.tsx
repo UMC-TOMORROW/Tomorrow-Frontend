@@ -1,4 +1,3 @@
-import Header from "../../components/Header";
 import { SlArrowLeft } from "react-icons/sl";
 import check_active from "../../assets/check_active.png";
 import check_inactive from "../../assets/check_inactive.png";
@@ -25,12 +24,10 @@ const WorkPreference = () => {
 
   return (
     <div style={{ fontFamily: "Pretendard" }}>
-      <Header title="내일" />
-
-      <div className="mt-[50px] bg-white min-h-screen">
-        <section className="relative flex justify-center items-center h-[40px] border-b border-[#5555558C]">
+      <div className="bg-white min-h-screen">
+        <section className="relative flex justify-center items-center h-[52px] border-b-[1.5px] border-[#DEDEDE]">
           <SlArrowLeft className="absolute left-[15px] " />
-          <div className="text-[15px]" style={{ fontWeight: 700 }}>
+          <div className="text-[20px]" style={{ fontWeight: 700 }}>
             내 몸에 맞는 일 찾기
           </div>
         </section>
@@ -61,15 +58,6 @@ const WorkPreference = () => {
               </button>
             );
           })}
-        </section>
-
-        <section className="fixed bottom-[10px] px-[30px]">
-          <button
-            className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] rounded-full bg-[#729A73]"
-            style={{ fontWeight: 600 }}
-          >
-            추가하기
-          </button>
         </section>
       </div>
     </div>

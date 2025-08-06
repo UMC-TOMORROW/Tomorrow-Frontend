@@ -16,7 +16,7 @@ const LicenseItem: React.FC<LicenseItemProps> = ({ file, onDelete }) => {
     >
       <button
         onClick={() => setMenuOpen(!menuOpen)}
-        className="absolute text-[13px] text-[#729A73] top-[10px] right-[10px]"
+        className="absolute text-[14px] text-[#729A73] top-[10px] right-[10px]"
         style={{ fontWeight: 600 }}
       >
         <SlOptionsVertical />
@@ -30,7 +30,7 @@ const LicenseItem: React.FC<LicenseItemProps> = ({ file, onDelete }) => {
 
       {menuOpen && (
         <div
-          className="absolute flex flex-col w-[43px] h-[32px] bg-[#EDEDED] items-center justify-center gap-[10px] right-[20px] z-10"
+          className="absolute flex flex-col w-[43px] h-[32px] bg-[#EDEDED] items-center justify-center gap-[10px] right-[25px] z-10"
           style={{ borderRadius: "8px" }}
         >
           <button

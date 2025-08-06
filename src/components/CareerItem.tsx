@@ -44,7 +44,7 @@ const CareerItem: React.FC<CareerItemProps> = ({
 
       {menuOpen && (
         <div
-          className="flex flex-col w-[43px] h-[32px] bg-[#EDEDED] items-center justify-center gap-[10px] absolute right-[20px] z-10"
+          className="flex flex-col w-[43px] h-[32px] bg-[#EDEDED] items-center justify-center gap-[10px] absolute right-[25px] z-10"
           style={{ borderRadius: "8px" }}
         >
           <button
