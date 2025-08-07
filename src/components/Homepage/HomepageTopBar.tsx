@@ -132,7 +132,7 @@ const FilterButton = ({
         ${
           isActive
             ? "bg-[#729A73] !text-white border-[#729A73]"
-            : "bg-white text-[#555555D9] border-[#ccc]"
+            : "bg-white text-[#555555D9] border-[##555555D9]"
         } 
         ${className}
       `}
