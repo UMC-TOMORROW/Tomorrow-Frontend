@@ -119,23 +119,27 @@ const RecommendationPage = () => {
           </p>
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center text-center mt-[160px] font-[Pretendard] font-semibold">
-          <p
-            className="text-[20px] leading-[26px] mb-[36px]"
-            style={{ color: palette.gray.dark }}
-          >
-            당신의 내일을 응원합니다.
-            <br />
-            지금 나에게 맞는 일을 찾아보세요.
-          </p>
-          <button
-            onClick={() => navigate(`/MyPage/WorkPreference`)}
-            className="text-[20px] underline cursor-pointer"
-            style={{ color: palette.primary.primary }}
-          >
-            내일추천 설정하기
-          </button>
-        </div>
+        <div className="flex flex-col items-center justify-center text-center mt-[100px] font-[Pretendard] font-semibold">
+  <img
+    src="src/assets/logo/recommend_logo.png"
+    alt="내일추천 퍼즐 이미지"
+    className="w-[253.8px] h-auto mb-[40px]"
+  />
+  <button
+    onClick={() => navigate(`/MyPage/WorkPreference`)}
+    className="text-[20px] underline mb-[40px]"
+    style={{ color: palette.primary.primary }}
+  >
+    내일추천 설정하기
+  </button>
+  <p className="text-[18px] leading-[30px]" style={{ color: palette.gray.dark }}>
+    지금 내일추천 설정하고
+    <br />
+    나에게 잘 맞는 일을 찾아보세요!✨
+  </p>
+</div>
+
+
       )}
 
       <BottomNavbar />
