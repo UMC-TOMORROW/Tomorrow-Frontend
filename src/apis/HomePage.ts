@@ -66,3 +66,14 @@ export const getJobsDefault = async (): Promise<JobsView[]> => {
   const response = await axiosInstance.get("/api/v1/jobsView");
   return response.data.result;
 };
+
+// 일자리 키워드 검색
+export const getJobsByKeyword = async (keyword: string) => {
+  const response = await axiosInstance.post("/api/v1/jobs/search", {
+    keyword: keyword,
+  });
+
+  console.log("🔥 getJobsByKeyword 응답:", response.data); // ✅ 이거도 찍어
+
+  return response.data;
+};

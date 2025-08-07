@@ -355,7 +355,7 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "물건 운반 근무 중심"]);
+                  setSelectedTags((prev) => [...prev, "물건 운반 중심"]);
                   setPage(6);
                 },
               },
@@ -428,7 +428,7 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "가벼운 활동 근무 중심"]);
+                  setSelectedTags((prev) => [...prev, "신체 활동 중심"]);
                   setPage(7);
                 },
               },
@@ -501,7 +501,7 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "사람 응대 근무 중심"]);
+                  setSelectedTags((prev) => [...prev, "사람 응대 중심"]);
                   setPage(8);
                 },
               },
@@ -591,7 +591,6 @@ function Onboarding() {
                 } catch (e) {
                   console.error("선호 저장 실패", e);
 
-                  // 👉 여기에 서버 응답 상세 출력 추가
                   if (axios.isAxiosError(e) && e.response) {
                     console.log("서버 응답 내용", e.response.data); // 👈 이 줄이 핵심
                   }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BottomNavbar from "../components/BottomNavbar";
 import type { JobsView } from "../types/homepage";
@@ -11,7 +11,10 @@ import { dummyJobs } from "../data/HomePage";
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const [jobList, setJobList] = useState<JobsView[]>([]);
+  const location = useLocation();
+  const [jobList, setJobList] = useState<JobsView[]>(
+    location.state?.jobList || []
+  );
 
   const [selectedRegion, setSelectedRegion] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState<string[]>([]);
@@ -22,9 +25,11 @@ const HomePage = () => {
   }>({});
 
   useEffect(() => {
+    if (location.state?.jobList) return;
+
     const fetchJobs = async () => {
       try {
-        const allJobs: JobsView[] = dummyJobs as JobsView[];
+        const allJobs: JobsView[] = dummyJobs;
 
         const filtered = allJobs.filter((job) => {
           const regionQuery = selectedRegion.join(" ");
@@ -59,12 +64,33 @@ const HomePage = () => {
     };
 
     fetchJobs();
-  }, [selectedRegion, selectedType, selectedDays, selectedTime]);
+  }, [
+    selectedRegion,
+    selectedType,
+    selectedDays,
+    selectedTime,
+    location.state,
+  ]);
 
   return (
     <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px]">
       <div className="flex-shrink-0 pt-[50px]">
         <Header title="내일" />
+
+        <div className="absolute left-1/2 -translate-x-1/2 top-11 w-[393px] h-[10px] bg-white !z-50" />
+
+        <div
+          onClick={() => navigate("/search")}
+          className="flex justify-center !py-2 !mt-[-4px] cursor-pointer bg-white"
+        >
+          <SearchBar onSearch={() => {}} />
+        </div>
+
+        <div
+          className="w-full h-[1px]"
+          style={{ backgroundColor: palette.gray.default }}
+        />
+
         <HomepageTopBar
           onRegionSelect={setSelectedRegion}
           onTypeSelect={setSelectedType}
@@ -72,20 +98,6 @@ const HomePage = () => {
           onTimeSelect={setSelectedTime}
         />
 
-        <div
-          className="w-full h-[1px]"
-          style={{ backgroundColor: palette.gray.default }}
-        />
-        <div className="h-[7px]" />
-
-        <div
-          onClick={() => navigate("/search")}
-          className="flex justify-center py-4 cursor-pointer"
-        >
-          <SearchBar onSearch={() => {}} />
-        </div>
-
-        <div className="h-[7px]" />
         <div
           className="w-full h-[1px]"
           style={{ backgroundColor: palette.gray.default }}
@@ -107,13 +119,13 @@ const HomePage = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-scroll bg-white">
+      <div className="flex-1 overflow-y-scroll bg-white min-h-[calc(100vh-100px)]">
         {jobList.length > 0 ? (
           jobList.map((jobCard) => (
             <JobCard
               key={jobCard.jobId}
               title={jobCard.title}
-              company={jobCard.company_name}
+              company={jobCard.companyName}
               location={jobCard.location}
               wage={`${jobCard.salary.toLocaleString()}원`}
               review={

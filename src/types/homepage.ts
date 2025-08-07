@@ -1,7 +1,7 @@
 export interface JobsView {
   jobId: number;
   title: string;
-  company_name: string;
+  companyName: string;
   location: string;
   salary: number;
   review_count: number;

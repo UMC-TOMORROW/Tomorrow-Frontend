@@ -2,7 +2,7 @@ export const dummyJobs = [
   {
     jobId: 1,
     title: "카페 알바",
-    company_name: "카페봄봄",
+    companyName: "카페봄봄",
     location: "서울 강남구",
     salary: 12000,
     review_count: 3,
@@ -19,7 +19,7 @@ export const dummyJobs = [
   {
     jobId: 2,
     title: "사무보조",
-    company_name: "삼성전자",
+    companyName: "삼성전자",
     location: "서울 서초구",
     salary: 3000000,
     review_count: 10,
@@ -36,7 +36,7 @@ export const dummyJobs = [
   {
     jobId: 3,
     title: "헬스장 트레이너",
-    company_name: "헬스킹",
+    companyName: "헬스킹",
     location: "서울 송파구",
     salary: 25000,
     review_count: 8,
@@ -51,7 +51,7 @@ export const dummyJobs = [
   {
     jobId: 4,
     title: "어린이집 교사",
-    company_name: "해피키즈",
+    companyName: "해피키즈",
     location: "서울 마포구",
     salary: 28000,
     review_count: 6,
@@ -68,7 +68,7 @@ export const dummyJobs = [
   {
     jobId: 5,
     title: "마트 진열 정리",
-    company_name: "이마트",
+    companyName: "이마트",
     location: "서울 노원구",
     salary: 11000,
     review_count: 2,
@@ -85,7 +85,7 @@ export const dummyJobs = [
   {
     jobId: 6,
     title: "디자인 아르바이트",
-    company_name: "디자인스튜디오",
+    companyName: "디자인스튜디오",
     location: "서울 강남구",
     salary: 15000,
     review_count: 4,
@@ -102,7 +102,7 @@ export const dummyJobs = [
   {
     jobId: 7,
     title: "청소도우미",
-    company_name: "크린하우스",
+    companyName: "크린하우스",
     location: "서울 중랑구",
     salary: 10000,
     review_count: 5,
@@ -117,7 +117,7 @@ export const dummyJobs = [
   {
     jobId: 8,
     title: "편의점 야간 알바",
-    company_name: "CU",
+    companyName: "CU",
     location: "서울 관악구",
     salary: 14000,
     review_count: 7,
@@ -134,7 +134,7 @@ export const dummyJobs = [
   {
     jobId: 9,
     title: "배달 보조",
-    company_name: "배달의민족",
+    companyName: "배달의민족",
     location: "서울 강동구",
     salary: 18000,
     review_count: 6,
@@ -149,7 +149,7 @@ export const dummyJobs = [
   {
     jobId: 10,
     title: "반찬가게 포장",
-    company_name: "반찬천국",
+    companyName: "반찬천국",
     location: "서울 은평구",
     salary: 11000,
     review_count: 3,
@@ -166,7 +166,7 @@ export const dummyJobs = [
   {
     jobId: 11,
     title: "도서관 정리 보조",
-    company_name: "성북구립도서관",
+    companyName: "성북구립도서관",
     location: "서울 성북구",
     salary: 10000,
     review_count: 2,
@@ -183,7 +183,7 @@ export const dummyJobs = [
   {
     jobId: 12,
     title: "문서 스캔 알바",
-    company_name: "문서마루",
+    companyName: "문서마루",
     location: "서울 중구",
     salary: 12000,
     review_count: 4,
@@ -200,7 +200,7 @@ export const dummyJobs = [
   {
     jobId: 13,
     title: "놀이방 보조",
-    company_name: "아이조아",
+    companyName: "아이조아",
     location: "서울 용산구",
     salary: 13000,
     review_count: 5,
@@ -215,7 +215,7 @@ export const dummyJobs = [
   {
     jobId: 14,
     title: "카페 주방 보조",
-    company_name: "카페라떼",
+    companyName: "카페라떼",
     location: "서울 동작구",
     salary: 11500,
     review_count: 6,
@@ -232,7 +232,7 @@ export const dummyJobs = [
   {
     jobId: 15,
     title: "미술 학원 보조",
-    company_name: "창의미술",
+    companyName: "창의미술",
     location: "서울 서대문구",
     salary: 16000,
     review_count: 7,
@@ -249,7 +249,7 @@ export const dummyJobs = [
   {
     jobId: 16,
     title: "사진 촬영 어시스턴트",
-    company_name: "포토스튜디오",
+    companyName: "포토스튜디오",
     location: "서울 종로구",
     salary: 17000,
     review_count: 9,
@@ -266,7 +266,7 @@ export const dummyJobs = [
   {
     jobId: 17,
     title: "스터디카페 관리",
-    company_name: "조용한공간",
+    companyName: "조용한공간",
     location: "서울 금천구",
     salary: 9500,
     review_count: 1,
@@ -283,7 +283,7 @@ export const dummyJobs = [
   {
     jobId: 18,
     title: "패스트푸드 매장 알바",
-    company_name: "맥너겟",
+    companyName: "맥너겟",
     location: "서울 강서구",
     salary: 12000,
     review_count: 10,
@@ -300,7 +300,7 @@ export const dummyJobs = [
   {
     jobId: 19,
     title: "빨래방 매장 관리",
-    company_name: "세탁소녀",
+    companyName: "세탁소녀",
     location: "서울 양천구",
     salary: 10000,
     review_count: 2,
@@ -317,7 +317,7 @@ export const dummyJobs = [
   {
     jobId: 20,
     title: "야간 독서실 알바",
-    company_name: "24시열공독서실",
+    companyName: "24시열공독서실",
     location: "서울 동대문구",
     salary: 13000,
     review_count: 4,
