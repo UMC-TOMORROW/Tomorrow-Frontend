@@ -17,37 +17,37 @@ const MyPage = () => {
       <Header title="마이페이지" />
 
       <div className="min-h-screen pb-[100px] overflow-y-auto mt-[50px]">
-        <section className="flex items-center justify-between px-[20px] py-[15px] h-[90px] border-b border-[#5555558C]">
+        <section className="flex items-center justify-between px-[20px] py-[15px] h-[115px] border-b border-[#DEDEDE]">
           <div className="flex items-center gap-4">
             <img src={member} />
             <div>
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
-                이OO
+                이내일
               </p>
-              <p className="text-[16px]">몸도 마음도 건강한 하루 되세요!</p>
+              <p className="text-[14px]">몸도 마음도 건강한 하루 되세요!</p>
             </div>
           </div>
           <button onClick={() => navigate("/MyPage/MemberInfo")}>
             <SlArrowRight className="w-[15px] h-[15px]" />
           </button>
         </section>
-        <section className="flex justify-around h-[100px] border-b border-[#5555558C] px-[20px] py-[15px]">
+        <section className="flex justify-around h-[100px] border-b border-[#DEDEDE] px-[20px] py-[15px]">
           <div
             onClick={() => navigate("/MyPage/ResumeManage")}
-            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
+            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
           >
             <p>이력서 관리</p>
             <img src={resume} />
           </div>
           <div
-            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
+            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
             onClick={() => navigate("")}
           >
             <p>내일 추천 관리</p>
             <img src={recommend} />
           </div>
         </section>
-        <section className="flex items-center justify-center h-[50px] divide-x border-b-[3px] border-[#CACACA]">
+        <section className="flex items-center justify-center h-[50px] divide-x border-b border-[#DEDEDE]">
           <div
             onClick={() => navigate("/MyPage/ApplyStatus")}
             className="text-[16px] flex w-1/2 items-center justify-center"
@@ -67,21 +67,21 @@ const MyPage = () => {
         </section>
         <section>
           <div
-            className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#5555558C]"
+            className="flex px-[25px] h-[55px] text-[15px] items-center border-b border-[#DEDEDE]"
             style={{ fontWeight: 800 }}
           >
             고객센터
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>공지사항</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>자주 묻는 질문</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>1:1 문의</span>
               <button>
                 <SlArrowRight className="w-[15px] h-[15px]" />
@@ -91,17 +91,17 @@ const MyPage = () => {
         </section>
         <section>
           <div
-            className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#5555558C]"
+            className="flex px-[25px] h-[55px] mt-[17px] text-[15px] items-center border-b border-[#DEDEDE]"
             style={{ fontWeight: 800 }}
           >
             약관 및 방침
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>이용약관</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>개인정보처리방침</span>
               <SlArrowRight />
             </li>

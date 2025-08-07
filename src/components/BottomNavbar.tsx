@@ -34,7 +34,7 @@ const BottomNavbar = () => {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[393px] px-[27px] py-[10px] border-t border-[#5555558C] flex justify-between items-center h-[64px] text-[11px] z-50 bg-white">
+    <nav className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[393px] px-[27px] py-[10px] border-t border-[#DEDEDE] flex justify-between items-center h-[64px] text-[11px] z-50 bg-white">
       <div className="flex w-full justify-between items-center">
         {navItems.map((item, index) => {
           const isActive = location.pathname === item.path;
