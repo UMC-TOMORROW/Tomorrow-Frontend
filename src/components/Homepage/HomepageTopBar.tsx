@@ -14,10 +14,8 @@ import RegionModal from "./HomepageModal/RegionModal";
 import TypeModal from "./HomepageModal/TypeModal";
 import DayModal from "./HomepageModal/DayModal";
 import TimeModal from "./HomepageModal/TimeModal";
-import type { Job } from "../../types/homepage";
 
 interface Props {
-  setJobList: (jobs: Job[]) => void;
   onRegionSelect: (regions: string[]) => void;
   onTypeSelect: (types: string[]) => void;
   onDaySelect: (days: string[]) => void;
@@ -25,7 +23,7 @@ interface Props {
 }
 
 const HomepageTopBar = ({
-  setJobList,
+  onRegionSelect,
   onTypeSelect,
   onDaySelect,
   onTimeSelect,
@@ -83,7 +81,7 @@ const HomepageTopBar = ({
       <RegionModal
         isOpen={modal === "region"}
         onClose={closeModal}
-        setJobList={setJobList}
+        onSubmit={onRegionSelect}
       />
       <TypeModal
         isOpen={modal === "type"}
