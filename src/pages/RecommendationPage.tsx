@@ -1,30 +1,62 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import BottomNavbar from "../components/BottomNavbar";
 import Header from "../components/Header";
 import RecommendationCard from "../components/recommendation/RecommendationCard";
-import recommendationData from "../data/recommendationData";
 import classNames from "classnames";
 import palette from "../styles/theme";
-import { useNavigate } from "react-router-dom";
+import { getRecommendations } from "../apis/recommendation";
+import type { Recommendation } from "../types/recommendation";
 
 const RecommendationPage = () => {
   const navigate = useNavigate();
-  const [current, setCurrent] = useState(0);
-  const total = recommendationData.length;
 
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [cursor, setCursor] = useState<number | undefined>(undefined);
+  const [hasNext, setHasNext] = useState(true);
+  const [current, setCurrent] = useState(0);
+
+  const fetchRecommendations = async () => {
+    try {
+      const data = await getRecommendations(8, cursor);
+      setRecommendations((prev) => [...prev, ...data.recommendationList]);
+      setHasNext(data.hasNext);
+
+      // 다음 요청을 위한 cursor 갱신
+      if (data.recommendationList.length > 0) {
+        const last =
+          data.recommendationList[data.recommendationList.length - 1];
+        setCursor(last.id);
+      }
+    } catch (err) {
+      console.error("추천 목록 불러오기 실패", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, []);
+
+  // 캐러셀 이전 버튼
   const handlePrev = () => {
     if (current > 0) setCurrent(current - 1);
   };
 
+  // 캐러셀 다음 버튼 + 무한스크롤 추가 호출
   const handleNext = () => {
-    if (current < total - 1) setCurrent(current + 1);
+    if (current < recommendations.length - 1) {
+      setCurrent(current + 1);
+      if (hasNext && current + 1 >= recommendations.length - 2) {
+        fetchRecommendations();
+      }
+    }
   };
 
   return (
     <div className="min-h-screen px-4 pb-16 pt-[60px]">
       <Header title="내일추천" />
 
-      {recommendationData.length > 0 ? (
+      {recommendations.length > 0 ? (
         <>
           <div className="text-center mt-[15px]">
             <div className="text-[25px] mb-[5px] font-[Pretendard]">✨</div>
@@ -40,7 +72,7 @@ const RecommendationPage = () => {
 
           {/* 카드 캐러셀 */}
           <div className="relative h-[430px] w-full flex items-center justify-center overflow-hidden">
-            {recommendationData.map((job, index) => {
+            {recommendations.map((job, index) => {
               const position = index - current;
 
               let translate = "";
@@ -54,13 +86,13 @@ const RecommendationPage = () => {
                 scale = "scale-95";
                 zIndex = "z-0";
                 opacity = "opacity-90";
-                variant = "dimmed"; // 왼쪽 카드
+                variant = "dimmed";
               } else if (position === 1) {
                 translate = "translateX(110%)";
                 scale = "scale-95";
                 zIndex = "z-0";
                 opacity = "opacity-90";
-                variant = "dimmed"; // 오른쪽 카드
+                variant = "dimmed";
               } else if (position < -1 || position > 1) {
                 translate = "translateX(0%)";
                 opacity = "opacity-0";
@@ -99,8 +131,7 @@ const RecommendationPage = () => {
                 ←
               </button>
             )}
-
-            {current < total - 1 && (
+            {current < recommendations.length - 1 && (
               <button
                 onClick={handleNext}
                 className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 p-2 rounded-full shadow z-20"
@@ -111,7 +142,7 @@ const RecommendationPage = () => {
           </div>
 
           <p
-            onClick={() => navigate(`/MyPage/WorkPreference`)}
+            onClick={() => navigate("/MyPage/WorkPreference")}
             className="text-[13px] text-center mt-[10px] underline cursor-pointer font-[Pretendard]"
             style={{ color: palette.gray.default }}
           >
@@ -120,26 +151,27 @@ const RecommendationPage = () => {
         </>
       ) : (
         <div className="flex flex-col items-center justify-center text-center mt-[100px] font-[Pretendard] font-semibold">
-  <img
-    src="src/assets/logo/recommend_logo.png"
-    alt="내일추천 퍼즐 이미지"
-    className="w-[253.8px] h-auto mb-[40px]"
-  />
-  <button
-    onClick={() => navigate(`/MyPage/WorkPreference`)}
-    className="text-[20px] underline mb-[40px]"
-    style={{ color: palette.primary.primary }}
-  >
-    내일추천 설정하기
-  </button>
-  <p className="text-[18px] leading-[30px]" style={{ color: palette.gray.dark }}>
-    지금 내일추천 설정하고
-    <br />
-    나에게 잘 맞는 일을 찾아보세요!✨
-  </p>
-</div>
-
-
+          <img
+            src="src/assets/logo/recommend_logo.png"
+            alt="내일추천 퍼즐 이미지"
+            className="w-[253.8px] h-auto mb-[40px]"
+          />
+          <button
+            onClick={() => navigate(`/MyPage/WorkPreference`)}
+            className="text-[20px] underline mb-[40px] cursor-pointer"
+            style={{ color: palette.primary.primary }}
+          >
+            내일추천 설정하기
+          </button>
+          <p
+            className="text-[18px] leading-[30px]"
+            style={{ color: palette.gray.dark }}
+          >
+            지금 내일추천 설정하고
+            <br />
+            나에게 잘 맞는 일을 찾아보세요!✨
+          </p>
+        </div>
       )}
 
       <BottomNavbar />

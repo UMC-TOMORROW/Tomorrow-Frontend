@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Recommendation } from "../../data/recommendationData";
+import type { Recommendation, PaymentType, WorkPeriod } from "../../types/recommendation";
 import palette from "../../styles/theme";
 
 interface Props {
@@ -7,11 +7,32 @@ interface Props {
   variant?: "default" | "dimmed";
 }
 
+const WORK_PERIOD_KOR: Record<WorkPeriod, string> = {
+  SHORT_TERM: "단기",
+  OVER_ONE_MONTH: "1개월 이상",
+  OVER_THREE_MONTH: "3개월 이상",
+  OVER_ONE_YEAR: "1년 이상",
+};
+
+const PAYMENT_TYPE_KOR: Record<PaymentType, string> = {
+  DAILY: "일급",
+  HOURLY: "시급",
+  MONTHLY: "월급",
+  PER_TASK: "건별",
+};
+
+const formatTime = (time: string): string => {
+  const [hourStr, minuteStr] = time.split(":");
+  const hour = hourStr.padStart(2, "0");
+  const minute = minuteStr.padStart(2, "0");
+  return `${hour}:${minute}`;
+};
+
+
 const RecommendationCard = ({ job, variant = "default" }: Props) => {
+  const [isApplied, setIsApplied] = useState(false);
   const backgroundColor =
     variant === "dimmed" ? palette.primary.primary : "rgba(161, 196, 163, 0.75)";
-
-  const [isApplied, setIsApplied] = useState(false);
 
   const handleApplyClick = () => {
     setIsApplied(true);
@@ -30,7 +51,7 @@ const RecommendationCard = ({ job, variant = "default" }: Props) => {
       </p>
 
       <div
-        className="max-w-[180px] rounded-[20px] px-[16px] py-[12px] mb-[10px] mx-auto"
+        className="max-w-[190px] rounded-[20px] px-[16px] py-[12px] mb-[10px] mx-auto"
         style={{ backgroundColor: palette.gray.light }}
       >
         <p
@@ -39,35 +60,32 @@ const RecommendationCard = ({ job, variant = "default" }: Props) => {
         >
           {job.companyName}
         </p>
+
         <strong
           className="text-[18px] font-bold font-[Pretendard]"
           style={{ color: palette.gray.dark }}
         >
           {job.title}
         </strong>
-        <p
-          className="text-[14px] mt-[12px] font-[Pretendard]"
-          style={{ color: palette.gray.dark }}
-        >
+
+        <p className="text-[14px] mt-[12px] font-[Pretendard]" style={{ color: palette.gray.dark }}>
           {job.location}
         </p>
-        <p
-          className="text-[14px] font-[Pretendard]"
-          style={{ color: palette.gray.dark }}
-        >
-          {job.workPeriod} · {job.workDays.join(", ")}
+
+        <p className="text-[14px] font-[Pretendard]" style={{ color: palette.gray.dark }}>
+          {job.isPeriodNegotiable ? "기간 협의" : WORK_PERIOD_KOR[job.workPeriod]} · {" "}
+          {job.isTimeNegotiable ? "시간 협의" : formatTime(job.workStart)}~{formatTime(job.workEnd)}
         </p>
-        <p
-          className="text-[14px] font-[Pretendard]"
-          style={{ color: palette.gray.dark }}
-        >
-          시 {job.salary.toLocaleString()}원
+
+        <p className="text-[14px] font-[Pretendard]" style={{ color: palette.gray.dark }}>
+          {PAYMENT_TYPE_KOR[job.paymentType]} {job.salary.toLocaleString()}원
         </p>
+
         <p
           className="text-[12px] mb-[8px] mt-[12px] font-[Pretendard]"
-          style={{ color: palette.gray.dark }}
+          style={{ color: palette.gray.default }}
         >
-          <span className="text-[12px]">★</span> 후기 {job.reviewsCount}건
+          <span className="text-[12px]">★</span> 후기 {job.reviewCount}건
         </p>
       </div>
 
