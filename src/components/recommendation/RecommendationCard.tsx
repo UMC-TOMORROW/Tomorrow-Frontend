@@ -1,10 +1,15 @@
 import { useState } from "react";
-import type { Recommendation, PaymentType, WorkPeriod } from "../../types/recommendation";
+import type {
+  Recommendation,
+  PaymentType,
+  WorkPeriod,
+} from "../../types/recommendation";
 import palette from "../../styles/theme";
 
 interface Props {
   job: Recommendation;
   variant?: "default" | "dimmed";
+  userName: string;
 }
 
 const WORK_PERIOD_KOR: Record<WorkPeriod, string> = {
@@ -28,11 +33,12 @@ const formatTime = (time: string): string => {
   return `${hour}:${minute}`;
 };
 
-
-const RecommendationCard = ({ job, variant = "default" }: Props) => {
+const RecommendationCard = ({ job, variant = "default", userName }: Props) => {
   const [isApplied, setIsApplied] = useState(false);
   const backgroundColor =
-    variant === "dimmed" ? palette.primary.primary : "rgba(161, 196, 163, 0.75)";
+    variant === "dimmed"
+      ? palette.primary.primary
+      : "rgba(161, 196, 163, 0.75)";
 
   const handleApplyClick = () => {
     setIsApplied(true);
@@ -47,7 +53,9 @@ const RecommendationCard = ({ job, variant = "default" }: Props) => {
         className="text-[16px] leading-[18px] mb-[15px] mt-[12px] text-center font-[Pretendard]"
         style={{ color: palette.gray.dark }}
       >
-        OO님의 근무 스타일에<br />맞는 일자리를 추천드려요!
+        {userName}님의 근무 스타일에
+        <br />
+        맞는 일자리를 추천드려요!
       </p>
 
       <div
@@ -68,16 +76,28 @@ const RecommendationCard = ({ job, variant = "default" }: Props) => {
           {job.title}
         </strong>
 
-        <p className="text-[14px] mt-[12px] font-[Pretendard]" style={{ color: palette.gray.dark }}>
+        <p
+          className="text-[14px] mt-[12px] font-[Pretendard]"
+          style={{ color: palette.gray.dark }}
+        >
           {job.location}
         </p>
 
-        <p className="text-[14px] font-[Pretendard]" style={{ color: palette.gray.dark }}>
-          {job.isPeriodNegotiable ? "기간 협의" : WORK_PERIOD_KOR[job.workPeriod]} · {" "}
-          {job.isTimeNegotiable ? "시간 협의" : formatTime(job.workStart)}~{formatTime(job.workEnd)}
+        <p
+          className="text-[14px] font-[Pretendard]"
+          style={{ color: palette.gray.dark }}
+        >
+          {job.isPeriodNegotiable
+            ? "기간 협의"
+            : WORK_PERIOD_KOR[job.workPeriod]}{" "}
+          · {job.isTimeNegotiable ? "시간 협의" : formatTime(job.workStart)}~
+          {formatTime(job.workEnd)}
         </p>
 
-        <p className="text-[14px] font-[Pretendard]" style={{ color: palette.gray.dark }}>
+        <p
+          className="text-[14px] font-[Pretendard]"
+          style={{ color: palette.gray.dark }}
+        >
           {PAYMENT_TYPE_KOR[job.paymentType]} {job.salary.toLocaleString()}원
         </p>
 
@@ -93,7 +113,9 @@ const RecommendationCard = ({ job, variant = "default" }: Props) => {
         onClick={handleApplyClick}
         className="w-[180px] mt-[30px] mb-[10px] mx-auto block text-[15px] font-[Pretendard] px-[20px] py-[8px] rounded-[10px] font-semibold"
         style={{
-          backgroundColor: isApplied ? palette.primary.primary : palette.gray.light,
+          backgroundColor: isApplied
+            ? palette.primary.primary
+            : palette.gray.light,
           color: isApplied ? "#ffffff" : palette.primary.primary,
           border: isApplied ? "none" : `1px solid ${palette.primary.primary}`,
         }}

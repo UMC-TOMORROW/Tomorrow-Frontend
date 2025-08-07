@@ -7,6 +7,7 @@ import classNames from "classnames";
 import palette from "../styles/theme";
 import { getRecommendations } from "../apis/recommendation";
 import type { Recommendation } from "../types/recommendation";
+import { getMyInfo } from "../apis/employerMyPage";
 
 const RecommendationPage = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const RecommendationPage = () => {
   const [cursor, setCursor] = useState<number | undefined>(undefined);
   const [hasNext, setHasNext] = useState(true);
   const [current, setCurrent] = useState(0);
+  const [userName, setUserName] = useState<string>("OO");
 
   const fetchRecommendations = async () => {
     try {
@@ -22,10 +24,8 @@ const RecommendationPage = () => {
       setRecommendations((prev) => [...prev, ...data.recommendationList]);
       setHasNext(data.hasNext);
 
-      // 다음 요청을 위한 cursor 갱신
       if (data.recommendationList.length > 0) {
-        const last =
-          data.recommendationList[data.recommendationList.length - 1];
+        const last = data.recommendationList[data.recommendationList.length - 1];
         setCursor(last.id);
       }
     } catch (err) {
@@ -34,15 +34,24 @@ const RecommendationPage = () => {
   };
 
   useEffect(() => {
-    fetchRecommendations();
+    const fetchInitialData = async () => {
+      try {
+        const info = await getMyInfo();
+        if (info.name) setUserName(info.name);
+
+        fetchRecommendations();
+      } catch (err) {
+        console.error("사용자 정보 조회 실패", err);
+      }
+    };
+
+    fetchInitialData();
   }, []);
 
-  // 캐러셀 이전 버튼
   const handlePrev = () => {
     if (current > 0) setCurrent(current - 1);
   };
 
-  // 캐러셀 다음 버튼 + 무한스크롤 추가 호출
   const handleNext = () => {
     if (current < recommendations.length - 1) {
       setCurrent(current + 1);
@@ -117,6 +126,7 @@ const RecommendationPage = () => {
                     <RecommendationCard
                       job={job}
                       variant={variant as "default" | "dimmed"}
+                      userName={userName}
                     />
                   </div>
                 </div>
