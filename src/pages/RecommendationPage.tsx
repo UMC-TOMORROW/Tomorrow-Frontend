@@ -5,8 +5,10 @@ import RecommendationCard from "../components/recommendation/RecommendationCard"
 import recommendationData from "../data/recommendationData";
 import classNames from "classnames";
 import palette from "../styles/theme";
+import { useNavigate } from "react-router-dom";
 
 const RecommendationPage = () => {
+  const navigate = useNavigate();
   const [current, setCurrent] = useState(0);
   const total = recommendationData.length;
 
@@ -22,21 +24,22 @@ const RecommendationPage = () => {
     <div className="min-h-screen px-4 pb-16 pt-[60px]">
       <Header title="내일추천" />
 
-      {/* 추천 설정 O */}
       {recommendationData.length > 0 ? (
         <>
-          <p
-            className='text-center text-[20px] leading-[20px] mb-[10px] mt-[40px] font-["Ulsan_Junggu"]'
-            style={{ color: palette.primary.primary }}
-          >
-            당신의 내일을 응원합니다.
-            <br />
-            <br />
-            지금 나에게 맞는 일을 찾아보세요.
-          </p>
+          <div className="text-center mt-[15px]">
+            <div className="text-[25px] mb-[5px] font-[Pretendard]">✨</div>
+            <p
+              className="text-[18px] leading-[25px] font-semibold font-[Pretendard]"
+              style={{ color: palette.primary.primary }}
+            >
+              당신의 내일을 응원합니다.
+              <br />
+              지금 나에게 맞는 일을 찾아보세요.
+            </p>
+          </div>
 
-          {/* 카드 캐러셀 영역 */}
-          <div className="relative h-[400px] w-full flex items-center justify-center overflow-hidden">
+          {/* 카드 캐러셀 */}
+          <div className="relative h-[430px] w-full flex items-center justify-center overflow-hidden">
             {recommendationData.map((job, index) => {
               const position = index - current;
 
@@ -44,23 +47,24 @@ const RecommendationPage = () => {
               let scale = "scale-100";
               let zIndex = "z-10";
               let opacity = "opacity-100";
+              let variant = "default";
 
               if (position === -1) {
                 translate = "translateX(-115%)";
                 scale = "scale-95";
                 zIndex = "z-0";
                 opacity = "opacity-90";
+                variant = "dimmed"; // 왼쪽 카드
               } else if (position === 1) {
                 translate = "translateX(110%)";
                 scale = "scale-95";
                 zIndex = "z-0";
                 opacity = "opacity-90";
+                variant = "dimmed"; // 오른쪽 카드
               } else if (position < -1 || position > 1) {
                 translate = "translateX(0%)";
                 opacity = "opacity-0";
                 zIndex = "z-0";
-              } else {
-                translate = "translateX(0%)";
               }
 
               return (
@@ -78,13 +82,15 @@ const RecommendationPage = () => {
                   }}
                 >
                   <div className="w-[280px]">
-                    <RecommendationCard job={job} />
+                    <RecommendationCard
+                      job={job}
+                      variant={variant as "default" | "dimmed"}
+                    />
                   </div>
                 </div>
               );
             })}
 
-            {/* ← 버튼 */}
             {current > 0 && (
               <button
                 onClick={handlePrev}
@@ -94,7 +100,6 @@ const RecommendationPage = () => {
               </button>
             )}
 
-            {/* → 버튼 */}
             {current < total - 1 && (
               <button
                 onClick={handleNext}
@@ -105,8 +110,8 @@ const RecommendationPage = () => {
             )}
           </div>
 
-          {/* 설정 링크 */}
           <p
+            onClick={() => navigate(`/MyPage/WorkPreference`)}
             className="text-[13px] text-center mt-[10px] underline cursor-pointer font-[Pretendard]"
             style={{ color: palette.gray.default }}
           >
@@ -114,7 +119,6 @@ const RecommendationPage = () => {
           </p>
         </>
       ) : (
-        // 추천 설정 X
         <div className="flex flex-col items-center justify-center text-center mt-[160px] font-[Pretendard] font-semibold">
           <p
             className="text-[20px] leading-[26px] mb-[36px]"
@@ -124,8 +128,8 @@ const RecommendationPage = () => {
             <br />
             지금 나에게 맞는 일을 찾아보세요.
           </p>
-
           <button
+            onClick={() => navigate(`/MyPage/WorkPreference`)}
             className="text-[20px] underline cursor-pointer"
             style={{ color: palette.primary.primary }}
           >
