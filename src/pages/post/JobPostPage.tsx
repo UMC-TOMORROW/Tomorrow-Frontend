@@ -23,7 +23,7 @@ const JobPostForm = () => {
         </h1>
       </div>
 
-      <div className="flex flex-col gap-6 py-8">
+      <div className="flex flex-col gap-6 !mx-4">
         {/* 1. 기업/개인 선택 */}
         <JobTypeSelector />
         <Divider />
