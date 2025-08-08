@@ -30,7 +30,7 @@ const JobPeriodSelector = () => {
               className={`px-[10px] py-[4px] rounded-[7px] border-[1px] text-[13px] leading-none whitespace-nowrap transition
           ${
             selected
-              ? "bg-[#5E7C62] !text-white border-[#5E7C62]"
+              ? "bg-[#729A73] !text-white border-[#729A73]"
               : "bg-white text-[#333] border-[#D9D9D9] hover:border-[#BBB] active:scale-[0.99]"
           }`}
             >

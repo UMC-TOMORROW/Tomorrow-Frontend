@@ -66,7 +66,7 @@ export default function JobTitleAndTags() {
                       transition whitespace-nowrap
             ${
               selected
-                ? "bg-[#5E7C62] !text-white border-[#5E7C62]"
+                ? "bg-[#729A73] !text-white !border-[#729A73]"
                 : "bg-white text-[#333] border-[#D9D9D9] hover:border-[#BBB] active:scale-[0.99]"
             }`}
               >
