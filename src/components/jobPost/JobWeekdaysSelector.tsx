@@ -15,7 +15,7 @@ const JobWeekdaysSelector = () => {
   return (
     <div className="w-full flex flex-col gap-2">
       <h2
-        style={{ margin: "10px 0", fontWeight: "700" }}
+        style={{ margin: "10px 0", fontWeight: "600" }}
         className="text-[18px] text-[#333] leading-[100%] font-pretendard"
       >
         요일 선택

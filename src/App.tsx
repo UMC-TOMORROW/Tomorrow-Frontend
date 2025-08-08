@@ -24,6 +24,7 @@ import ApplicantDetail from "./pages/Mypage/ApplicantDetail";
 import EmployerMyPage from "./pages/Mypage/EmployerMyPage";
 import SearchPage from "./pages/SearchPage";
 import UserInfoForm from "./pages/auth/UserInfoForm";
+import JobPostForm from "./pages/post/JobPostPage";
 
 const router = createBrowserRouter([
   { path: "/splash", element: <SplashScreenPage /> }, // 1) 스플래시
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
       { path: "career-talk/edit/:id", element: <CareerTalkWritePage /> },
       { path: "MyPage", element: <MyPage /> },
       { path: "recommendation", element: <RecommendationPage /> },
+      { path: "post", element: <JobPostForm /> },
     ],
   },
   {
