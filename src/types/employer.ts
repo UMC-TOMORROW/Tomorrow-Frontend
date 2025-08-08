@@ -4,14 +4,20 @@ export interface MyPostItem {
   postId: number;
   title: string;
   status: MyPostStatus;
-  date: string;   
-  location: string; 
+  date: string;
+  location: string;
   tags: string[];
 }
 
 export interface ApiEnvelope<T> {
   timestamp: string;
-  code: string;   
-  message: string; 
+  code: string;
+  message: string;
   result: T;
+}
+
+export interface ApiEnvelopeNoResult {
+  timestamp: string;
+  code: string;
+  message: string;
 }

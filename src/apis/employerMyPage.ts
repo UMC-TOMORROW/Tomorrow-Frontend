@@ -1,6 +1,6 @@
 import { axiosInstance } from "./axios";
 import type { MyInfo } from "../types/member";
-import type { ApiEnvelope, MyPostItem } from "../types/employer";
+import type { ApiEnvelope, ApiEnvelopeNoResult, MyPostItem, MyPostStatus } from "../types/employer";
 
 export const getMyInfo = async (): Promise<MyInfo> => {
   const response = await axiosInstance.get<MyInfo>("/api/v1/members/me");
@@ -21,4 +21,15 @@ export const getMyClosedPosts = async (): Promise<MyPostItem[]> => {
     "/api/v1/my-posts/closed"
   );
   return res.data.result;
+};
+
+// 모집글 상태 변경 (모집중/모집완료)
+export const updateMyPostStatus = async (
+  postId: number,
+  status: MyPostStatus
+): Promise<void> => {
+  await axiosInstance.patch<ApiEnvelopeNoResult>(
+    `/api/v1/jobs/${postId}/status`,
+    { status }
+  );
 };
