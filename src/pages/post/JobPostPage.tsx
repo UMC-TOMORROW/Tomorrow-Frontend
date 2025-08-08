@@ -11,6 +11,7 @@ import CompanyInfo from "../../components/jobPost/CompanyInfo";
 // import JobPostSubmitButton from "../../components/jobPost/JobPostSubmitButton";
 
 import Divider from "../../components/common/Devider";
+import CommonButton from "../../components/common/CommonButton";
 
 const JobPostForm = () => {
   return (
@@ -55,10 +56,9 @@ const JobPostForm = () => {
 
         {/* 9. 업체명 + 장소 */}
         <CompanyInfo />
-        <Divider />
 
         {/* 10. 다음 버튼 */}
-        {/* <JobPostSubmitButton /> */}
+        <CommonButton label={"다음"} />
       </div>
     </div>
   );
