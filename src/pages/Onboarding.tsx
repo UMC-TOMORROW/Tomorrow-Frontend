@@ -586,7 +586,7 @@ function Onboarding() {
                   console.log("받은 응답", response);
 
                   if (response.result.saved) {
-                    navigate("/");
+                    navigate("/recommendation");
                   }
                 } catch (e) {
                   console.error("선호 저장 실패", e);

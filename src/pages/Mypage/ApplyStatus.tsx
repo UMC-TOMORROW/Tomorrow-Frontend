@@ -1,49 +1,63 @@
-import { useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { getApplications } from "../../apis/applyStatus";
+import type { applyStatus, ApplicationFilter } from "../../types/applyStatus";
+
+type UIJob = {
+  date: string;
+  company: string;
+  title: string;
+  tags: string[];
+  status: "" | "합격";
+};
 
 const ApplyStatus = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"" | "합격">("");
+  const [jobs, setJobs] = useState<UIJob[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const jobList = [
-    {
-      date: "2025.06.01",
-      company: "(주) 내일",
-      title: "사무 보조 (문서 스캔 및 정리)",
-      tags: ["앉아서 근무 중심", "반복 손작업 포함"],
-      status: "",
-    },
-    {
-      date: "2025.06.01",
-      company: "내일도서관",
-      title: "도서 정리 및 대출 보조",
-      tags: ["가벼운 물건 운반", "손이나 팔을 자주 사용하는 작업"],
-      status: "",
-    },
-    {
-      date: "2025.06.10",
-      company: "내일텃밭",
-      title: "텃밭 관리 도우미",
-      tags: ["가벼운 물건 운반", "손이나 팔을 자주 사용하는 작업"],
-      status: "",
-    },
-    {
-      date: "2025.06.01",
-      company: "내일도서관",
-      title: "도서 정리 및 대출 보조",
-      tags: ["가벼운 물건 운반", "손이나 팔을 자주 사용하는 작업"],
-      status: "합격",
-    },
-    {
-      date: "2025.06.10",
-      company: "내일텃밭",
-      title: "텃밭 관리 도우미",
-      tags: ["가벼운 물건 운반", "손이나 팔을 자주 사용하는 작업"],
-      status: "합격",
-    },
-  ];
+  const formatDateDot = (d: string) => {
+    if (!d) return d;
+    const onlyNum = d.replace(/[^\d]/g, "");
+    if (onlyNum.length === 8) {
+      return `${onlyNum.slice(0, 4)}.${onlyNum.slice(4, 6)}.${onlyNum.slice(
+        6,
+        8
+      )}`;
+    }
+    return d;
+  };
 
-  const filteredJobs = jobList.filter((job) => job.status === activeTab);
+  const mapToUIJob = useCallback(
+    (it: applyStatus): UIJob => ({
+      date: formatDateDot(it.date),
+      company: it.company,
+      title: it.postTitle,
+      tags: [],
+      status: it.status === "합격" ? "합격" : "",
+    }),
+    []
+  );
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const type: ApplicationFilter = activeTab === "합격" ? "pass" : "all";
+        const list = await getApplications(type);
+        setJobs(list.map(mapToUIJob));
+      } catch (e) {
+        console.error("지원 현황 조회 실패:", e);
+        setJobs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [activeTab, mapToUIJob]);
+
+  const filteredJobs = useMemo(() => jobs, [jobs]);
 
   return (
     <div style={{ fontFamily: "Pretendard" }}>
@@ -56,6 +70,7 @@ const ApplyStatus = () => {
             지원현황
           </div>
         </section>
+
         <section className="flex justify-around items-center h-[45px]">
           <button
             style={{ fontWeight: 500 }}
@@ -76,9 +91,11 @@ const ApplyStatus = () => {
             합격
           </button>
         </section>
+
         <div className="flex text-[12px] items-center pl-[20px] h-[34px] border-b border-[#DEDEDE]">
-          {filteredJobs.length}건
+          {loading ? "로딩 중..." : `${filteredJobs.length}건`}
         </div>
+
         <ul>
           {filteredJobs.map((job, index) => (
             <div key={index}>
@@ -98,6 +115,7 @@ const ApplyStatus = () => {
                   <div className="w-[79px] h-[79px] bg-gray-300"></div>
                 </div>
               </li>
+
               {activeTab === "합격" ? (
                 <div>
                   <button
