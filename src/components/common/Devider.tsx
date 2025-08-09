@@ -1,6 +1,6 @@
 export default function Divider() {
   return (
-    <div className="w-full max-w-[375px] h-[20px] px-[10px] flex items-center">
+    <div className="w-full max-w-[375px] h-[20px] flex items-center">
       <div className="w-full h-px bg-[#DEDEDE]" />
     </div>
   );
