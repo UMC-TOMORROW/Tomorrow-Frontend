@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { getApplications } from "../../apis/applyStatus";
-import type { applyStatus, ApplicationFilter } from "../../types/applyStatus";
+import type { ApplicationFilter, applyStatus } from "../../types/mypage";
+import { getApplications } from "../../apis/mypage";
 
 type UIJob = {
   date: string;

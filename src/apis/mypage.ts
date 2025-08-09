@@ -1,9 +1,9 @@
-import { axiosInstance } from "./axios";
 import type {
-  applyStatus,
-  ApplicationFilter,
   ApiResponse,
-} from "../types/applyStatus";
+  ApplicationFilter,
+  applyStatus,
+} from "../types/mypage";
+import { axiosInstance } from "./axios";
 
 export const getApplications = async (
   type: ApplicationFilter
