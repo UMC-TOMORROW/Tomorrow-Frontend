@@ -4,6 +4,7 @@ import type {
   ApplicationFilter,
   applyStatus,
   deleteMember,
+  reviews,
   savedJobs,
 } from "../types/mypage";
 import { axiosInstance } from "./axios";
@@ -118,4 +119,13 @@ export const deactivateMember = async (
     console.error("[deactivateMember] failed", { url, status, data });
     throw e instanceof Error ? e : new Error("Request failed");
   }
+};
+
+export const postReview = async (reviewData: reviews): Promise<number> => {
+  const res = await axiosInstance.post<ApiResponse<{ reviewId: number }>>(
+    "/api/v1/reviews",
+    reviewData
+  );
+
+  return res.data.result.reviewId;
 };

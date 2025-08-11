@@ -30,3 +30,9 @@ export interface deleteMember {
   deletedAt: string;
   recoverableUntil: string;
 }
+
+export interface reviews {
+  postId: number;
+  stars: number;
+  review: string;
+}
