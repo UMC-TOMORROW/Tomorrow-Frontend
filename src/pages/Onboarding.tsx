@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import CommonButton from "../components/common/CommonButton";
 import palette from "../styles/theme";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,9 @@ function Onboarding() {
   const [page, setPage] = useState(1);
   const [showSkipModal, setShowSkipModal] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const isSavingRef = useRef(false);
+  const addUniqueTag = (tag: string) =>
+    setSelectedTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
 
   const ProgressDots = ({
     current,
@@ -209,7 +212,7 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "앉아서 근무 중심"]);
+                  addUniqueTag("앉아서 근무 중심");
                   setPage(4);
                 },
               },
@@ -282,7 +285,7 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "서서 근무 중심"]);
+                  addUniqueTag("서서 근무 중심");
                   setPage(5);
                 },
               },
@@ -355,7 +358,7 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "물건 운반 중심"]);
+                  addUniqueTag("물건 운반 중심");
                   setPage(6);
                 },
               },
@@ -428,7 +431,7 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "신체 활동 중심"]);
+                  addUniqueTag("신체 활동 중심");
                   setPage(7);
                 },
               },
@@ -501,7 +504,7 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "사람 응대 중심"]);
+                  addUniqueTag("사람 응대 중심");
                   setPage(8);
                 },
               },
@@ -550,52 +553,55 @@ function Onboarding() {
           style={{ backgroundColor: palette.primary.primary }}
           className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10"
         >
-          <img
-            src="/src/assets/logo/logo_white.png"
-            className="w-[233px] h-[153px]"
-          ></img>
-          {/* 이미지 */}
-          <img
-            src="/src/assets/onboarding/FormingTeamLeadership-pana.png"
-            className="w-[340px] h-[300px]"
-          />{" "}
-          <p
-            className="text-[20px] !font-semibold text-white text-center"
-            style={{
-              fontFamily: "Pretendard",
-            }}
-          >
-            당신의 더 나은
-            <br />
-            '내일'을 위해 '내 일' 찾기
-          </p>
-          {/* 버튼 영역 */}
+          {/* ...생략 */}
           <div className="w-full max-w-[320px] font-bold items-center flex flex-col gap-3">
             <CommonButton
               label="시작하기"
               className="!w-[315px] !h-[52px] !rounded-[10px] !bg-white !text-[#729A73]"
               onClick={async () => {
+                if (isSavingRef.current) return;
+
+                const deduped = Array.from(new Set(selectedTags));
+                if (deduped.length === 0) {
+                  alert("선호 태그를 최소 1개 이상 선택해 주세요.");
+                  return;
+                }
+
                 try {
+                  isSavingRef.current = true;
+
                   const response = await postPreferences({
-                    preferenceList: selectedTags,
+                    preferenceList: deduped,
                   });
 
-                  console.log("보낸 데이터", {
-                    preferences: selectedTags,
-                  });
+                  console.log("보낸 데이터", { preferences: deduped });
                   console.log("받은 응답", response);
 
-                  if (response.result.saved) {
-                    navigate("/");
+                  if (response?.result?.saved) {
+                    navigate("/recommendation");
+                  } else {
+                    alert(
+                      "선호 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+                    );
                   }
-                } catch (e) {
-                  console.error("선호 저장 실패", e);
-
-                  if (axios.isAxiosError(e) && e.response) {
-                    console.log("서버 응답 내용", e.response.data); // 👈 이 줄이 핵심
+                } catch (err: unknown) {
+                  if (axios.isAxiosError(err)) {
+                    console.error(
+                      "AxiosError",
+                      err.response?.data ?? err.message
+                    );
+                    alert(
+                      "선호 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요."
+                    );
+                  } else if (err instanceof Error) {
+                    console.error(err.message);
+                    alert(`선호 정보 저장에 실패했습니다.\n${err.message}`);
+                  } else {
+                    console.error(err);
+                    alert("선호 정보 저장 중 알 수 없는 오류가 발생했습니다.");
                   }
-
-                  alert("선호 정보 저장에 실패했습니다.");
+                } finally {
+                  isSavingRef.current = false;
                 }
               }}
             />
