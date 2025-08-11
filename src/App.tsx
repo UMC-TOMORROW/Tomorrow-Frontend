@@ -27,6 +27,7 @@ import UserInfoForm from "./pages/auth/UserInfoForm";
 import JobPostForm from "./pages/post/JobPostPage";
 import BusinessStep from "./components/jobPost/BusinessStep";
 import PersonalStep from "./components/jobPost/PerSonalStep";
+import WorkPreference from "./pages/Mypage/WorkPreference";
 
 const router = createBrowserRouter([
   { path: "/splash", element: <SplashScreenPage /> }, // 1) 스플래시
@@ -67,6 +68,7 @@ const router = createBrowserRouter([
       { path: "SavedJobs", element: <SavedJobs /> },
       { path: "ApplicantList", element: <ApplicantList /> },
       { path: "ApplicantDetail", element: <ApplicantDetail /> },
+      { path: "WorkPreference", element: <WorkPreference /> },
     ],
   },
 ]);

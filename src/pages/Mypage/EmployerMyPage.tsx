@@ -16,7 +16,7 @@ const EmployerMyPage = () => {
       <Header title="마이페이지" />
 
       <div className="min-h-screen pb-[100px] overflow-y-auto mt-[50px]">
-        <section className="flex items-center justify-between px-[20px] py-[15px] h-[90px] border-b border-[#5555558C]">
+        <section className="flex items-center justify-between px-[20px] py-[15px] h-[115px] border-b border-[#DEDEDE]">
           <div className="flex items-center gap-4">
             <img src={member} />
             <div>
@@ -32,16 +32,16 @@ const EmployerMyPage = () => {
             <SlArrowRight className="w-[15px] h-[15px]" />
           </button>
         </section>
-        <section className="flex justify-around h-[100px] border-b border-[#5555558C] px-[20px] py-[15px]">
+        <section className="flex justify-around h-[100px] border-b border-[#DEDEDE] px-[20px] py-[15px] mb-[30px]">
           <div
             onClick={() => navigate("/MyPage/ManageMyJobs")}
-            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
+            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
           >
             <p>공고 관리</p>
             <img src={resume} />
           </div>
           <div
-            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[130px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
+            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
             onClick={() => navigate("")}
           >
             <p>일자리 등록</p>
@@ -50,13 +50,13 @@ const EmployerMyPage = () => {
         </section>
         <section>
           <div
-            className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#5555558C]"
+            className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#DEDEDE]"
             style={{ fontWeight: 800 }}
           >
             사업자 정보
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>사업자 정보 등록</span>
               <SlArrowRight />
             </li>
@@ -64,21 +64,21 @@ const EmployerMyPage = () => {
         </section>
         <section>
           <div
-            className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#5555558C]"
+            className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#DEDEDE]"
             style={{ fontWeight: 800 }}
           >
             고객센터
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>공지사항</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>자주 묻는 질문</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>1:1 문의</span>
               <button>
                 <SlArrowRight className="w-[15px] h-[15px]" />
@@ -88,17 +88,17 @@ const EmployerMyPage = () => {
         </section>
         <section>
           <div
-            className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#5555558C]"
+            className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#DEDEDE]"
             style={{ fontWeight: 800 }}
           >
             약관 및 방침
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>이용약관</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#5555558C]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>개인정보처리방침</span>
               <SlArrowRight />
             </li>

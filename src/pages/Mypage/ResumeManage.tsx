@@ -1,6 +1,4 @@
-import Header from "../../components/Header";
 import { useState } from "react";
-import { SlOptionsVertical } from "react-icons/sl";
 import CareerForm from "../../components/CareerForm";
 import CareerItem from "../../components/CareerItem";
 import LicenseForm from "../../components/LicenseForm";
@@ -13,7 +11,6 @@ const ResumeManage = () => {
   const [showCareerBox, setShowCareerBox] = useState(false);
   const [licenseFile, setLicenseFile] = useState<File[]>([]);
   const [showLicenseBox, setShowLicenseBox] = useState(false);
-  const [licenseMenuOpen, setLicenseMenuOpen] = useState(false);
   const [licenseForm, setLicenseForm] = useState<number[]>([0]);
 
   const [careers, setCareers] = useState<
@@ -119,12 +116,10 @@ const ResumeManage = () => {
 
   return (
     <div style={{ fontFamily: "Pretendard" }}>
-      <Header title="내일" />
-
-      <div className="mt-[50px] bg-white min-h-screen">
+      <div className="bg-white min-h-screen">
         <section>
           <div
-            className="flex justify-center items-center text-[15px] h-[38px] border-b border-[#5555558C]"
+            className="flex justify-center items-center text-[20px] h-[52px] border-b-[1.5px] border-[#DEDEDE]"
             style={{ fontWeight: 700 }}
           >
             이력서 관리
@@ -137,7 +132,7 @@ const ResumeManage = () => {
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
                 이내일
               </p>
-              <p className="text-[13px]">010-1234-5678</p>
+              <p className="text-[14px]">010-1234-5678</p>
             </div>
           </div>
         </section>
@@ -150,12 +145,12 @@ const ResumeManage = () => {
         <div>
           {!showSelfIntroBox ? (
             <div className="flex flex-col p-[15px] h-[284px] gap-[16px]">
-              <p className="text-[16px]" style={{ fontWeight: 700 }}>
+              <p className="text-[18px]" style={{ fontWeight: 700 }}>
                 자기소개
               </p>
               <div className="flex flex-col gap-[16px]">
                 <div className="flex flex-col gap-[3px]">
-                  <p className="text-[14px]" style={{ fontWeight: 700 }}>
+                  <p className="text-[16px]" style={{ fontWeight: 700 }}>
                     간단한 자기소개를 남겨주세요.
                   </p>
                   <p className="text-[14px]">
@@ -181,7 +176,7 @@ const ResumeManage = () => {
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
                 자기소개
               </p>
-              <div className="flex flex-col h-[85px] gap-[9px]">
+              <div className="flex flex-col h-[85px] gap-[5px]">
                 <button
                   onClick={() => setShowSelfIntroBox(false)}
                   className="flex text-[13px] text-[#729A73] justify-end underline"
@@ -216,7 +211,7 @@ const ResumeManage = () => {
 
         {!showCareerBox ? (
           <div className="flex flex-col px-[15px] py-[15px] gap-[16px]">
-            <p className="text-[16px]" style={{ fontWeight: 700 }}>
+            <p className="text-[18px]" style={{ fontWeight: 700 }}>
               경력
             </p>
             {careers.map((career) => (
@@ -249,8 +244,8 @@ const ResumeManage = () => {
               labels={labels}
             />
             <button
-              className="h-[42px] border border-[#729A73] text-[#729A73] text-14px mt-[20px]"
-              style={{ borderRadius: "12px" }}
+              className="h-[42px] border border-[#729A73] text-[#729A73] text-[14px] mt-[20px]"
+              style={{ borderRadius: "10px" }}
               onClick={handleAddCareer}
             >
               + 추가하기
@@ -261,8 +256,8 @@ const ResumeManage = () => {
             <p className="text-[18px]" style={{ fontWeight: 800 }}>
               경력
             </p>
-            <div className=" flex flex-col gap-[6px]">
-              <div className="relative flex justify-end h-[36px]">
+            <div className=" flex flex-col">
+              <div className="relative flex justify-end h-[30px]">
                 <button
                   onClick={() => {
                     setShowCareerBox(false);
@@ -273,7 +268,7 @@ const ResumeManage = () => {
                       selectedLabel: "",
                     });
                   }}
-                  className="text-[13px] text-[#729A73]"
+                  className="text-[14px] text-[#729A73]"
                   style={{ fontWeight: 600 }}
                 >
                   +추가
@@ -300,12 +295,12 @@ const ResumeManage = () => {
 
         {!showLicenseBox ? (
           <div className="flex flex-col px-[15px] pt-[15px] pb-[15px] gap-[16px]">
-            <p className="text-[16px]" style={{ fontWeight: 700 }}>
+            <p className="text-[18px]" style={{ fontWeight: 700 }}>
               자격증
             </p>
             <div className="flex flex-col gap-[22px]">
               <div className="flex flex-col gap-[3px]">
-                <p className="text-[14px]" style={{ fontWeight: 700 }}>
+                <p className="text-[16px]" style={{ fontWeight: 700 }}>
                   자격증을 추가해주세요.
                 </p>
                 <p className="text-[14px]">
@@ -346,32 +341,12 @@ const ResumeManage = () => {
             </p>
             <div className="relative flex justify-end h-[30px] gap-[14px]">
               <button
-                className="text-[13px] text-[#729A73]"
+                className="text-[14px] text-[#729A73]"
                 style={{ fontWeight: 600 }}
                 onClick={() => setShowLicenseBox(false)}
               >
                 +추가
               </button>
-              <button
-                onClick={() => setLicenseMenuOpen(!licenseMenuOpen)}
-                className="text-[13px] text-[#729A73]"
-                style={{ fontWeight: 600 }}
-              >
-                <SlOptionsVertical />
-              </button>
-              {licenseMenuOpen && (
-                <div
-                  className="flex flex-col w-[43px] h-[32px] bg-[#EDEDED] items-center justify-center gap-[10px] absolute right-0 mt-[30px] z-10"
-                  style={{ borderRadius: "8px" }}
-                >
-                  <button
-                    className="text-[12px] text-[#EE0606CC]"
-                    style={{ fontWeight: 600 }}
-                  >
-                    삭제
-                  </button>
-                </div>
-              )}
             </div>
             <div className="flex flex-col gap-[15px]">
               {licenseFile.map((file, idx) => (
@@ -389,7 +364,7 @@ const ResumeManage = () => {
           <button
             onClick={handleSaveResume}
             className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] bg-[#729A73]"
-            style={{ fontWeight: 600, borderRadius: "12px" }}
+            style={{ fontWeight: 600, borderRadius: "10px" }}
           >
             이력서 저장
           </button>
