@@ -36,3 +36,28 @@ export interface reviews {
   stars: number;
   review: string;
 }
+
+export type Gender = "MALE" | "FEMALE" | null;
+
+export interface Member {
+  id: number;
+  role: string | null;
+  username: string | null;
+  email: string | null;
+  name: string | null;
+  gender: Gender;
+  phoneNumber: string | null;
+  address: string | null;
+  status: string | null;
+  inactiveAt: string | null;
+  isOnboarded: boolean | null;
+  provider: string | null;
+  providerUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  resumeId: number | null;
+}
+
+export type MemberUpdate = Partial<
+  Pick<Member, "email" | "name" | "gender" | "phoneNumber" | "address">
+>;

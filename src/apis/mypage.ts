@@ -4,6 +4,8 @@ import type {
   ApplicationFilter,
   applyStatus,
   deleteMember,
+  Member,
+  MemberUpdate,
   reviews,
   savedJobs,
 } from "../types/mypage";
@@ -128,4 +130,39 @@ export const postReview = async (reviewData: reviews): Promise<number> => {
   );
 
   return res.data.result.reviewId;
+};
+
+export const patchMyProfile = async (body: MemberUpdate): Promise<void> => {
+  const payload: Record<string, unknown> = {};
+  Object.entries(body).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && String(v).trim() !== "")
+      payload[k] = v;
+  });
+
+  try {
+    const res = await axiosInstance.put<ApiResponse<Member | null>>(
+      "/api/v1/members/me",
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      }
+    );
+
+    if (res.status < 200 || res.status >= 300) {
+      throw new Error(res.data?.message || "프로필 수정에 실패했습니다.");
+    }
+  } catch (e) {
+    if (axios.isAxiosError(e)) {
+      const msg =
+        (e.response?.data as Partial<ApiResponse<unknown>> | undefined)
+          ?.message ||
+        e.message ||
+        "프로필 수정에 실패했습니다.";
+      throw new Error(msg);
+    }
+    throw e instanceof Error ? e : new Error("프로필 수정에 실패했습니다.");
+  }
 };
