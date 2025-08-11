@@ -7,13 +7,13 @@ import palette from "../styles/theme";
 import SearchBar from "../components/search/SearchBar";
 import JobCard from "../components/Homepage/JobCard";
 import HomepageTopBar from "../components/Homepage/HomepageTopBar";
-import { dummyJobs } from "../data/HomePage";
+import { getJobsByDay, getJobsDefault } from "../apis/HomePage";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [jobList, setJobList] = useState<JobsView[]>(
-    location.state?.jobList || []
+    Array.isArray(location.state?.jobList) ? location.state.jobList : []
   );
 
   const [selectedRegion, setSelectedRegion] = useState<string[]>([]);
@@ -25,72 +25,79 @@ const HomePage = () => {
   }>({});
 
   useEffect(() => {
-    if (location.state?.jobList) return;
-
     const fetchJobs = async () => {
       try {
-        const allJobs: JobsView[] = dummyJobs;
+        // 검색 페이지에서 넘어온 목록이 있으면 그걸 우선 사용
+        if (location.state?.jobList && Array.isArray(location.state.jobList)) {
+          setJobList(location.state.jobList);
+          return;
+        }
 
-        const filtered = allJobs.filter((job) => {
-          const regionQuery = selectedRegion.join(" ");
-          const matchRegion =
-            selectedRegion.length === 0 || job.location?.includes(regionQuery);
+        // 1) 기본 조회
+        let jobs = await getJobsDefault();
 
-          const matchType =
-            selectedType.length === 0 ||
-            (job.job_category &&
-              selectedType.some((type) => job.job_category?.includes(type)));
+        // 2) 지역 필터 (서버)
+        if (selectedRegion.length > 0) {
+          jobs = jobs.filter((j: JobsView) =>
+            selectedRegion.every((kw) => j.location?.includes(kw))
+          );
+        }
 
-          const matchDay =
-            selectedDays.length === 0 ||
-            (job.work_days &&
-              job.work_days.some((day) => selectedDays.includes(day)));
+        // 3) 업무 유형 필터 (서버)
+        if (selectedType.length > 0) {
+          jobs = jobs.filter((j: JobsView) =>
+            selectedType.includes(
+              Array.isArray(j.job_category)
+                ? j.job_category[0] ?? ""
+                : j.job_category ?? ""
+            )
+          );
+        }
 
-          const matchTime =
-            (!selectedTime.start && !selectedTime.end) ||
-            (job.work_start &&
-              job.work_end &&
-              (!selectedTime.start || job.work_start >= selectedTime.start) &&
-              (!selectedTime.end || job.work_end <= selectedTime.end));
+        // 4) 요일 필터 (서버)
+        if (selectedDays.length > 0) {
+          const byDay = await getJobsByDay(selectedDays);
+          const validIds = new Set(byDay.map((j) => j.jobId));
+          jobs = jobs.filter((j) => validIds.has(j.jobId));
+        }
 
-          return matchRegion && matchType && matchDay && matchTime;
-        });
+        // 5) 시간 필터 (서버)
+        const toMin = (t?: string) => {
+          if (!t) return undefined;
+          const [hh, mm] = t.split(":");
+          return Number(hh) * 60 + Number(mm);
+        };
+        if (selectedTime.start || selectedTime.end) {
+          const startMin = toMin(selectedTime.start || "00:00");
+          const endMin = toMin(selectedTime.end || "23:59");
+          jobs = jobs.filter((j: JobsView) => {
+            const s = toMin(j.work_start);
+            const e = toMin(j.work_end);
+            if (s == null || e == null) return false;
+            return !(e < startMin! || s > endMin!);
+          });
+        }
 
-        setJobList(filtered);
+        setJobList(jobs);
       } catch (error) {
-        console.error("기본 일자리 목록 조회 실패:", error);
+        console.error("일자리 조회 실패:", error);
         setJobList([]);
       }
     };
 
     fetchJobs();
   }, [
+    location.state,
     selectedRegion,
     selectedType,
     selectedDays,
     selectedTime,
-    location.state,
   ]);
 
   return (
     <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px]">
       <div className="flex-shrink-0 pt-[50px]">
         <Header title="내일" />
-
-        <div className="absolute left-1/2 -translate-x-1/2 top-11 w-[393px] h-[10px] bg-white !z-50" />
-
-        <div
-          onClick={() => navigate("/search")}
-          className="flex justify-center !py-2 !mt-[-4px] cursor-pointer bg-white"
-        >
-          <SearchBar onSearch={() => {}} />
-        </div>
-
-        <div
-          className="w-full h-[1px]"
-          style={{ backgroundColor: palette.gray.default }}
-        />
-
         <HomepageTopBar
           onRegionSelect={setSelectedRegion}
           onTypeSelect={setSelectedType}
@@ -102,6 +109,20 @@ const HomePage = () => {
           className="w-full h-[1px]"
           style={{ backgroundColor: palette.gray.default }}
         />
+        <div className="h-[7px]" />
+
+        <div
+          onClick={() => navigate("/search")}
+          className="flex justify-center py-4 cursor-pointer"
+        >
+          <SearchBar onSearch={() => {}} />
+        </div>
+
+        <div className="h-[7px]" />
+        <div
+          className="w-full h-[1px]"
+          style={{ backgroundColor: palette.gray.default }}
+        />
 
         <div className="bg-white">
           <div className="flex justify-between items-center h-[25px]">
@@ -109,7 +130,7 @@ const HomePage = () => {
               className="!ml-7 text-[12px]"
               style={{ color: palette.gray.default }}
             >
-              {jobList.length}건
+              {Array.isArray(jobList) ? jobList.length : 0}건
             </span>
           </div>
           <div
@@ -119,27 +140,35 @@ const HomePage = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-scroll bg-white min-h-[calc(100vh-100px)]">
-        {jobList.length > 0 ? (
+      <div className="flex-1 overflow-y-scroll bg-white">
+        {Array.isArray(jobList) && jobList.length > 0 ? (
           jobList.map((jobCard) => (
             <JobCard
               key={jobCard.jobId}
               title={jobCard.title}
               company={jobCard.companyName}
               location={jobCard.location}
-              wage={`${jobCard.salary.toLocaleString()}원`}
+              wage={`${jobCard.salary?.toLocaleString() || "0"}원`}
               review={
-                jobCard.review_count > 0 ? `${jobCard.review_count}건` : ""
+                typeof jobCard.review_count === "number" &&
+                jobCard.review_count > 0
+                  ? `${jobCard.review_count}건`
+                  : ""
               }
-              image={jobCard.job_image_url}
-              isTime={jobCard.isTimeNegotiable}
-              isPeriod={jobCard.isPeriodNegotiable}
-              environment={jobCard.work_environment}
+              image={jobCard.job_image_url ?? ""} // string 보장
+              isTime={Boolean(jobCard.isTimeNegotiable)} // boolean 보장
+              isPeriod={Boolean(jobCard.isPeriodNegotiable)} // boolean 보장
+              environment={
+                Array.isArray(jobCard.work_environment)
+                  ? jobCard.work_environment
+                  : []
+              }
             />
           ))
         ) : (
           <p className="text-center mt-10 text-gray-500">일자리가 없습니다.</p>
         )}
+
         <div className="h-[63px]" />
       </div>
 

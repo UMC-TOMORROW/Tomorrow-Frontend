@@ -13,3 +13,14 @@ export interface ApiResponse<T> {
   message: string;
   result: T;
 }
+
+export interface savedJobs {
+  postId: number;
+  title: string;
+  company: string;
+  location: string;
+  wage: string;
+  tags: string[];
+  rating: number;
+  isWished: boolean;
+}
