@@ -1,5 +1,5 @@
+// components/jobPost/JobTimeSelector.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { FaClock } from "react-icons/fa";
 import checkActive from "../../assets/check_active.png";
 import checkInactive from "../../assets/check_inactive.png";
 import time from "../../assets/filter/time.png";
@@ -30,7 +30,11 @@ const timeOptions = [
   "오후 07:00",
 ];
 
+const ITEM_H = 32;
+
+// "오전 09:30" -> 분 단위
 const toKey = (t: string) => {
+  if (!t) return -1;
   const [ampm, hhmm] = t.split(" ");
   let [hh, mm] = hhmm.split(":").map(Number);
   if (ampm === "오전") {
@@ -41,17 +45,47 @@ const toKey = (t: string) => {
   return hh * 60 + mm;
 };
 
-const ITEM_H = 32;
+// "오전 09:30" -> "09:30"
+const toHHmm = (t: string): string => {
+  const mins = toKey(t);
+  if (mins < 0) return "";
+  const hh = Math.floor(mins / 60);
+  const mm = mins % 60;
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+};
 
-export default function JobTimeSelector() {
+// "09:30" -> "오전 09:30"
+const toDisplay = (hhmm: string): string => {
+  if (!hhmm) return "";
+  const [hStr, mStr] = hhmm.split(":");
+  let h = Number(hStr);
+  const m = Number(mStr);
+  const am = h < 12;
+  const dispH = (() => {
+    if (h === 0) return 12;
+    if (h > 12) return h - 12;
+    return h;
+  })();
+  return `${am ? "오전" : "오후"} ${String(dispH).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+};
+
+type Props = {
+  start: string; // "HH:mm"
+  end: string; // "HH:mm"
+  negotiable: boolean;
+  onChange: (v: { start: string; end: string; negotiable: boolean }) => void;
+};
+
+export default function JobTimeSelector({ start, end, negotiable, onChange }: Props) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isNegotiable, setIsNegotiable] = useState(false);
 
-  const [startTime, setStartTime] = useState("오전 09:00");
-  const [endTime, setEndTime] = useState("오후 06:00");
+  // 드롭다운 내 임시 선택(로컬)
+  const [draftStart, setDraftStart] = useState<string>("");
+  const [draftEnd, setDraftEnd] = useState<string>("");
 
-  const [draftStart, setDraftStart] = useState(startTime);
-  const [draftEnd, setDraftEnd] = useState(endTime);
+  // 표시용 라벨은 props 기반(오전/오후 표기 유지)
+  const displayStart = toDisplay(start);
+  const displayEnd = toDisplay(end);
 
   const startRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -60,9 +94,11 @@ export default function JobTimeSelector() {
   const endIdx = useMemo(() => timeOptions.findIndex((t) => t === draftEnd), [draftEnd]);
 
   const openAndSync = () => {
-    setDraftStart(startTime);
-    setDraftEnd(endTime);
+    // 현재 props를 드래프트로 동기화
+    setDraftStart(displayStart || "오전 09:00");
+    setDraftEnd(displayEnd || "오후 06:00");
     setIsOpen(true);
+    console.log("[JobTimeSelector] open sync:", { draftStart: displayStart, draftEnd: displayEnd });
   };
 
   useEffect(() => {
@@ -86,13 +122,13 @@ export default function JobTimeSelector() {
         일하는 시간
       </h2>
 
-      {/* 표시 영역 */}
+      {/* 표시 영역 (디자인 그대로) */}
       <div
         className="!px-3 border border-[#555]/85 rounded-[10px] h-[44px] flex items-center justify-between cursor-pointer"
         onClick={() => (isOpen ? setIsOpen(false) : openAndSync())}
       >
         <span className="text-[14px] text-[#555]/85">
-          {startTime && endTime ? `${startTime} ~ ${endTime}` : "시간을 선택해주세요"}
+          {start && end ? `${displayStart} ~ ${displayEnd}` : "시간을 선택해주세요"}
         </span>
         <img src={time} alt="시간" className="w-5 h-5" />
       </div>
@@ -152,8 +188,8 @@ export default function JobTimeSelector() {
             <button
               type="button"
               onClick={() => {
-                setDraftStart(startTime);
-                setDraftEnd(endTime);
+                setDraftStart(displayStart || "오전 09:00");
+                setDraftEnd(displayEnd || "오후 06:00");
               }}
               className="flex-3 h-[40px] rounded-[10px] !bg-white border border-[#729A73] text-[#729A73] !font-semibold hover:bg-[#729A73] hover:text-white transition"
             >
@@ -164,8 +200,13 @@ export default function JobTimeSelector() {
               onClick={() => {
                 if (!draftStart || !draftEnd) return;
                 if (toKey(draftEnd) <= toKey(draftStart)) return;
-                setStartTime(draftStart);
-                setEndTime(draftEnd);
+                const next = {
+                  start: toHHmm(draftStart),
+                  end: toHHmm(draftEnd),
+                  negotiable,
+                };
+                console.log("[JobTimeSelector] 적용하기 -> onChange:", next);
+                onChange(next);
                 setIsOpen(false);
               }}
               disabled={!draftStart || !draftEnd || toKey(draftEnd) <= toKey(draftStart)}
@@ -184,11 +225,15 @@ export default function JobTimeSelector() {
       <button
         type="button"
         className="flex items-center gap-1 !mt-1 text-sm text-[#666]"
-        onClick={() => setIsNegotiable((prev) => !prev)}
+        onClick={() => {
+          const next = { start, end, negotiable: !negotiable };
+          console.log("[JobTimeSelector] 협의 토글 -> onChange:", next);
+          onChange(next);
+        }}
       >
         <img
-          src={isNegotiable ? checkActive : checkInactive}
-          alt={isNegotiable ? "선택됨" : "선택 안됨"}
+          src={negotiable ? checkActive : checkInactive}
+          alt={negotiable ? "선택됨" : "선택 안됨"}
           className="w-4 h-4"
         />
         협의 가능

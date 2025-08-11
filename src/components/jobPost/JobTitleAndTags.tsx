@@ -1,4 +1,5 @@
-import { useState } from "react";
+// components/jobPost/JobTitleAndTags.tsx
+import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 const TAGS = [
@@ -15,18 +16,98 @@ const TAGS = [
   "기타",
 ];
 
-const COLLAPSED_COUNT = 3; // 접힘 상태에서 보여줄 태그 개수 (3~4 중 선택)
+const COLLAPSED_COUNT = 3;
 
-export default function JobTitleAndTags() {
-  const [title, setTitle] = useState("");
+type Props = {
+  title: string;
+  onTitleChange: (v: string) => void;
+
+  // ✅ 다중 선택(권장)
+  selectedTags?: string[];
+  onSelectedTagsChange?: (arr: string[]) => void;
+
+  // 🔁 기존(대표+환경) 방식도 지원(옵션)
+  primaryCategoryKo?: string;
+  onPrimaryCategoryChange?: (v: string) => void;
+  envCategoriesKo?: string[];
+  onEnvCategoriesChange?: (arr: string[]) => void;
+
+  imageFile?: File;
+  onImageFileChange?: (f?: File) => void;
+};
+
+export default function JobTitleAndTags(props: Props) {
+  const {
+    title,
+    onTitleChange,
+    selectedTags,
+    onSelectedTagsChange,
+    primaryCategoryKo,
+    onPrimaryCategoryChange,
+    envCategoriesKo,
+    onEnvCategoriesChange,
+  } = props;
+
   const [expanded, setExpanded] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
-  };
+  // 선택 세트(우선순위: selectedTags → primary+env 조합)
+  const selectedSet = useMemo(() => {
+    const s = new Set<string>();
+    if (selectedTags && Array.isArray(selectedTags)) {
+      selectedTags.forEach((t) => s.add(t));
+      return s;
+    }
+    if (primaryCategoryKo) s.add(primaryCategoryKo);
+    (envCategoriesKo ?? []).forEach((t) => s.add(t));
+    return s;
+  }, [selectedTags, primaryCategoryKo, envCategoriesKo]);
 
   const visibleTags = expanded ? TAGS : TAGS.slice(0, COLLAPSED_COUNT);
+
+  const toggleTag = (tag: string) => {
+    const isSelected = selectedSet.has(tag);
+    console.log("[JobTitleAndTags] toggleTag:", {
+      tag,
+      isSelected,
+      primaryCategoryKo,
+      envCategoriesKo,
+      selectedTags,
+    });
+
+    // 1) 다중선택 제어형 경로
+    if (onSelectedTagsChange) {
+      if (isSelected) {
+        onSelectedTagsChange((selectedTags ?? []).filter((t) => t !== tag));
+      } else {
+        onSelectedTagsChange([...(selectedTags ?? []), tag]);
+      }
+      return;
+    }
+    const hasPrimary = !!primaryCategoryKo;
+    const env = envCategoriesKo ?? [];
+
+    if (isSelected) {
+      if (tag === primaryCategoryKo) {
+        const remaining = env.filter((t) => t !== tag);
+        if (remaining.length) {
+          onPrimaryCategoryChange?.(remaining[0]);
+          onEnvCategoriesChange?.(remaining.slice(1));
+        } else {
+          onPrimaryCategoryChange?.("");
+          onEnvCategoriesChange?.([]);
+        }
+      } else {
+        onEnvCategoriesChange?.(env.filter((t) => t !== tag));
+      }
+      return;
+    }
+
+    if (!hasPrimary) {
+      onPrimaryCategoryChange?.(tag);
+    } else if (!env.includes(tag)) {
+      onEnvCategoriesChange?.([...env, tag]);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -37,7 +118,6 @@ export default function JobTitleAndTags() {
         업무 제목을 작성해주세요.
       </h2>
 
-      {/* 제목 입력 */}
       <input
         id="jobTitle"
         type="text"
@@ -45,18 +125,13 @@ export default function JobTitleAndTags() {
              border border-[#555555D9] px-3 outline-none
              focus:border-[#555555D9] focus:ring-2 focus:ring-[#555555D9]/20 transition"
         value={title}
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={(e) => onTitleChange(e.target.value)}
       />
 
-      {/* 태그 영역 */}
       <div className="relative flex items-start !py-5">
-        {/* 태그 리스트 */}
-        <div
-          className={`flex-1 gap-[10px] pr-2
-                ${expanded ? "flex flex-wrap" : "flex flex-nowrap overflow-hidden"}`}
-        >
+        <div className={`flex-1 gap-[10px] pr-2 ${expanded ? "flex flex-wrap" : "flex flex-nowrap overflow-hidden"}`}>
           {visibleTags.map((tag) => {
-            const selected = selectedTags.includes(tag);
+            const selected = selectedSet.has(tag);
             return (
               <button
                 key={tag}
@@ -76,7 +151,6 @@ export default function JobTitleAndTags() {
           })}
         </div>
 
-        {/* 펼치기/접기 버튼 - 항상 같은 자리 */}
         <button
           type="button"
           aria-label={expanded ? "태그 접기" : "태그 더보기"}

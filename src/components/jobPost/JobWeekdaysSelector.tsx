@@ -1,15 +1,27 @@
-import React, { useState } from "react";
+import React from "react";
 import checkActive from "../../assets/check_active.png";
 import checkInactive from "../../assets/check_inactive.png";
 
 const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
 
-const JobWeekdaysSelector = () => {
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
-  const [isNegotiable, setIsNegotiable] = useState(false);
+type Props = {
+  // ✅ 부모 제어형: ["월","수","금"] 같은 한글 요일 배열
+  value: string[];
+  onChange: (arr: string[]) => void;
+
+  // (옵션) 협의 가능 스위치도 제어형으로 쓰고 싶을 때
+  negotiable?: boolean;
+  onChangeNegotiable?: (b: boolean) => void;
+};
+
+const JobWeekdaysSelector = ({ value, onChange, negotiable, onChangeNegotiable }: Props) => {
+  const selectedDays = value ?? [];
 
   const toggleDay = (day: string) => {
-    setSelectedDays((prev) => (prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]));
+    const next = selectedDays.includes(day) ? selectedDays.filter((d) => d !== day) : [...selectedDays, day];
+
+    console.log("[JobWeekdaysSelector] toggle:", next);
+    onChange(next);
   };
 
   return (
@@ -21,7 +33,7 @@ const JobWeekdaysSelector = () => {
         요일 선택
       </h2>
 
-      {/* 요일 버튼 */}
+      {/* 요일 버튼 (디자인 그대로) */}
       <div className="flex flex-wrap gap-[10px]">
         {weekdays.map((day) => {
           const selected = selectedDays.includes(day);
@@ -43,15 +55,20 @@ const JobWeekdaysSelector = () => {
         })}
       </div>
 
-      {/* 협의 가능 */}
+      {/* 협의 가능 (디자인 그대로, 필요 시 제어형) */}
       <button
         type="button"
         className="flex items-center gap-1 mt-1 text-sm text-[#666]"
-        onClick={() => setIsNegotiable((prev) => !prev)}
+        onClick={() => {
+          if (typeof negotiable === "boolean" && onChangeNegotiable) {
+            onChangeNegotiable(!negotiable);
+            console.log("[JobWeekdaysSelector] 협의 토글:", !negotiable);
+          }
+        }}
       >
         <img
-          src={isNegotiable ? checkActive : checkInactive}
-          alt={isNegotiable ? "선택됨" : "선택 안됨"}
+          src={negotiable ? checkActive : checkInactive}
+          alt={negotiable ? "선택됨" : "선택 안됨"}
           className="w-4 h-4"
         />
         협의 가능

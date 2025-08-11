@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import imagePlus from "../../assets/jobRegister/image_plus.png"; // 사진 추가 아이콘
+// components/jobPost/JobDescription.tsx
+import React from "react";
+import imagePlus from "../../assets/jobRegister/image_plus.png";
 
 const jobTypes = [
   "앉아서 근무 중심",
@@ -10,17 +11,39 @@ const jobTypes = [
   "사람 응대 중심",
 ];
 
-export default function JobDescription() {
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [description, setDescription] = useState("");
-  const [image, setImage] = useState<File | null>(null);
+type Props = {
+  // 설명 본문
+  value: string;
+  onChange: (text: string) => void;
 
-  const handleTagClick = (tag: string) => {
-    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+  // 작업 환경 태그(다중)
+  envTags?: string[];
+  onEnvTagsChange?: (arr: string[]) => void;
+
+  // 이미지 파일
+  imageFile?: File | null;
+  onImageFileChange?: (file: File | null) => void;
+};
+
+export default function JobDescription({
+  value,
+  onChange,
+  envTags = [],
+  onEnvTagsChange,
+  imageFile,
+  onImageFileChange,
+}: Props) {
+  const toggleTag = (tag: string) => {
+    if (!onEnvTagsChange) return;
+    const next = envTags.includes(tag) ? envTags.filter((t) => t !== tag) : [...envTags, tag];
+    console.log("[JobDescription] envTags:", next);
+    onEnvTagsChange(next);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.length) setImage(e.target.files[0]);
+    const file = e.target.files?.[0] ?? null;
+    console.log("[JobDescription] image:", file ? file.name : null);
+    onImageFileChange?.(file);
   };
 
   return (
@@ -33,15 +56,15 @@ export default function JobDescription() {
           일에 대해 설명해주세요.
         </h2>
 
-        {/* 태그 – 공통 디자인 */}
+        {/* 태그 – 디자인 그대로 */}
         <div className="flex flex-wrap gap-[10px] !mb-4">
           {jobTypes.map((tag) => {
-            const selected = selectedTags.includes(tag);
+            const selected = envTags.includes(tag);
             return (
               <button
                 key={tag}
                 type="button"
-                onClick={() => handleTagClick(tag)}
+                onClick={() => toggleTag(tag)}
                 className={`px-[10px] py-[4px] rounded-[7px] border-[1px] text-[13px] leading-none whitespace-nowrap transition
                   ${
                     selected
@@ -58,8 +81,11 @@ export default function JobDescription() {
         {/* 설명 */}
         <textarea
           placeholder="일에 대한 구체적인 사항을 알려주세요."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          value={value}
+          onChange={(e) => {
+            console.log("[JobDescription] text change");
+            onChange(e.target.value);
+          }}
           className="w-full h-[100px] !p-3 border border-[#DEDEDE] rounded-[10px] p-3 text-sm text-[#333] placeholder:text-[#999] resize-none"
         />
       </div>
@@ -76,7 +102,7 @@ export default function JobDescription() {
         </label>
         <input id="image-upload" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-        {image && <p className="text-[12px] text-[#666] mt-2">{image.name}</p>}
+        {imageFile && <p className="text-[12px] text-[#666] mt-2">{imageFile.name}</p>}
       </div>
     </div>
   );

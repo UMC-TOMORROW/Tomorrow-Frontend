@@ -1,7 +1,20 @@
 import { useState } from "react";
 
-const JobTypeSelector = () => {
-  const [selected, setSelected] = useState<"기업" | "개인">("개인");
+type RegistrantType = "BUSINESS" | "PERSONAL";
+
+export default function JobTypeSelector({
+  value,
+  onChange,
+}: {
+  value: RegistrantType;
+  onChange: (v: RegistrantType) => void;
+}) {
+  const selected = value === "BUSINESS" ? "기업" : "개인";
+
+  const handleClick = (v: RegistrantType) => {
+    console.log("[JobTypeSelector] 선택:", v);
+    onChange(v);
+  };
 
   return (
     <div className="gap-4 flex flex-col px-4 py-8">
@@ -15,7 +28,7 @@ const JobTypeSelector = () => {
         {/* 기업 버튼 */}
         <button
           type="button"
-          onClick={() => setSelected("기업")}
+          onClick={() => handleClick("BUSINESS")}
           className={`w-[185px] h-[80px] rounded-[10px] flex flex-col items-center justify-center gap-2
     ${selected === "기업" ? "bg-[#729A73]" : "bg-white border border-[#D1D5DB]"}`}
         >
@@ -30,7 +43,7 @@ const JobTypeSelector = () => {
         {/* 개인 버튼 */}
         <button
           type="button"
-          onClick={() => setSelected("개인")}
+          onClick={() => handleClick("PERSONAL")}
           className={`w-[185px] h-[80px] rounded-[10px] px-4 py-2 flex flex-col items-center justify-center gap-2
             ${selected === "개인" ? "bg-[#729A73]" : "bg-white border border-[#D1D5DB]"}`}
         >
@@ -44,6 +57,4 @@ const JobTypeSelector = () => {
       </div>
     </div>
   );
-};
-
-export default JobTypeSelector;
+}

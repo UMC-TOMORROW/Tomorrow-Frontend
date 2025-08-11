@@ -1,12 +1,20 @@
-import React, { useState } from "react";
+// components/jobPost/CompanyInfo.tsx
+import React from "react";
 import { Search } from "lucide-react";
 
-export default function CompanyInfo() {
-  const [companyName, setCompanyName] = useState("");
-  const [address, setAddress] = useState("");
+type Props = {
+  companyName: string;
+  location: string; // 주소(장소)
+  alwaysHiring: boolean; // 상시모집 (UI에 노출은 안 하지만 상태는 유지)
+  isActive: boolean; // 활성화 (UI에 노출은 안 하지만 상태는 유지)
+  onChange: (v: { companyName: string; location: string; alwaysHiring: boolean; isActive: boolean }) => void;
+  onSearchClick?: () => void; // (옵션) 주소검색 연동용
+};
 
+export default function CompanyInfo({ companyName, location, alwaysHiring, isActive, onChange, onSearchClick }: Props) {
   const handleSearch = () => {
-    // TODO: 주소 검색 기능 연동
+    console.log("[CompanyInfo] 주소 검색 버튼 클릭");
+    if (onSearchClick) return onSearchClick();
     alert("주소 검색 기능은 추후 구현 예정입니다.");
   };
 
@@ -25,7 +33,11 @@ export default function CompanyInfo() {
           type="text"
           placeholder="예) 내일"
           value={companyName}
-          onChange={(e) => setCompanyName(e.target.value)}
+          onChange={(e) => {
+            const next = { companyName: e.target.value, location, alwaysHiring, isActive };
+            console.log("[CompanyInfo] 업체명 변경:", next.companyName);
+            onChange(next);
+          }}
           className="w-full h-[44px] border border-[#DEDEDE] rounded-[8px] px-3 text-sm text-[#333] !px-3"
         />
       </div>
@@ -35,8 +47,12 @@ export default function CompanyInfo() {
         <input
           type="text"
           placeholder="서울 강서구 00로 000"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          value={location}
+          onChange={(e) => {
+            const next = { companyName, location: e.target.value, alwaysHiring, isActive };
+            console.log("[CompanyInfo] 장소 변경:", next.location);
+            onChange(next);
+          }}
           className="w-full h-[44px] border border-[#DEDEDE] rounded-[8px] px-3 pr-10 text-sm text-[#333] !px-3"
         />
         <button
