@@ -24,3 +24,9 @@ export interface savedJobs {
   rating: number;
   isWished: boolean;
 }
+
+export interface deleteMember {
+  status: string;
+  deletedAt: string;
+  recoverableUntil: string;
+}
