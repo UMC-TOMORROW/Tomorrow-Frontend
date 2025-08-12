@@ -97,7 +97,7 @@ const ApplicantList = () => {
                   <li
                     key={applicant.applicantId}
                     onClick={() =>
-                      navigate(`/MyPage/ApplicantDetail?applicantId=${applicant.applicantId}`)
+                      navigate(`/MyPage/ApplicantDetail?jobId=${jobId}&applicantId=${applicant.applicantId}`)
                     }
                     className="flex h-[123px] items-center gap-[15px] px-[15px] py-[25px] border-b border-[#DEDEDE] cursor-pointer"
                   >

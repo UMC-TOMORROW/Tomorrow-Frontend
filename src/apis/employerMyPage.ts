@@ -1,7 +1,7 @@
 import { axiosInstance } from "./axios";
 import type { MyInfo } from "../types/member";
 import type { ApiEnvelope, ApiEnvelopeNoResult, MyPostItem, MyPostStatus } from "../types/employer";
-import type { Applicant } from "../types/applicant";
+import type { Applicant, ApplicantResume } from "../types/applicant";
 
 export const getMyInfo = async (): Promise<MyInfo> => {
   const response = await axiosInstance.get<MyInfo>("/api/v1/members/me");
@@ -43,6 +43,17 @@ export const getApplicantsByPostId = async (
   const res = await axiosInstance.get<ApiEnvelope<Applicant[]>>(
     `/api/v1/posts/${postId}/applicants`,
     { params: status ? { status } : {} }
+  );
+  return res.data.result;
+};
+
+// 개별 지원자 이력서 조회
+export const getApplicantResume = async (
+  postId: number,
+  applicantId: number
+): Promise<ApplicantResume> => {
+  const res = await axiosInstance.get<ApiEnvelope<ApplicantResume>>(
+    `/api/v1/posts/${postId}/applicants/${applicantId}/resume`
   );
   return res.data.result;
 };
