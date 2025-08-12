@@ -105,6 +105,7 @@ const JobPostForm = () => {
   const [longitude, setLongitude] = useState<number | undefined>(undefined);
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [isSalaryNegotiable, setIsSalaryNegotiable] = useState(false);
 
   // ---- 검증 ----
   const validateForm = () => {
@@ -113,8 +114,9 @@ const JobPostForm = () => {
     if (!location.trim()) return alert("장소를 입력해주세요."), false;
     if (!periodLabel) return alert("근무 기간을 선택해주세요."), false;
     if (!paymentLabel) return alert("급여 유형을 선택해주세요."), false;
-    if (!salary || salary <= 0) return alert("급여 금액을 입력해주세요."), false;
-
+    if (!isSalaryNegotiable && (!salary || salary <= 0)) {
+      return alert("급여 금액을 입력해주세요."), false;
+    }
     if (!timeNegotiable && (!startTime || !endTime)) return alert("근무 시간을 입력해주세요."), false;
     if (!dayNegotiable && weekdaysKo.length === 0) return alert("근무 요일을 선택해주세요."), false;
     if (!alwaysHiring && !deadlineISO) return alert("모집 마감일을 설정해주세요."), false;
@@ -137,8 +139,9 @@ const JobPostForm = () => {
       work_start: timeNegotiable ? "" : startTime,
       work_end: timeNegotiable ? "" : endTime,
       salary: Number(salary),
+      isSalaryNegotiable,
       work_enviroment: buildEnvSnakeList(envCategoriesKo),
-      payment_type: paymentLabel,
+      payment_type: paymentMap[paymentLabel],
       deadline: alwaysHiring ? "" : deadlineISO || "",
       job_image_url: undefined as unknown as string, // 파일 업로드 후 URL 설정
 
@@ -263,9 +266,12 @@ const JobPostForm = () => {
         <SalaryInput
           paymentLabel={paymentLabel}
           amount={salary}
-          onChange={({ paymentLabel, amount }) => {
+          negotiable={isSalaryNegotiable}
+          onChange={({ paymentLabel, amount, negotiable }) => {
+            console.log("[JobPostForm] ← SalaryInput change:", { paymentLabel, amount, negotiable });
             setPaymentLabel(paymentLabel);
             setSalary(Number(amount || 0));
+            if (negotiable !== undefined) setIsSalaryNegotiable(!!negotiable);
           }}
         />
         <Divider />

@@ -54,6 +54,7 @@ export interface JobDraftPayload {
   work_start?: string;
   work_end?: string;
   salary: number;
+  isSalaryNegotiable?: boolean;
   work_enviroment?: string[];
   payment_type: string;
   deadline?: string;
@@ -101,6 +102,7 @@ export interface JobDetailApi {
   paymentType?: PaymentType;
   jobCategory?: JobCategory | string;
   salary?: number;
+  isSalaryNegotiable?: boolean;
   jobImageUrl?: string | null;
   companyName?: string;
   isActive?: boolean;
