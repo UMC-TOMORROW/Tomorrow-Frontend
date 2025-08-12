@@ -285,7 +285,7 @@ export default function JobDetailPage() {
 
       {/* 하단 고정 CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[375px] bg-white border-t border-[#E5E7EB]">
-        <div className="px-4 pt-2 pb-[max(16px,env(safe-area-inset-bottom))]">
+        <div className="px-4 !pt-4 !pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-3">
             <button
               aria-label="찜하기"
