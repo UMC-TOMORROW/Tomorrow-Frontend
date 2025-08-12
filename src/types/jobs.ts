@@ -1,22 +1,37 @@
+// 타입: 생성/인증 + 상세조회 (스웨거 예시 기반)
+
 export type RegistrantType = "BUSINESS" | "PERSONAL";
 
-export interface JobDraftPayload {
-  title: string;
-  jobDescription?: string;
-  job_description?: string;
-  recruitment_type: RegistrantType; // "PERSONAL" | "BUSINESS"
-  work_period: "SHORT_TERM" | "OVER_ONE_MONTH" | "OVER_THREE_MONTH" | "OVER_ONE_YEAR";
-  work_days?: string[]; // ["월","수"...] 협의면 빈 배열도 허용
-  work_start?: string; // "HH:mm" or ""
-  work_end?: string; // "HH:mm" or ""
-  salary: number;
-  work_enviroment?: string[]; // ["can_work_standing", ...]
-  payment_type: string; // "시급"/"일급"/"월급"/"건별"
-  deadline?: string; // "YYYY-MM-DDTHH:mm:ss" or "" (없으면 빈 문자열)
-  job_image_url?: string; // 파일 업로드 후 URL 사용
+export type PaymentType = "HOURLY" | "DAILY" | "MONTHLY" | "PER_TASK";
+export type WorkPeriod = "SHORT_TERM" | "OVER_ONE_MONTH" | "OVER_THREE_MONTH" | "OVER_ONE_YEAR";
+export type JobCategory =
+  | "SERVING"
+  | "KITCHEN_ASSIST"
+  | "CAFE_BAKERY"
+  | "TUTORING"
+  | "ERRAND"
+  | "PROMOTION"
+  | "ELDER_CARE"
+  | "CHILD_CARE"
+  | "BEAUTY"
+  | "OFFICE_ASSIST"
+  | "ETC";
+export type WorkEnvKey =
+  | "canWorkSitting"
+  | "canWorkStanding"
+  | "canMoveActively"
+  | "canCarryObjects"
+  | "canCommunicate";
 
-  isTimeNegotiable?: boolean;
-  isPeriodNegotiable?: boolean;
+export interface WorkDaysMap {
+  isDayNegotiable: boolean;
+  mon?: boolean;
+  tue?: boolean;
+  wed?: boolean;
+  thu?: boolean;
+  fri?: boolean;
+  sat?: boolean;
+  sun?: boolean;
 }
 
 /** 공통 래핑 응답 형태 */
@@ -28,7 +43,27 @@ export interface CommonResponse<T = any> {
   data?: T;
 }
 
-/** 1차 저장 응답 result */
+/** 생성(초안) 요청 바디 */
+export interface JobDraftPayload {
+  title: string;
+  jobDescription?: string;
+  job_description?: string;
+  recruitment_type: RegistrantType;
+  work_period: WorkPeriod;
+  work_days?: string[];
+  work_start?: string;
+  work_end?: string;
+  salary: number;
+  work_enviroment?: string[];
+  payment_type: string;
+  deadline?: string;
+  job_image_url?: string;
+
+  isTimeNegotiable?: boolean;
+  isPeriodNegotiable?: boolean;
+}
+
+/** 생성 응답 result */
 export interface JobCreateResult {
   jobId?: number | string | null;
   registrantType?: RegistrantType;
@@ -37,18 +72,46 @@ export interface JobCreateResult {
 
 /** 사업자 인증 */
 export interface BusinessVerifyPayload {
-  job_id?: number | string; // 서버가 필요 시 사용
-  reg_no: string; // 사업자등록번호
-  corp_name: string; // 상호
-  owner_name: string; // 대표자
+  job_id?: number | string;
+  reg_no: string;
+  corp_name: string;
+  owner_name: string;
   open_date: string; // YYYY-MM-DD
 }
 
 /** 개인 인증 */
 export interface PersonalVerifyPayload {
-  job_id?: number | string; // 서버가 필요 시 사용
+  job_id?: number | string;
   name: string;
   district: string;
   phone: string;
   request?: string;
+}
+
+/** 상세 조회 응답 본문(스웨거 예시 기반) */
+export interface JobDetailApi {
+  jobId?: number | string;
+  title: string;
+  jobDescription?: string;
+  workPeriod?: WorkPeriod;
+  isPeriodNegotiable?: boolean;
+  workStart?: string; // "17:00:00"
+  workEnd?: string; // "22:00:00"
+  isTimeNegotiable?: boolean;
+  paymentType?: PaymentType;
+  jobCategory?: JobCategory | string;
+  salary?: number;
+  jobImageUrl?: string | null;
+  companyName?: string;
+  isActive?: boolean;
+  recruitmentLimit?: number;
+  deadline?: string; // ISO
+  preferredQualifications?: string;
+  location?: string;
+  address?: string;
+  alwaysHiring?: boolean;
+  workDays?: WorkDaysMap;
+  workEnvironment?: WorkEnvKey[];
+  reviewCount?: number;
+  registrantType?: RegistrantType;
 }

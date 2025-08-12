@@ -1,38 +1,13 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { getJobDetail } from "../../apis/jobs";
+
 import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
 import starHalf from "../../assets/star/star_half_filled.png";
 import bmEmpty from "../../assets/bookmark/star_empty.png";
 import bmFilled from "../../assets/bookmark/star_filled.png";
 
-// NOTE: Pure UI only (no API). Swap mock with real data later.
-// TailwindCSS assumed. Width targets mobile (max-w-375).
-
-// ---- Mock data to visualize the screen ----
-const mockJob = {
-  jobId: 1,
-  category: "상점/소규모가게",
-  title: "청소 관리 도우미",
-  companyName: "내일텃밭",
-  place: "성동구",
-  rating: 4.2,
-  reviewCount: 32,
-  paymentType: "시급",
-  salary: 13000,
-  minWageNote: "2025년 최저시급 10,030원",
-  period: "3개월 이상",
-  weekdays: "요일협의",
-  time: "시간협의",
-  role: "상시모집",
-  headcount: 6,
-  preference: "유사업무 경력 우대, 인근 거주 우대",
-  tip: "날 예약 없는 날, 지금 연락해보세요.",
-  address: "서울 강서구 00로 000",
-  description:
-    "현재 밭에는 상추와 방울토마토, 고추, 쪽파 등 여러 종이 있습니다. 주기적으로 작물을 새로 심고 수확하는 곳입니다. 모종 심기부터 작물 재배와 수확까지 전 과정 성실히 일해주실 분을 찾습니다. 초보자도 환영합니다. ^^",
-};
-
-// ---- Small UI helpers ----
 const Divider: React.FC = () => <div className="h-px bg-[#EAEAEA] -mx-4" />;
 
 const Badge: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -50,16 +25,13 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 
 const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({ k, v, helper }) => (
   <div className="!py-1 ">
-    {/* 값 라인: 왼쪽 정렬 + 일정 간격 */}
     <div className="flex items-start gap-4 ">
       <span className="w-[72px] shrink-0 text-[12px] text-[#666] whitespace-nowrap">{k}</span>
       <div className="text-[14px] text-[#222] leading-5">{v}</div>
     </div>
-
-    {/* helper 라인: 값 시작점과 정확히 같은 지점에서 시작 */}
     {helper ? (
       <div className="mt-1 flex items-start gap-4 ">
-        <span className="w-[72px] shrink-0" /> {/* 라벨 자리만큼 비워서 정렬 */}
+        <span className="w-[72px] shrink-0" />
         <p className="text-[11px] text-[#8A8A8A]">{helper}</p>
       </div>
     ) : null}
@@ -88,26 +60,138 @@ const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({ v
   );
 };
 
-export default function JobDetailPageUI() {
-  const job = mockJob; // replace with API data later
+// ---------- 매핑 유틸 (응답 → 화면 모델) ----------
+const DAY_KO: Record<string, string> = { mon: "월", tue: "화", wed: "수", thu: "목", fri: "금", sat: "토", sun: "일" };
+const periodLabel = (p?: string) =>
+  p === "SHORT_TERM"
+    ? "단기"
+    : p === "OVER_ONE_MONTH"
+    ? "1개월 이상"
+    : p === "OVER_THREE_MONTH"
+    ? "3개월 이상"
+    : p === "OVER_ONE_YEAR"
+    ? "1년 이상"
+    : p ?? "-";
+const paymentLabel = (t?: string) =>
+  t === "HOURLY" ? "시급" : t === "DAILY" ? "일급" : t === "MONTHLY" ? "월급" : t === "PER_TASK" ? "건별" : t ?? "-";
 
-  // 업무환경 → 한글 라벨
-  const envKoMap: Record<string, string> = {
-    can_carry_objects: "가벼운 물건 운반",
-    can_move_actively: "신체 활동 중심",
-    can_work_standing: "서서 근무 중심",
-    can_work_sitting: "앉아서 근무 중심",
-    can_communicate: "사람 응대 중심",
+const JOB_CATEGORY_KO: Record<string, string> = {
+  SERVING: "서빙",
+  KITCHEN_ASSIST: "주방보조/설거지",
+  CAFE_BAKERY: "카페/베이커리",
+  TUTORING: "과외/학원",
+  ERRAND: "심부름/소일거리",
+  PROMOTION: "전단지/홍보",
+  ELDER_CARE: "어르신 돌봄",
+  CHILD_CARE: "아이 돌봄",
+  BEAUTY: "미용/뷰티",
+  OFFICE_ASSIST: "사무보조",
+  ETC: "기타",
+};
+
+const ENV_KO: Record<string, string> = {
+  canWorkSitting: "앉아서 근무 중심",
+  canWorkStanding: "서서 근무 중심",
+  canMoveActively: "신체 활동 중심",
+  canCarryObjects: "가벼운 물건 운반",
+  canCommunicate: "사람 응대 중심",
+};
+
+const hhmm = (s?: string) => (s ? s.slice(0, 5) : "");
+
+function mapSwaggerJobDetail(api: any) {
+  // 근무요일
+  let weekdays = "요일협의";
+  if (api?.workDays && api.workDays.isDayNegotiable === false) {
+    const arr = Object.entries(api.workDays)
+      .filter(([k, v]) => k !== "isDayNegotiable" && v)
+      .map(([k]) => DAY_KO[k] ?? (k as string).toUpperCase());
+    weekdays = arr.length ? arr.join(", ") : "요일협의";
+  }
+  // 근무시간
+  const time = api?.isTimeNegotiable
+    ? "시간협의"
+    : api?.workStart || api?.workEnd
+    ? `${hhmm(api.workStart)}${api.workStart && api.workEnd ? " - " : ""}${hhmm(api.workEnd)}`
+    : "-";
+  // 환경 태그
+  const envTags = Array.isArray(api?.workEnvironment) ? api.workEnvironment.map((k: string) => ENV_KO[k] ?? k) : [];
+
+  return {
+    jobId: api.jobId ?? api.id,
+    category: JOB_CATEGORY_KO[api.jobCategory] ?? api.jobCategory ?? "",
+    title: api.title ?? "",
+    companyName: api.companyName ?? "",
+    place: undefined,
+    rating: 0,
+    reviewCount: api.reviewCount ?? 0,
+
+    paymentType: paymentLabel(api.paymentType),
+    salary: api.salary ?? 0,
+    minWageNote: api.paymentType === "HOURLY" ? "2025년 최저시급 10,030원" : undefined,
+    period: `${periodLabel(api.workPeriod)}${api.isPeriodNegotiable ? " (협의가능)" : ""}`,
+    weekdays,
+    time,
+
+    role: api.alwaysHiring ? "상시모집" : api.deadline ? String(api.deadline).slice(0, 10) : "상시모집",
+    headcount: api.recruitmentLimit ?? "-",
+    preference: api.preferredQualifications ?? "-",
+
+    address: api.location ?? api.address ?? "-",
+    description: api.jobDescription ?? api.description ?? "-",
+
+    envTags,
+  };
+}
+
+export default function JobDetailPage() {
+  const { jobId } = useParams<{ jobId: string }>();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
+  const [bookmarked, setBookmarked] = useState(false);
+
+  useEffect(() => {
+    const effectiveId = jobId ?? "36"; // 존재하는 ID로 테스트
+    (async () => {
+      try {
+        setLoading(true);
+        console.log("[JobDetail] GET /api/v1/jobs/", effectiveId);
+        const res = await getJobDetail(effectiveId); // 본문 타입으로 반환됨
+        console.log("[JobDetail] OK ▶", res);
+        setData(mapSwaggerJobDetail(res));
+      } catch (e: any) {
+        console.error("[JobDetail] error ▶", e);
+        setError(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [jobId]);
+
+  // 화면 바인딩용 기본값 (값이 비어도 레이아웃 유지)
+  const job = data ?? {
+    category: "",
+    title: "",
+    companyName: "",
+    place: "",
+    rating: 0,
+    reviewCount: 0,
+    paymentType: "",
+    salary: 0,
+    minWageNote: undefined as string | undefined,
+    period: "",
+    weekdays: "",
+    time: "",
+    role: "",
+    headcount: "-",
+    preference: "-",
+    address: "",
+    description: "",
+    envTags: [] as string[],
   };
 
-  // envTags 값 만들기 (API/목업 둘 다 대응, 없으면 기본 2개)
-  const rawEnv = (job as any).work_enviroment ?? (job as any).work_environment;
-  const envTags: string[] = rawEnv
-    ? (Array.isArray(rawEnv) ? rawEnv : [rawEnv]).map((k) => envKoMap[k] ?? k)
-    : ["가벼운 물건 운반", "신체 활동 중심"];
-
-  // 북마크 상태
-  const [bookmarked, setBookmarked] = React.useState(false);
+  const envTags: string[] = job.envTags ?? [];
 
   return (
     <div className="max-w-[375px] mx-auto bg-white">
@@ -145,7 +229,7 @@ export default function JobDetailPageUI() {
             v={
               <span className="inline-flex items-center gap-2">
                 <Badge>{job.paymentType}</Badge>
-                <span>{job.salary.toLocaleString()}원</span>
+                <span>{Number(job.salary ?? 0).toLocaleString()}원</span>
               </span>
             }
             helper={job.minWageNote}
@@ -172,7 +256,7 @@ export default function JobDetailPageUI() {
                 <span
                   key={i}
                   className="min-w-[108px] h-[24px] rounded-[7px] px-[6px] py-[1px] inline-flex items-center justify-center text-[12px] font-pretendard text-[#3F5A41]"
-                  style={{ background: "#729A7380" }} // 정확 색상(알파 포함)
+                  style={{ background: "#729A7380" }}
                 >
                   <span className="mr-[6px]">✅</span>
                   {t}
@@ -199,19 +283,17 @@ export default function JobDetailPageUI() {
         </Section>
       </div>
 
-      {/* 하단 고정 CTA (센터 고정 + 최대 375px) */}
+      {/* 하단 고정 CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[375px] bg-white border-t border-[#E5E7EB]">
         <div className="px-4 pt-2 pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-3">
-            {/* 찜하기: 고정폭 + 줄어들지 않게 */}
             <button
               aria-label="찜하기"
               className="w-12 h-12 shrink-0 rounded-[10px] bg-[#729A73] flex items-center justify-center"
+              onClick={() => setBookmarked((v) => !v)}
             >
-              <img src={bmEmpty} alt="" />
+              <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-5 h-5" />
             </button>
-
-            {/* 전화/지원: 컨텐츠가 길어도 줄어들도록 min-w-0 */}
             <button className="flex-1 min-w-0 h-12 rounded-[10px] border border-[#729A73] text-[#729A73] font-semibold">
               전화하기
             </button>
