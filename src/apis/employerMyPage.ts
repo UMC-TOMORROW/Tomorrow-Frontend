@@ -1,6 +1,7 @@
 import { axiosInstance } from "./axios";
 import type { MyInfo } from "../types/member";
 import type { ApiEnvelope, ApiEnvelopeNoResult, MyPostItem, MyPostStatus } from "../types/employer";
+import type { Applicant } from "../types/applicant";
 
 export const getMyInfo = async (): Promise<MyInfo> => {
   const response = await axiosInstance.get<MyInfo>("/api/v1/members/me");
@@ -32,4 +33,16 @@ export const updateMyPostStatus = async (
     `/api/v1/jobs/${postId}/status`,
     { status }
   );
+};
+
+// 지원자 목록 조회
+export const getApplicantsByPostId = async (
+  postId: number,
+  status?: "open" | "closed" | string
+): Promise<Applicant[]> => {
+  const res = await axiosInstance.get<ApiEnvelope<Applicant[]>>(
+    `/api/v1/posts/${postId}/applicants`,
+    { params: status ? { status } : {} }
+  );
+  return res.data.result;
 };

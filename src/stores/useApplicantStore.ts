@@ -1,61 +1,50 @@
 import { create } from "zustand";
+import type { Applicant } from "../types/applicant";
+import { getApplicantsByPostId } from "../apis/employerMyPage";
 
-interface Applicant {
-  name: string;
-  phone: string;
-  info: string;
-  comment: string;
-  introduction: string;
-  career: string;
-  license: string;
-  result: "합격" | "불합" | "";
-}
-
-interface useApplicantStore {
+interface ApplicantState {
   applicants: Applicant[];
-  setResult: (name: string, result: "합격" | "불합") => void;
+  loading: boolean;
+  error: string | null;
+
+  // 서버에서 불러오기
+  fetchApplicants: (postId: number, status?: "open" | "closed" | string) => Promise<void>;
+
+  // 로컬 상태만 변경(합/불) — 백엔드 API 생기면 여기만 교체
+  setResultLocal: (applicantId: number, result: string) => void;
+
+  // 필요 시 수동 세터
+  setApplicants: (list: Applicant[]) => void;
+  clear: () => void;
 }
 
-export const useApplicantStore = create<useApplicantStore>((set) => ({
-  applicants: [
-    {
-      name: "이지현",
-      phone: "010-1234-5678",
-      info: "이지현/여/56세/광진구",
-      comment: "성실히 도움이 되도록 노력하겠습니다.",
-      introduction:
-        "어르신들과 대화하고 도움을 주는 일을 좋아합니다. 책임감 있게 일하며, 시간을 잘 지킵니다.",
-      career: "내일 요양센터 2025년/6개월 이하 어르신 돌봄 업무",
-      license: "요양보호사 자격증",
-      result: "합격",
-    },
-    {
-      name: "김영희",
-      phone: "010-1234-5678",
-      info: "김영희/여/58세/강남구",
-      comment: "경험은 부족하지만 책임감을 가지고 일하겠습니다.",
-      introduction:
-        "어르신들과 대화하고 도움을 주는 일을 좋아합니다. 책임감 있게 일하며, 시간을 잘 지킵니다.",
-      career: "내일 요양센터 2025년/6개월 이하 어르신 돌봄 업무",
-      license: "요양보호사 자격증",
-      result: "불합",
-    },
-    {
-      name: "김유석",
-      phone: "010-1234-5678",
-      info: "김유석/남/62세/마포구",
-      comment: "성실하게 맡은 일을 수행하겠습니다.",
-      introduction:
-        "어르신들과 대화하고 도움을 주는 일을 좋아합니다. 책임감 있게 일하며, 시간을 잘 지킵니다.",
-      career: "내일 요양센터 2025년/6개월 이하 어르신 돌봄 업무",
-      license: "요양보호사 자격증",
-      result: "합격",
-    },
-  ],
-  setResult: (name, result) =>
-    set((state) => ({
-      applicants: state.applicants.map((a) =>
-        a.name === name ? { ...a, result } : a
+export const useApplicantStore = create<ApplicantState>((set, get) => ({
+  applicants: [],
+  loading: false,
+  error: null,
+
+  fetchApplicants: async (postId, status) => {
+    set({ loading: true, error: null });
+    try {
+      const data = await getApplicantsByPostId(postId, status);
+      set({ applicants: data });
+    } catch (e) {
+      console.error("지원자 목록 조회 실패:", e);
+      set({ error: "지원자 목록을 불러오지 못했습니다." });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  setResultLocal: (applicantId, result) => {
+    const { applicants } = get();
+    set({
+      applicants: applicants.map((a) =>
+        a.applicantId === applicantId ? { ...a, status: result } : a
       ),
-    })),
+    });
+  },
+
+  setApplicants: (list) => set({ applicants: list }),
+  clear: () => set({ applicants: [], loading: false, error: null }),
 }));
