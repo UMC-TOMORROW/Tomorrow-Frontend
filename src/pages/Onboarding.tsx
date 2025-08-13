@@ -553,7 +553,25 @@ function Onboarding() {
           style={{ backgroundColor: palette.primary.primary }}
           className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10"
         >
-          {/* ...생략 */}
+          <img
+            src="/src/assets/logo/logo_white.png"
+            className="w-[233px] h-[153px]"
+          ></img>
+          {/* 이미지 */}
+          <img
+            src="/src/assets/onboarding/FormingTeamLeadership-pana.png"
+            className="w-[340px] h-[300px]"
+          />{" "}
+          <p
+            className="text-[20px] !font-semibold text-white text-center"
+            style={{
+              fontFamily: "Pretendard",
+            }}
+          >
+            당신의 더 나은
+            <br />
+            '내일'을 위해 '내 일' 찾기
+          </p>
           <div className="w-full max-w-[320px] font-bold items-center flex flex-col gap-3">
             <CommonButton
               label="시작하기"
