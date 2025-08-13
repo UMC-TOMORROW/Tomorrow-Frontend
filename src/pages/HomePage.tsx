@@ -9,6 +9,12 @@ import JobCard from "../components/Homepage/JobCard";
 import HomepageTopBar from "../components/Homepage/HomepageTopBar";
 import { getJobsByDay, getJobsDefault } from "../apis/HomePage";
 
+type JobLike = JobsView & {
+  jobCategory?: string; // camel
+  workStart?: string;
+  workEnd?: string;
+};
+
 const HomePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,60 +31,70 @@ const HomePage = () => {
   }>({});
 
   useEffect(() => {
+    const toMin = (t?: string) => {
+      if (!t) return undefined;
+      const [hh, mm] = t.split(":");
+      return Number(hh) * 60 + Number(mm);
+    };
+
+    const applyAllFilters = async (baseJobs: JobsView[]) => {
+      let jobs = [...baseJobs];
+
+      // 1) 요일 필터: 서버 결과 타입 명시
+      if (selectedDays.length > 0) {
+        const byDay = await getJobsByDay(selectedDays);
+        const validIds = new Set(byDay.map((j: { jobId: number }) => j.jobId));
+        jobs = jobs.filter((j: JobLike) => validIds.has(j.jobId));
+      }
+
+      // 2) 지역 필터
+      if (selectedRegion.length > 0) {
+        jobs = jobs.filter((j: JobLike) =>
+          selectedRegion.every((kw) => (j.location ?? "").includes(kw))
+        );
+      }
+
+      // 3) 유형 필터 (snake/camel 동시 대응)
+      if (selectedType.length > 0) {
+        jobs = jobs.filter((j: JobLike) => {
+          type CatShape = {
+            job_category?: string | string[];
+            jobCategory?: string | string[];
+          };
+          const s = (j as CatShape).job_category ?? (j as CatShape).jobCategory;
+
+          const cat: string = Array.isArray(s) ? s[0] ?? "" : s ?? "";
+
+          return selectedType.includes(cat);
+        });
+      }
+
+      // 4) 시간 필터 (snake/camel 동시 대응)
+      if (selectedTime.start || selectedTime.end) {
+        const startMin = toMin(selectedTime.start || "00:00")!;
+        const endMin = toMin(selectedTime.end || "23:59")!;
+        jobs = jobs.filter((j: JobLike) => {
+          const sStr = (j.work_start ?? j.workStart ?? "").slice(0, 5); // "HH:MM"
+          const eStr = (j.work_end ?? j.workEnd ?? "").slice(0, 5);
+          const s = toMin(sStr);
+          const e = toMin(eStr);
+          if (s == null || e == null) return false;
+          return !(e < startMin || s > endMin);
+        });
+      }
+
+      return jobs;
+    };
+
     const fetchJobs = async () => {
       try {
-        // 검색 페이지에서 넘어온 목록이 있으면 그걸 우선 사용
-        if (location.state?.jobList && Array.isArray(location.state.jobList)) {
-          setJobList(location.state.jobList);
-          return;
-        }
+        // 기준 데이터셋 결정: 검색 결과 우선, 없으면 기본 조회
+        const base: JobsView[] = Array.isArray(location.state?.jobList)
+          ? location.state.jobList
+          : await getJobsDefault();
 
-        // 1) 기본 조회
-        let jobs = await getJobsDefault();
-
-        // 2) 지역 필터 (서버)
-        if (selectedRegion.length > 0) {
-          jobs = jobs.filter((j: JobsView) =>
-            selectedRegion.every((kw) => j.location?.includes(kw))
-          );
-        }
-
-        // 3) 업무 유형 필터 (서버)
-        if (selectedType.length > 0) {
-          jobs = jobs.filter((j: JobsView) =>
-            selectedType.includes(
-              Array.isArray(j.job_category)
-                ? j.job_category[0] ?? ""
-                : j.job_category ?? ""
-            )
-          );
-        }
-
-        // 4) 요일 필터 (서버)
-        if (selectedDays.length > 0) {
-          const byDay = await getJobsByDay(selectedDays);
-          const validIds = new Set(byDay.map((j) => j.jobId));
-          jobs = jobs.filter((j) => validIds.has(j.jobId));
-        }
-
-        // 5) 시간 필터 (서버)
-        const toMin = (t?: string) => {
-          if (!t) return undefined;
-          const [hh, mm] = t.split(":");
-          return Number(hh) * 60 + Number(mm);
-        };
-        if (selectedTime.start || selectedTime.end) {
-          const startMin = toMin(selectedTime.start || "00:00");
-          const endMin = toMin(selectedTime.end || "23:59");
-          jobs = jobs.filter((j: JobsView) => {
-            const s = toMin(j.work_start);
-            const e = toMin(j.work_end);
-            if (s == null || e == null) return false;
-            return !(e < startMin! || s > endMin!);
-          });
-        }
-
-        setJobList(jobs);
+        const filtered = await applyAllFilters(base);
+        setJobList(filtered);
       } catch (error) {
         console.error("일자리 조회 실패:", error);
         setJobList([]);
