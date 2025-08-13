@@ -11,18 +11,37 @@ import type {
 } from "../types/mypage";
 import { axiosInstance } from "./axios";
 
-/* ---------- 간단 유틸: 쿠키에서 Authorization 값을 읽어서 헤더로 넣기 ---------- */
+/* ---------- 토큰 읽기: 쿠키 + localStorage + sessionStorage ---------- */
 function readCookie(name: string): string | null {
   const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
   return m ? decodeURIComponent(m[1]) : null;
 }
-function getAuthHeader(): Record<string, string> {
-  const raw = readCookie("Authorization"); // 쿠키 이름 그대로 사용
-  if (!raw) return {};
-  const bearer = raw.startsWith("Bearer ") ? raw : `Bearer ${raw}`;
-  return { Authorization: bearer };
+function sanitizeToken(raw: string): string {
+  return raw
+    .replace(/^Bearer\s+/i, "")
+    .replace(/^"|"$/g, "")
+    .trim();
 }
-/* ------------------------------------------------------------------------- */
+function getAuthHeader(): Record<string, string> {
+  // 프로젝트마다 저장 키가 다를 수 있어 몇 가지 후보를 모두 확인
+  const rawCookie =
+    readCookie("Authorization") ??
+    readCookie("accessToken") ??
+    readCookie("ACCESS_TOKEN") ??
+    "";
+  const rawLS =
+    window.localStorage.getItem("Authorization") ??
+    window.localStorage.getItem("accessToken") ??
+    "";
+  const rawSS =
+    window.sessionStorage.getItem("Authorization") ??
+    window.sessionStorage.getItem("accessToken") ??
+    "";
+
+  const token = sanitizeToken(rawCookie || rawLS || rawSS);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+/* ------------------------------------------------------------------- */
 
 // 지원 현황 조회
 export const getApplications = async (
@@ -41,19 +60,27 @@ export const getApplications = async (
   return list;
 };
 
-// 찜 목록 조회 (헤더만 추가)
+// 찜 목록 조회
 export const getSavedJobs = async (): Promise<savedJobs[]> => {
   const res = await axiosInstance.get<ApiResponse<savedJobs[]>>(
-    "/api/v1/saved-posts",
-    { headers: getAuthHeader() } // ⬅️ 추가
+    "/api/v1/job-bookmarks",
+    {
+      withCredentials: true,
+      headers: {
+        Accept: "application/json",
+        ...getAuthHeader(), // ← 실제 사용: ESLint/TS 경고 해소 + 헤더 인증 시도
+      },
+    }
   );
 
-  const list = res.data?.result;
-  if (!Array.isArray(list)) {
-    console.error("Unexpected response shape:", res.data);
-    return [];
+  // 로그인 페이지(HTML) 방어
+  const ct = res.headers?.["content-type"];
+  if (typeof res.data !== "object" || (ct && ct.includes("text/html"))) {
+    throw new Error("로그인이 필요합니다.");
   }
-  return list;
+
+  const list = res.data?.result;
+  return Array.isArray(list) ? list : [];
 };
 
 type MeRaw = {
@@ -110,7 +137,6 @@ export const deactivateMember = async (
   const idNum = Number(memberId);
   const idForPath = Number.isFinite(idNum) ? String(idNum) : memberId;
 
-  // ⬇️ 백틱으로 수정
   const url = `/api/v1/members/${encodeURIComponent(idForPath)}/deactivate`;
 
   try {
@@ -141,7 +167,8 @@ export const deactivateMember = async (
 export const postReview = async (reviewData: reviews): Promise<number> => {
   const res = await axiosInstance.post<ApiResponse<{ reviewId: number }>>(
     "/api/v1/reviews",
-    reviewData
+    reviewData,
+    { headers: { Accept: "application/json" } }
   );
 
   return res.data.result.reviewId;
@@ -163,6 +190,7 @@ export const patchMyProfile = async (body: MemberUpdate): Promise<void> => {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
+        withCredentials: true,
       }
     );
 
