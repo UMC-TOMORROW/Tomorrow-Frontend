@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { getSavedJobs } from "../../apis/mypage";
-import type { savedJobs } from "../../types/mypage";
+import type { savedJobs as SavedJobType } from "../../types/mypage";
 
 const SavedJobs = () => {
-  const [savedJobs, setSavedJobs] = useState<savedJobs[]>([]);
+  const [savedJobs, setSavedJobs] = useState<SavedJobType[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
 
   useEffect(() => {
@@ -78,7 +78,7 @@ const SavedJobs = () => {
                     onClick={() => handleApplyClick(index)}
                     className={`flex border w-[80px] h-[28px] items-center justify-center text-[14px] ${
                       appliedJobs.includes(index)
-                        ? "bg-[#729A73] text-[#FFFFFF]"
+                        ? "bg-[#729A73] text-[#FFFFFF] border-transparent"
                         : "border-[#555555D9] text-[#555555D9]"
                     }`}
                     style={{ borderRadius: "5px" }}

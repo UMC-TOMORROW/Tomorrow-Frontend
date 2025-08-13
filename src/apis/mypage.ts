@@ -11,6 +11,19 @@ import type {
 } from "../types/mypage";
 import { axiosInstance } from "./axios";
 
+/* ---------- 간단 유틸: 쿠키에서 Authorization 값을 읽어서 헤더로 넣기 ---------- */
+function readCookie(name: string): string | null {
+  const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+function getAuthHeader(): Record<string, string> {
+  const raw = readCookie("Authorization"); // 쿠키 이름 그대로 사용
+  if (!raw) return {};
+  const bearer = raw.startsWith("Bearer ") ? raw : `Bearer ${raw}`;
+  return { Authorization: bearer };
+}
+/* ------------------------------------------------------------------------- */
+
 // 지원 현황 조회
 export const getApplications = async (
   type: ApplicationFilter
@@ -28,10 +41,11 @@ export const getApplications = async (
   return list;
 };
 
-// 찜 목록 조회
+// 찜 목록 조회 (헤더만 추가)
 export const getSavedJobs = async (): Promise<savedJobs[]> => {
   const res = await axiosInstance.get<ApiResponse<savedJobs[]>>(
-    "/api/v1/saved-posts"
+    "/api/v1/saved-posts",
+    { headers: getAuthHeader() } // ⬅️ 추가
   );
 
   const list = res.data?.result;
@@ -96,6 +110,7 @@ export const deactivateMember = async (
   const idNum = Number(memberId);
   const idForPath = Number.isFinite(idNum) ? String(idNum) : memberId;
 
+  // ⬇️ 백틱으로 수정
   const url = `/api/v1/members/${encodeURIComponent(idForPath)}/deactivate`;
 
   try {
