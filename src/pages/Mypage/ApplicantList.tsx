@@ -149,7 +149,6 @@ const ApplicantList = () => {
               <ul>
                 {applicants.map((applicant) => {
                   const parsed = parsedById[applicant.applicantId];
-                  const displayName = parsed?.name ?? applicant.userName;
                   const displayMeta =
                     parsed
                       ? `${parsed.gender ?? "-"}/${
@@ -175,7 +174,7 @@ const ApplicantList = () => {
                           <div className="flex flex-col gap-[2px] min-w-[200px]">
                             <div className="flex items-center gap-[10px]">
                               <p className="text-[18px]" style={{ fontWeight: 800 }}>
-                                {displayName}
+                                {applicant.userName}
                               </p>
                               <p
                                 className="text-[11px] text-[#555555D9]"
