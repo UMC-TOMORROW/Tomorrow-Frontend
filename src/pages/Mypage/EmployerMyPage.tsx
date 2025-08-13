@@ -55,7 +55,7 @@ const EmployerMyPage = () => {
           </div>
           <div
             className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
-            onClick={() => navigate("")}
+            onClick={() => navigate("/MyPage/MemberInfo")}
           >
             <p>일자리 등록</p>
             <img src={suitcase} />
