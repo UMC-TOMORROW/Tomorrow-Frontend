@@ -1,17 +1,26 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BottomNavbar from "../components/BottomNavbar";
-import type { Job } from "../types/homepage";
+import type { JobsView } from "../types/homepage";
 import palette from "../styles/theme";
 import SearchBar from "../components/search/SearchBar";
 import JobCard from "../components/Homepage/JobCard";
-import { getJobsDefault } from "../apis/HomePage";
 import HomepageTopBar from "../components/Homepage/HomepageTopBar";
+import { getJobsByDay, getJobsDefault } from "../apis/HomePage";
+
+type JobLike = JobsView & {
+  jobCategory?: string; // camel
+  workStart?: string;
+  workEnd?: string;
+};
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const [jobList, setJobList] = useState<Job[]>([]);
+  const location = useLocation();
+  const [jobList, setJobList] = useState<JobsView[]>(
+    Array.isArray(location.state?.jobList) ? location.state.jobList : []
+  );
 
   const [selectedRegion, setSelectedRegion] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState<string[]>([]);
@@ -22,59 +31,90 @@ const HomePage = () => {
   }>({});
 
   useEffect(() => {
+    const toMin = (t?: string) => {
+      if (!t) return undefined;
+      const [hh, mm] = t.split(":");
+      return Number(hh) * 60 + Number(mm);
+    };
+
+    const applyAllFilters = async (baseJobs: JobsView[]) => {
+      let jobs = [...baseJobs];
+
+      // 1) 요일 필터: 서버 결과 타입 명시
+      if (selectedDays.length > 0) {
+        const byDay = await getJobsByDay(selectedDays);
+        const validIds = new Set(byDay.map((j: { jobId: number }) => j.jobId));
+        jobs = jobs.filter((j: JobLike) => validIds.has(j.jobId));
+      }
+
+      // 2) 지역 필터
+      if (selectedRegion.length > 0) {
+        jobs = jobs.filter((j: JobLike) =>
+          selectedRegion.every((kw) => (j.location ?? "").includes(kw))
+        );
+      }
+
+      // 3) 유형 필터 (snake/camel 동시 대응)
+      if (selectedType.length > 0) {
+        jobs = jobs.filter((j: JobLike) => {
+          type CatShape = {
+            job_category?: string | string[];
+            jobCategory?: string | string[];
+          };
+          const s = (j as CatShape).job_category ?? (j as CatShape).jobCategory;
+
+          const cat: string = Array.isArray(s) ? s[0] ?? "" : s ?? "";
+
+          return selectedType.includes(cat);
+        });
+      }
+
+      // 4) 시간 필터 (snake/camel 동시 대응)
+      if (selectedTime.start || selectedTime.end) {
+        const startMin = toMin(selectedTime.start || "00:00")!;
+        const endMin = toMin(selectedTime.end || "23:59")!;
+        jobs = jobs.filter((j: JobLike) => {
+          const sStr = (j.work_start ?? j.workStart ?? "").slice(0, 5); // "HH:MM"
+          const eStr = (j.work_end ?? j.workEnd ?? "").slice(0, 5);
+          const s = toMin(sStr);
+          const e = toMin(eStr);
+          if (s == null || e == null) return false;
+          return !(e < startMin || s > endMin);
+        });
+      }
+
+      return jobs;
+    };
+
     const fetchJobs = async () => {
       try {
-        const allJobs = await getJobsDefault();
+        // 기준 데이터셋 결정: 검색 결과 우선, 없으면 기본 조회
+        const base: JobsView[] = Array.isArray(location.state?.jobList)
+          ? location.state.jobList
+          : await getJobsDefault();
 
-        if (!Array.isArray(allJobs)) {
-          console.error("allJobs가 배열이 아님:", allJobs);
-          setJobList([]);
-          return;
-        }
-
-        const filtered = allJobs.filter((job: Job) => {
-          const matchRegion =
-            selectedRegion.length === 0 ||
-            selectedRegion.some((region: string) =>
-              job.location.includes(region)
-            );
-
-          const matchType =
-            selectedType.length === 0 ||
-            selectedType.some((type: string) =>
-              job.job_category.includes(type)
-            );
-
-          const matchDay =
-            selectedDays.length === 0 ||
-            job.work_days?.some((day: string) => selectedDays.includes(day));
-
-          const matchTime =
-            (!selectedTime.start && !selectedTime.end) ||
-            (job.work_start &&
-              job.work_end &&
-              (!selectedTime.start || job.work_start >= selectedTime.start) &&
-              (!selectedTime.end || job.work_end <= selectedTime.end));
-
-          return matchRegion && matchType && matchDay && matchTime;
-        });
-
+        const filtered = await applyAllFilters(base);
         setJobList(filtered);
       } catch (error) {
-        console.error("기본 일자리 목록 조회 실패:", error);
+        console.error("일자리 조회 실패:", error);
         setJobList([]);
       }
     };
 
     fetchJobs();
-  }, [selectedRegion, selectedType, selectedDays, selectedTime]);
+  }, [
+    location.state,
+    selectedRegion,
+    selectedType,
+    selectedDays,
+    selectedTime,
+  ]);
 
   return (
     <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px]">
       <div className="flex-shrink-0 pt-[50px]">
         <Header title="내일" />
         <HomepageTopBar
-          setJobList={setJobList}
           onRegionSelect={setSelectedRegion}
           onTypeSelect={setSelectedType}
           onDaySelect={setSelectedDays}
@@ -118,22 +158,33 @@ const HomePage = () => {
 
       <div className="flex-1 overflow-y-scroll bg-white">
         {Array.isArray(jobList) && jobList.length > 0 ? (
-          jobList.map((job: Job, index: number) => (
+          jobList.map((jobCard) => (
             <JobCard
-              key={job.jobId}
-              company={job.company_name}
-              title={job.title}
-              tags={job.job_category}
-              duration={job.isPeriodNegotiable ? "기간 협의" : "고정 기간"}
-              review={job.review_count > 0 ? `${job.review_count}건` : ""}
-              location={job.location}
-              wage={`${job.salary.toLocaleString()}원`}
-              isFirst={index === 0}
+              key={jobCard.jobId}
+              title={jobCard.title}
+              company={jobCard.companyName}
+              location={jobCard.location}
+              wage={`${jobCard.salary?.toLocaleString() || "0"}원`}
+              review={
+                typeof jobCard.review_count === "number" &&
+                jobCard.review_count > 0
+                  ? `${jobCard.review_count}건`
+                  : ""
+              }
+              image={jobCard.job_image_url ?? ""} // string 보장
+              isTime={Boolean(jobCard.isTimeNegotiable)} // boolean 보장
+              isPeriod={Boolean(jobCard.isPeriodNegotiable)} // boolean 보장
+              environment={
+                Array.isArray(jobCard.work_environment)
+                  ? jobCard.work_environment
+                  : []
+              }
             />
           ))
         ) : (
           <p className="text-center mt-10 text-gray-500">일자리가 없습니다.</p>
         )}
+
         <div className="h-[63px]" />
       </div>
 

@@ -1,8 +1,50 @@
 import { useState } from "react";
 import { SlArrowLeft } from "react-icons/sl";
+import { patchMyProfile } from "../../apis/mypage";
+import { useNavigate } from "react-router-dom";
+import type { MemberUpdate } from "../../types/mypage";
+
+const mapGender = (g?: "남자" | "여자"): "MALE" | "FEMALE" | undefined => {
+  if (g === "남자") return "MALE";
+  if (g === "여자") return "FEMALE";
+  return undefined;
+};
 
 const MemberInfo = () => {
+  const navigate = useNavigate();
+
   const [gender, setGender] = useState<"남자" | "여자">();
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [address, setAddress] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (saving) return;
+
+    const payload: MemberUpdate = {
+      email: email || undefined,
+      name: name || undefined,
+      gender: mapGender(gender),
+      ...(phoneNumber ? { phoneNumber } : {}),
+      ...(address ? { address } : {}),
+    };
+
+    try {
+      setSaving(true);
+      await patchMyProfile(payload);
+      alert("회원 정보가 수정되었습니다.");
+      navigate(-1);
+    } catch (e) {
+      const msg =
+        e instanceof Error ? e.message : "수정 중 오류가 발생했습니다.";
+      alert(msg);
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div style={{ fontFamily: "Pretendard" }}>
@@ -29,6 +71,8 @@ const MemberInfo = () => {
                 type="text"
                 className="w-full h-[42px] px-[5px] border border-[#5555558C] text-[13px]"
                 style={{ borderRadius: "10px" }}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
               <p className="text-[12px] text-[#555555D9]">
                 카카오 로그인 사용중
@@ -43,6 +87,8 @@ const MemberInfo = () => {
                 type="text"
                 className="w-full h-[42px] px-[5px] border border-[#5555558C] text-[13px]"
                 style={{ borderRadius: "10px" }}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
             </div>
 
@@ -88,6 +134,8 @@ const MemberInfo = () => {
                   placeholder="010-1234-5678"
                   className="flex-1 w-[235px] h-[44px] px-[10px] border border-[#5555558C] text-[13px]"
                   style={{ borderRadius: "10px" }}
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
                 />
                 <button
                   type="button"
@@ -109,6 +157,8 @@ const MemberInfo = () => {
                   placeholder="서울시 00구 00동"
                   className="flex-1 w-[235px] h-[44px] px-[10px] border border-[#5555558C] text-[13px]"
                   style={{ borderRadius: "10px" }}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                 />
                 <button
                   type="button"
@@ -125,8 +175,10 @@ const MemberInfo = () => {
           <button
             className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] bg-[#729A73]"
             style={{ fontWeight: 600, borderRadius: "10px" }}
+            onClick={handleSave}
+            disabled={saving}
           >
-            수정 완료
+            {saving ? "저장 중..." : "수정 완료"}
           </button>
         </section>
       </div>

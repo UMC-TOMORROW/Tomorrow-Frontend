@@ -24,6 +24,9 @@ import ApplicantDetail from "./pages/Mypage/ApplicantDetail";
 import EmployerMyPage from "./pages/Mypage/EmployerMyPage";
 import SearchPage from "./pages/SearchPage";
 import UserInfoForm from "./pages/auth/UserInfoForm";
+import JobPostForm from "./pages/post/JobPostPage";
+import BusinessStep from "./components/jobPost/BusinessStep";
+import PersonalStep from "./components/jobPost/PerSonalStep";
 import WorkPreference from "./pages/Mypage/WorkPreference";
 
 const router = createBrowserRouter([
@@ -45,6 +48,9 @@ const router = createBrowserRouter([
       { path: "career-talk/edit/:id", element: <CareerTalkWritePage /> },
       { path: "MyPage", element: <MyPage /> },
       { path: "recommendation", element: <RecommendationPage /> },
+      { path: "post", element: <JobPostForm /> },
+      { path: "/post/business", element: <BusinessStep /> },
+      { path: "/post/personal", element: <PersonalStep /> },
     ],
   },
   {

@@ -1,20 +1,18 @@
-export interface Job {
+export interface JobsView {
   jobId: number;
-  company_name: string;
   title: string;
-  job_category: string[];
-  isPeriodNegotiable: boolean;
-  review_count: number;
+  companyName: string;
   location: string;
   salary: number;
-  work_days?: string[];
+  review_count: number;
+  job_image_url: string;
+  payment_type: string;
+  isTimeNegotiable: boolean;
+  isPeriodNegotiable: boolean;
+  work_environment: string[];
+
   work_start?: string;
   work_end?: string;
-}
-
-export interface GetJobsResponse {
-  timestamp: string;
-  code: string;
-  message: string;
-  result: Job[];
+  work_days?: string[];
+  job_category?: string[];
 }

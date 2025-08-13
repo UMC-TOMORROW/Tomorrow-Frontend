@@ -39,9 +39,7 @@ const DayModal = ({ isOpen, onClose, onSubmit }: DayModalProps) => {
       className="fixed inset-0 z-[9999] flex justify-center items-end bg-black/30"
       style={{ fontFamily: "Pretendard" }}
     >
-      {/* 모달 박스 */}
       <div className="w-[393px] bg-white rounded-[20px] -translate-y-5">
-        {/* 상단 초록색 박스 */}
         <div
           className="relative flex items-center justify-center h-[55px] text-[18px] font-bold w-full rounded-t-[20px]"
           style={{ backgroundColor: palette.primary.primaryLight }}
@@ -55,7 +53,6 @@ const DayModal = ({ isOpen, onClose, onSubmit }: DayModalProps) => {
           </button>
         </div>
 
-        {/* 버튼 그룹 */}
         <div className="flex justify-between items-center px-[15px] py-[30px]">
           {days.map((day) => {
             const isSelected = selectedDay === day;
@@ -79,7 +76,6 @@ const DayModal = ({ isOpen, onClose, onSubmit }: DayModalProps) => {
           })}
         </div>
 
-        {/* 하단 버튼 */}
         <div className="w-full !mb-6 flex justify-center">
           <button
             onClick={handleSubmit}

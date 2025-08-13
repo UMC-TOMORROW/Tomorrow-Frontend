@@ -1,15 +1,13 @@
 import { useState } from "react";
 import palette from "../../../styles/theme";
-import { getJobsByRegion } from "../../../apis/HomePage";
-import type { Job } from "../../../types/homepage";
 
 interface RegionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  setJobList: (jobs: Job[]) => void;
+  onSubmit: (regions: string[]) => void;
 }
 
-const RegionModal = ({ isOpen, onClose, setJobList }: RegionModalProps) => {
+const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
   const regions = [
     "전체",
     "강남구",
@@ -39,23 +37,16 @@ const RegionModal = ({ isOpen, onClose, setJobList }: RegionModalProps) => {
     "중랑구",
   ];
 
-  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedRegion, setSelectedRegion] = useState<string>("전체");
 
   if (!isOpen) return null;
 
-  const handleSubmit = async () => {
-    const queryRegions = ["서울특별시"];
-    if (selectedRegion && selectedRegion !== "전체") {
-      queryRegions.push(selectedRegion);
+  const handleSubmit = () => {
+    if (selectedRegion === "전체") {
+      onSubmit([]);
+    } else {
+      onSubmit([selectedRegion]);
     }
-
-    try {
-      const jobList = await getJobsByRegion(queryRegions);
-      setJobList(jobList);
-    } catch (e) {
-      console.error("일자리 목록 불러오기 실패:", e);
-    }
-
     onClose();
   };
 
@@ -86,7 +77,7 @@ const RegionModal = ({ isOpen, onClose, setJobList }: RegionModalProps) => {
         >
           <span>서울</span>
           <span className="text-[18px]">&gt;</span>
-          <span>{selectedRegion || "전체"}</span>
+          <span>{selectedRegion}</span>
         </div>
 
         {/* 동 리스트 */}
@@ -101,19 +92,20 @@ const RegionModal = ({ isOpen, onClose, setJobList }: RegionModalProps) => {
               if (index === regions.length - 1)
                 radiusClass = "rounded-br-[12px]";
 
+              const isSelected = selectedRegion === dong;
+
               return (
                 <button
                   key={dong}
                   onClick={() => setSelectedRegion(dong)}
                   className={`w-[110px] h-[60px] text-[14px] border font-bold ${radiusClass} ${
-                    selectedRegion === dong
+                    isSelected
                       ? "bg-[#B8CDB9] text-black"
                       : "bg-white text-black"
                   }`}
                   style={{
-                    borderColor:
-                      selectedRegion === dong ? "#B8CDB9" : "#DDDDDD",
-                    fontWeight: selectedRegion === dong ? "700" : "500",
+                    borderColor: isSelected ? "#B8CDB9" : "#DDDDDD",
+                    fontWeight: isSelected ? "700" : "500",
                   }}
                 >
                   {dong}

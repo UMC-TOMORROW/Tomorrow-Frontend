@@ -1,34 +1,58 @@
 import { useState } from "react";
 import palette from "../../styles/theme";
+import defaultLogo from "../../assets/logo/logo.png";
 
 interface JobCardProps {
   company: string;
   title: string;
-  tags: string[];
-  duration: string;
   review: string;
   location: string;
   wage: string;
-  isFirst?: boolean;
+  image: string;
+  isTime: boolean;
+  isPeriod: boolean;
+  environment?: string[];
 }
 
 const JobCard = ({
   company,
   title,
-  tags,
-  duration,
   review,
   location,
   wage,
-  isFirst,
+  image,
+  isTime,
+  isPeriod,
+  environment,
 }: JobCardProps) => {
   const [clicked, setClicked] = useState(false);
   const [hovered, setHovered] = useState(false);
 
   const isActive = clicked || hovered;
 
+  const environmentMap: Record<string, string> = {
+    can_work_standing: "서서 근무 중심",
+    can_work_sitting: "앉아서 근무 중심",
+    can_lift_light_objects: "가벼운 물건 운반",
+    can_lift_heavy_objects: "무거운 물건 운반",
+    use_arm_frequently: "손과 팔을 자주 사용하는 작업",
+    repetitive_hand_work: "반복 손작업 포함",
+  };
+
+  const timeText = isTime ? "시간협의" : "시간 고정";
+  const periodText = isPeriod ? "기간협의" : "기간 고정";
+
+  const translatedEnv =
+    environment
+      ?.map((e) => environmentMap[e])
+      .filter(Boolean)
+      .join(", ") || "";
+
   return (
-    <div className={`bg-white w-[393px] mx-auto ${isFirst ? "" : ""}`}>
+    <div
+      className="bg-white w-[393px] mx-auto overflow-x-hidden"
+      style={{ fontFamily: "Pretendard" }}
+    >
       <div className="px-[16px] pt-[10px] pb-[6px]">
         {/* 텍스트 + 사진 */}
         <div className="flex justify-between items-start">
@@ -39,10 +63,12 @@ const JobCard = ({
               className="text-[14px] whitespace-nowrap overflow-hidden text-ellipsis"
               style={{ color: palette.primary.primary }}
             >
-              {tags.join(", ")}
+              {translatedEnv}
             </p>
             <p className="text-[12px] !mt-1.5 text-black">
-              <span style={{ color: palette.gray.default }}>{duration}</span>
+              <span style={{ color: palette.gray.default }}>
+                {timeText}, {periodText}
+              </span>
               {review && (
                 <>
                   &nbsp; ★ <span>{review}</span>
@@ -54,8 +80,9 @@ const JobCard = ({
           {/* 사진 */}
           <div className="flex items-center !mt-3 justify-center h-full w-[60px]">
             <img
-              src="/src/assets/logo/logo.png"
-              className="h-[50px] w-[60px]"
+              src={image?.trim() ? image : defaultLogo}
+              alt={title}
+              className="!h-15 !w-15 rounded"
             />
           </div>
         </div>
