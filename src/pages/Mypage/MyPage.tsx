@@ -4,17 +4,32 @@ import { SlArrowRight } from "react-icons/sl";
 import resume from "../../assets/my/resume.png";
 import star_filled_black from "../../assets/my/star_filled_black.png";
 import { useNavigate } from "react-router-dom";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import recommend from "../../assets/recommend.png";
 import member from "../../assets/member.png";
 import { deactivateMember, getMe } from "../../apis/mypage";
+import type { MyInfo } from "../../types/member";
+import { getMyInfo } from "../../apis/employerMyPage";
 
 const MyPage = () => {
   const navigate = useNavigate();
   const [showUnregister, setShowUnregister] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
 
+  useEffect(() => {
+    const fetchMyInfo = async () => {
+      try {
+        const data = await getMyInfo();
+        setMyInfo(data);
+      } catch (error) {
+        console.error("내 정보 불러오기 실패:", error);
+      }
+    };
+    fetchMyInfo();
+  }, []);
+  
   const handleLogout = useCallback(async () => {
     if (isLoggingOut) return;
     try {
@@ -78,7 +93,7 @@ const MyPage = () => {
             <img src={member} />
             <div>
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
-                이내일
+                {myInfo?.name ?? "이름을 등록해주세요"}
               </p>
               <p className="text-[14px]">몸도 마음도 건강한 하루 되세요!</p>
             </div>

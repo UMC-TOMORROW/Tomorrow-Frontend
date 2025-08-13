@@ -4,13 +4,26 @@ import { SlArrowRight } from "react-icons/sl";
 import resume from "../../assets/my/resume.png";
 import suitcase from "../../assets/my/suitcase.png";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import member from "../../assets/member.png";
+import type { MyInfo } from "../../types/member";
+import { getMyInfo } from "../../apis/employerMyPage";
 
 const EmployerMyPage = () => {
   const navigate = useNavigate();
   const [showUnregister, setShowUnregister] = useState(false);
-
+  const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
+  useEffect(() => {
+    const fetchMyInfo = async () => {
+      try {
+        const data = await getMyInfo();
+        setMyInfo(data);
+      } catch (error) {
+        console.error("내 정보 불러오기 실패:", error);
+      }
+    };
+    fetchMyInfo();
+  }, []);
   return (
     <div className="bg-white" style={{ fontFamily: "Pretendard" }}>
       <Header title="마이페이지" />
@@ -21,7 +34,7 @@ const EmployerMyPage = () => {
             <img src={member} />
             <div>
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
-                이내일
+                {myInfo?.name ?? "이름을 등록해주세요"}
               </p>
               <p className="text-[13px]">
                 서로를 이어주는 내일, 지금 시작해보세요
