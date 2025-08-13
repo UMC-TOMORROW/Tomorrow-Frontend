@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getJobDetail } from "../../apis/jobs";
+import ApplySheet from "../../components/jobApply/ApplySheet";
+import { getResumeSummary } from "../../apis/resumes";
+import { postApplication } from "../../apis/applications";
 
 import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
 import starHalf from "../../assets/star/star_half_filled.png";
 import bmEmpty from "../../assets/bookmark/star_empty.png";
 import bmFilled from "../../assets/bookmark/star_filled.png";
+import bmFill from "../../assets/bookmark/image.png";
 
 const Divider: React.FC = () => <div className="h-px bg-[#EAEAEA] -mx-4" />;
 
@@ -193,6 +197,63 @@ export default function JobDetailPage() {
 
   const envTags: string[] = job.envTags ?? [];
 
+  const navigate = useNavigate();
+  const [applyOpen, setApplyOpen] = useState(false);
+  const [applyContent, setApplyContent] = useState("");
+  const [attachChecked, setAttachChecked] = useState(false);
+  const [resumeId, setResumeId] = useState<number | null>(null);
+  const [applied, setApplied] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  function onClickApplyCTA() {
+    if (applied) return;
+    setApplyOpen(true);
+  }
+
+  // 체크박스 토글 시: 체크=이력서 확인 → 없으면 이동, 있으면 resumeId 저장
+  async function handleToggleAttach(checked: boolean) {
+    if (!checked) {
+      setAttachChecked(false);
+      return;
+    }
+    try {
+      const { hasResume, resumeId: rid } = await getResumeSummary();
+      if (!hasResume || !rid) {
+        // 이력서 없으면 즉시 이동(요구사항)
+        setApplyOpen(false);
+        setAttachChecked(false);
+        navigate("/Mypage/ResumeManage");
+        return;
+      }
+      setResumeId(rid);
+      setAttachChecked(true);
+    } catch (e: any) {
+      alert(e?.response?.data?.message ?? "이력서 확인 중 오류가 발생했어요.");
+    }
+  }
+
+  // 제출: 체크박스 필수, resumeId 필수
+  async function onSubmitApply() {
+    if (!attachChecked || !resumeId) return; // 방어
+    try {
+      setSubmitting(true);
+      await postApplication({
+        content: applyContent.trim(), // 비워도 되면 그대로 전달
+        jobId: Number(jobId),
+        resumeId,
+      });
+      alert("지원이 완료되었습니다.");
+      setApplied(true);
+      setApplyOpen(false);
+      setApplyContent("");
+      setAttachChecked(false); // 초기화
+    } catch (e: any) {
+      alert(e?.response?.data?.message ?? "지원 중 오류가 발생했어요.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="max-w-[375px] mx-auto bg-white">
       <div className="sticky top-0 z-10 bg-white">
@@ -203,7 +264,6 @@ export default function JobDetailPage() {
           <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-bold font-pretendard">일자리 정보</h1>
         </div>
       </div>
-
       <div className="!px-4 !pt-4 !pb-28 !space-y-8">
         {/* Summary */}
         <section className="!space-y-2">
@@ -282,7 +342,6 @@ export default function JobDetailPage() {
           </div>
         </Section>
       </div>
-
       {/* 하단 고정 CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[375px] bg-white border-t border-[#E5E7EB]">
         <div className="px-4 !pt-4 !pb-[max(16px,env(safe-area-inset-bottom))]">
@@ -292,17 +351,35 @@ export default function JobDetailPage() {
               className="w-12 h-12 shrink-0 rounded-[10px] bg-[#729A73] flex items-center justify-center"
               onClick={() => setBookmarked((v) => !v)}
             >
-              <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-5 h-5" />
+              <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-[45px] h-[45px]" />
             </button>
             <button className="flex-1 min-w-0 h-12 rounded-[10px] border border-[#729A73] text-[#729A73] font-semibold">
               전화하기
             </button>
-            <button className="flex-1 min-w-0 h-12 rounded-[10px] bg-[#729A73] text-white font-semibold">
-              지원하기
+            <button
+              className={`flex-1 min-w-0 h-12 rounded-[10px] ${
+                applied ? "bg-[#C9C9C9]" : "bg-[#729A73]"
+              } !text-white font-semibold`}
+              onClick={onClickApplyCTA}
+              disabled={applied}
+            >
+              {applied ? "지원완료" : "지원하기"}
             </button>
           </div>
         </div>
       </div>
+      <ApplySheet
+        open={applyOpen}
+        content={applyContent}
+        setContent={setApplyContent}
+        attachChecked={attachChecked}
+        onToggleAttach={handleToggleAttach}
+        canSubmit={attachChecked && !submitting} // ✅ 체크됐을 때만 활성화(요구사항)
+        submitting={submitting}
+        onClose={() => setApplyOpen(false)}
+        onSubmit={onSubmitApply}
+      />
+      ;
     </div>
   );
 }
