@@ -1,5 +1,5 @@
 import { axiosInstance } from "./axios";
-import type { MyInfo } from "../types/member";
+import type { GetUserTypeResponse, MemberType, MyInfo } from "../types/member";
 import type { ApiEnvelope, ApiEnvelopeNoResult, MyPostItem, MyPostStatus } from "../types/employer";
 import type { Applicant, ApplicantResume, ApplicantResumeRaw } from "../types/applicant";
 import { parseApplicantContent } from "../utils/parseApplicantContent";
@@ -61,4 +61,12 @@ export const getApplicantResume = async (
   const parsedContent = parseApplicantContent(raw.content);
 
   return { ...raw, parsedContent };
+};
+
+// 내 역할(EMPLOYER | JOB_SEEKER) 조회
+export const getMyMemberType = async (): Promise<MemberType> => {
+  const res = await axiosInstance.get<ApiEnvelope<GetUserTypeResponse>>(
+    "/api/v1/members/member-type"
+  );
+  return res.data.result.memberType;
 };
