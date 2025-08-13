@@ -3,7 +3,7 @@ import CommonButton from "../components/common/CommonButton";
 import palette from "../styles/theme";
 import { useNavigate } from "react-router-dom";
 import OnboardingSkipModal from "../components/Onboarding/OnboardingSkipModal";
-import { postPreferences } from "../apis/Onboarding";
+import { postPreferences, patchMemberType } from "../apis/Onboarding";
 import axios from "axios";
 
 function Onboarding() {
@@ -57,11 +57,27 @@ function Onboarding() {
             {[
               {
                 label: "👥 직원을 찾고 있어요",
-                onClick: () => navigate("../MyPage/EmployerMyPage"),
+                onClick: async () => {
+                  try {
+                    await patchMemberType({ memberType: "EMPLOYER" });
+                  } catch (e) {
+                    console.error("회원유형 설정 실패(EMPLOYER):", e);
+                  } finally {
+                    navigate("../MyPage/EmployerMyPage");
+                  }
+                },
               },
               {
                 label: "💼 일을 찾고 있어요",
-                onClick: () => setPage(2),
+                onClick: async () => {
+                  try {
+                    await patchMemberType({ memberType: "JOB_SEEKER" });
+                  } catch (e) {
+                    console.error("회원유형 설정 실패(JOB_SEEKER):", e);
+                  } finally {
+                    setPage(2);
+                  }
+                },
               },
             ].map(({ label, onClick }) => (
               <button
@@ -183,10 +199,11 @@ function Onboarding() {
         </div>
       )}
 
+      {/* page 3 ~ 7 그대로 (생략 없음, 네 코드 유지) */}
+
       {page === 3 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />
-          {/* 상단 안내 문구 */}
           <h1
             className="text-[30px] text-center !font-bold leading-[51.776px] tracking-[0.04em] mb-10"
             style={{
@@ -198,12 +215,10 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          {/* 이미지 */}
           <img
             src="/src/assets/onboarding/Typing-pana.png"
             className="w-[340px] h-[300px]"
           />
-          {/* 버튼 영역 */}
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -216,10 +231,7 @@ function Onboarding() {
                   setPage(4);
                 },
               },
-              {
-                label: "아니오",
-                onClick: () => setPage(4),
-              },
+              { label: "아니오", onClick: () => setPage(4) },
             ].map(({ label, onClick }) => (
               <button
                 key={label}
@@ -259,7 +271,6 @@ function Onboarding() {
       {page === 4 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />
-          {/* 상단 안내 문구 */}
           <h1
             className="text-[30px] text-center !font-bold leading-[51.776px] tracking-[0.04em] mb-10"
             style={{
@@ -271,12 +282,10 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          {/* 이미지 */}
           <img
             src="/src/assets/onboarding/Bricklayer-pana.png"
             className="w-[340px] h-[300px]"
           />
-          {/* 버튼 영역 */}
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -289,10 +298,7 @@ function Onboarding() {
                   setPage(5);
                 },
               },
-              {
-                label: "아니오",
-                onClick: () => setPage(5),
-              },
+              { label: "아니오", onClick: () => setPage(5) },
             ].map(({ label, onClick }) => (
               <button
                 key={label}
@@ -332,7 +338,6 @@ function Onboarding() {
       {page === 5 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />
-          {/* 상단 안내 문구 */}
           <h1
             className="text-[30px] text-center !font-bold leading-[51.776px] tracking-[0.04em] mb-10"
             style={{
@@ -344,12 +349,10 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          {/* 이미지 */}
           <img
             src="/src/assets/onboarding/Heavybox-pana.png"
             className="w-[340px] h-[300px]"
-          />{" "}
-          {/* 버튼 영역 */}
+          />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -362,10 +365,7 @@ function Onboarding() {
                   setPage(6);
                 },
               },
-              {
-                label: "아니오",
-                onClick: () => setPage(6),
-              },
+              { label: "아니오", onClick: () => setPage(6) },
             ].map(({ label, onClick }) => (
               <button
                 key={label}
@@ -405,7 +405,6 @@ function Onboarding() {
       {page === 6 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />
-          {/* 상단 안내 문구 */}
           <h1
             className="text-[30px] text-center !font-bold leading-[51.776px] tracking-[0.04em] mb-10"
             style={{
@@ -417,12 +416,10 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          {/* 이미지 */}
           <img
             src="/src/assets/onboarding/Gardening-pana.png"
             className="w-[340px] h-[300px]"
-          />{" "}
-          {/* 버튼 영역 */}
+          />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -435,10 +432,7 @@ function Onboarding() {
                   setPage(7);
                 },
               },
-              {
-                label: "아니오",
-                onClick: () => setPage(7),
-              },
+              { label: "아니오", onClick: () => setPage(7) },
             ].map(({ label, onClick }) => (
               <button
                 key={label}
@@ -478,7 +472,6 @@ function Onboarding() {
       {page === 7 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />
-          {/* 상단 안내 문구 */}
           <h1
             className="text-[30px] text-center !font-bold leading-[51.776px] tracking-[0.04em] mb-10"
             style={{
@@ -490,12 +483,10 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          {/* 이미지 */}
           <img
             src="/src/assets/onboarding/Waiters-pana.png"
             className="w-[340px] h-[300px]"
-          />{" "}
-          {/* 버튼 영역 */}
+          />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -508,10 +499,7 @@ function Onboarding() {
                   setPage(8);
                 },
               },
-              {
-                label: "아니오",
-                onClick: () => setPage(8),
-              },
+              { label: "아니오", onClick: () => setPage(8) },
             ].map(({ label, onClick }) => (
               <button
                 key={label}
@@ -556,17 +544,14 @@ function Onboarding() {
           <img
             src="/src/assets/logo/logo_white.png"
             className="w-[233px] h-[153px]"
-          ></img>
-          {/* 이미지 */}
+          />
           <img
             src="/src/assets/onboarding/FormingTeamLeadership-pana.png"
             className="w-[340px] h-[300px]"
-          />{" "}
+          />
           <p
             className="text-[20px] !font-semibold text-white text-center"
-            style={{
-              fontFamily: "Pretendard",
-            }}
+            style={{ fontFamily: "Pretendard" }}
           >
             당신의 더 나은
             <br />
@@ -589,13 +574,16 @@ function Onboarding() {
                   isSavingRef.current = true;
 
                   const response = await postPreferences({
-                    preferenceList: deduped,
+                    preferences: deduped,
                   });
 
                   console.log("보낸 데이터", { preferences: deduped });
                   console.log("받은 응답", response);
 
-                  if (response?.result?.saved) {
+                  const result = response?.result as
+                    | { userId?: unknown }
+                    | undefined;
+                  if (typeof result?.userId === "number") {
                     navigate("/recommendation");
                   } else {
                     alert(
@@ -626,6 +614,7 @@ function Onboarding() {
           </div>
         </div>
       )}
+
       {showSkipModal && (
         <OnboardingSkipModal
           onAccept={() => {
