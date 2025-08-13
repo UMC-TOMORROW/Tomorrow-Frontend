@@ -144,14 +144,6 @@ function Onboarding() {
               <br />
               보다 편안하고 적합한 일자리와 활동을 추천해드립니다.
             </p>
-            <p
-              className="text-center text-black text-[14px] font-normal leading-[20px] tracking-[-0.03em] mb-10 mt-3"
-              style={{ fontFamily: "Pretendard" }}
-            >
-              본 질문은 의료 진단이나 치료 목적이 아닌,
-              <br />
-              서비스 추천을 위한 참고 정보로만 사용됩니다.
-            </p>
           </div>
           <div
             className="w-full max-w-[320px] font-bold text-[18px] flex flex-col gap-[15px] !mt-10"
