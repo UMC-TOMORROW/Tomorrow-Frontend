@@ -40,7 +40,7 @@ const HomePage = () => {
     const applyAllFilters = async (baseJobs: JobsView[]) => {
       let jobs = [...baseJobs];
 
-      // 1) 요일 필터: 서버 결과 타입 명시
+      // 1) 요일 필터
       if (selectedDays.length > 0) {
         const byDay = await getJobsByDay(selectedDays);
         const validIds = new Set(byDay.map((j: { jobId: number }) => j.jobId));
@@ -62,9 +62,7 @@ const HomePage = () => {
             jobCategory?: string | string[];
           };
           const s = (j as CatShape).job_category ?? (j as CatShape).jobCategory;
-
           const cat: string = Array.isArray(s) ? s[0] ?? "" : s ?? "";
-
           return selectedType.includes(cat);
         });
       }
@@ -74,7 +72,7 @@ const HomePage = () => {
         const startMin = toMin(selectedTime.start || "00:00")!;
         const endMin = toMin(selectedTime.end || "23:59")!;
         jobs = jobs.filter((j: JobLike) => {
-          const sStr = (j.work_start ?? j.workStart ?? "").slice(0, 5); // "HH:MM"
+          const sStr = (j.work_start ?? j.workStart ?? "").slice(0, 5);
           const eStr = (j.work_end ?? j.workEnd ?? "").slice(0, 5);
           const s = toMin(sStr);
           const e = toMin(eStr);
@@ -88,7 +86,6 @@ const HomePage = () => {
 
     const fetchJobs = async () => {
       try {
-        // 기준 데이터셋 결정: 검색 결과 우선, 없으면 기본 조회
         const base: JobsView[] = Array.isArray(location.state?.jobList)
           ? location.state.jobList
           : await getJobsDefault();
@@ -112,29 +109,31 @@ const HomePage = () => {
 
   return (
     <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px]">
+      {/* 헤더 */}
       <div className="flex-shrink-0 pt-[50px]">
         <Header title="내일" />
+
+        {/* 검색바 */}
+        <div className="relative bg-white">
+          <div className="absolute left-0 right-0 -top-px h-[1px] bg-white z-[100] pointer-events-none" />
+
+          <div
+            onClick={() => navigate("/search")}
+            className="flex justify-center py-4 cursor-pointer"
+          >
+            <SearchBar onSearch={() => {}} />
+          </div>
+        </div>
+
+        <div className="h-2 bg-white" />
+
+        {/* 모달 */}
         <HomepageTopBar
           onRegionSelect={setSelectedRegion}
           onTypeSelect={setSelectedType}
           onDaySelect={setSelectedDays}
           onTimeSelect={setSelectedTime}
         />
-
-        <div
-          className="w-full h-[1px]"
-          style={{ backgroundColor: palette.gray.default }}
-        />
-        <div className="h-[7px]" />
-
-        <div
-          onClick={() => navigate("/search")}
-          className="flex justify-center py-4 cursor-pointer"
-        >
-          <SearchBar onSearch={() => {}} />
-        </div>
-
-        <div className="h-[7px]" />
         <div
           className="w-full h-[1px]"
           style={{ backgroundColor: palette.gray.default }}
@@ -156,6 +155,7 @@ const HomePage = () => {
         </div>
       </div>
 
+      {/* 리스트 */}
       <div className="flex-1 overflow-y-scroll bg-white">
         {Array.isArray(jobList) && jobList.length > 0 ? (
           jobList.map((jobCard) => (
@@ -171,9 +171,9 @@ const HomePage = () => {
                   ? `${jobCard.review_count}건`
                   : ""
               }
-              image={jobCard.job_image_url ?? ""} // string 보장
-              isTime={Boolean(jobCard.isTimeNegotiable)} // boolean 보장
-              isPeriod={Boolean(jobCard.isPeriodNegotiable)} // boolean 보장
+              image={jobCard.job_image_url ?? ""}
+              isTime={Boolean(jobCard.isTimeNegotiable)}
+              isPeriod={Boolean(jobCard.isPeriodNegotiable)}
               environment={
                 Array.isArray(jobCard.work_environment)
                   ? jobCard.work_environment

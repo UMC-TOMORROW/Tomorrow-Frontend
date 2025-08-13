@@ -22,10 +22,10 @@ const OnboardingSkipModal = ({
         >
           맞춤 추천 기능이 제한될 수 있어요.
         </p>
-        <p className="text-center text-[15px] text-black mt-2 leading-5">
-          건강 정보에 따라 더 잘 맞는 일자리를 추천해드릴 수 있지만,
+        <p className="text-center text-[16px] text-black mt-2 leading-5">
+          모든 응답은 의료 진단이나 치료 목적이 아닌,
           <br />
-          지금 건너뛰셔도 괜찮습니다.
+          서비스 추천을 위한 참고 정보로만 사용됩니다.
         </p>
 
         <div

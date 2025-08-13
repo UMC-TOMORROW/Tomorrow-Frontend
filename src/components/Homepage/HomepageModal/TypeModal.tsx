@@ -85,7 +85,7 @@ const TypeModal = ({ isOpen, onClose, onSubmit }: TypeModalProps) => {
         <div className="w-full !mt-2 !mb-6 flex justify-center">
           <button
             onClick={handleSubmit}
-            className="w-[316px] h-[50px] rounded-[12px] text-[18px] font-bold !text-white"
+            className="w-[316px] h-[50px] rounded-[12px] text-[18px] !font-bold !text-white"
             style={{ backgroundColor: palette.primary.primary }}
           >
             선택 완료
