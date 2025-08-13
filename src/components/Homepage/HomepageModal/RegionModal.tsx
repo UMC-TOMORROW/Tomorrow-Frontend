@@ -42,9 +42,11 @@ const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    const queryRegions =
-      selectedRegion === "전체" ? ["서울"] : ["서울", selectedRegion];
-    onSubmit(queryRegions);
+    if (selectedRegion === "전체") {
+      onSubmit([]);
+    } else {
+      onSubmit([selectedRegion]);
+    }
     onClose();
   };
 

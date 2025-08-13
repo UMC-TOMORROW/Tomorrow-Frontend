@@ -33,6 +33,77 @@ const HomepageTopBar = ({
   );
   const closeModal = () => setModal(null);
 
+  // ====== [추가] 버튼 표시용 상태 ======
+  const [regionLabel, setRegionLabel] = useState<string | null>(null); // 예: "강남구"
+  const [typeLabel, setTypeLabel] = useState<string | null>(null); // 예: "서빙"
+  const [dayLabel, setDayLabel] = useState<string | null>(null); // 예: "토"
+  const [timeLabel, setTimeLabel] = useState<string | null>(null); // 예: "11:00~17:00"
+
+  // 영문 카테고리를 한국어 라벨로 (TypeModal이 영문코드 반환)
+  const typeKorean: Record<string, string> = {
+    SERVING: "서빙",
+    KITCHEN_ASSIST: "주방보조/설거지",
+    CAFE: "카페/베이커리",
+    ODD_JOBS: "심부름/소일거리",
+    PROMOTION: "전단지/홍보",
+    ELDERLY_CARE: "어르신 돌봄",
+    CHILD_CARE: "아이 돌봄",
+    BEAUTY: "미용/뷰티",
+    TUTORING: "과외/학원",
+    OFFICE_WORK: "사무보조",
+  };
+
+  const dayKorean: Record<string, string> = {
+    MON: "월",
+    TUE: "화",
+    WED: "수",
+    THU: "목",
+    FRI: "금",
+    SAT: "토",
+    SUN: "일",
+  };
+
+  // ====== [추가] 모달 onSubmit을 한 번 감싸서 표시용 라벨도 갱신 ======
+  const handleRegionSubmit = (regions: string[]) => {
+    // RegionModal은 [] 또는 ["강남구"] 형태로 전달
+    setRegionLabel(regions.length > 0 ? regions[0] : null);
+    onRegionSelect(regions);
+    closeModal();
+  };
+
+  const handleTypeSubmit = (types: string[]) => {
+    // TypeModal은 ["SERVING"] 등 영문 코드 배열로 전달
+    const label = types.length > 0 ? typeKorean[types[0]] ?? types[0] : null;
+    setTypeLabel(label);
+    onTypeSelect(types);
+    closeModal();
+  };
+
+  const handleDaySubmit = (days: string[]) => {
+    // DayModal은 한 개만 선택하도록 되어 있음 (예: ["SAT"])
+    const label = days.length > 0 ? dayKorean[days[0]] ?? days[0] : null;
+    setDayLabel(label);
+    onDaySelect(days);
+    closeModal();
+  };
+
+  const handleTimeSubmit = (time: { start?: string; end?: string }) => {
+    // "HH:MM" 형태만 표시(초 제거)
+    const trim = (t?: string) => (t ? t.slice(0, 5) : "");
+    const s = trim(time.start);
+    const e = trim(time.end);
+    const label = s || e ? `${s || "00:00"}~${e || "23:59"}` : null;
+    setTimeLabel(label);
+    onTimeSelect(time);
+    closeModal();
+  };
+
+  // 적용 여부
+  const isRegionApplied = !!regionLabel;
+  const isTypeApplied = !!typeLabel;
+  const isDayApplied = !!dayLabel;
+  const isTimeApplied = !!timeLabel;
+
   return (
     <>
       <div
@@ -40,40 +111,41 @@ const HomepageTopBar = ({
         style={{ fontFamily: "Pretendard" }}
       >
         <FilterButton
-          label="서울 전체"
+          label={isRegionApplied ? regionLabel! : "서울 전체"}
           img={locationIcon}
           imgActive={locationIconWhite}
           arrow={arrowIcon}
           arrowActive={arrowIconWhite}
           onClick={() => setModal("region")}
-          isActive={modal === "region"}
+          // 모달 열림(active) 이거나 적용됨(applied)이면 초록 배경/흰 글씨
+          isActive={modal === "region" || isRegionApplied}
         />
         <FilterButton
-          label="업무 유형"
+          label={isTypeApplied ? typeLabel! : "업무 유형"}
           img={typeIcon}
           imgActive={typeIconWhite}
           arrow={arrowIcon}
           arrowActive={arrowIconWhite}
           onClick={() => setModal("type")}
-          isActive={modal === "type"}
+          isActive={modal === "type" || isTypeApplied}
         />
         <FilterButton
-          label="요일"
+          label={isDayApplied ? dayLabel! : "요일"}
           img={calendarIcon}
           imgActive={calendarIconWhite}
           arrow={arrowIcon}
           arrowActive={arrowIconWhite}
           onClick={() => setModal("day")}
-          isActive={modal === "day"}
+          isActive={modal === "day" || isDayApplied}
         />
         <FilterButton
-          label="시간"
+          label={isTimeApplied ? timeLabel! : "시간"}
           img={timeIcon}
           imgActive={timeIconWhite}
           arrow={arrowIcon}
           arrowActive={arrowIconWhite}
           onClick={() => setModal("time")}
-          isActive={modal === "time"}
+          isActive={modal === "time" || isTimeApplied}
         />
       </div>
 
@@ -81,22 +153,22 @@ const HomepageTopBar = ({
       <RegionModal
         isOpen={modal === "region"}
         onClose={closeModal}
-        onSubmit={onRegionSelect}
+        onSubmit={handleRegionSubmit} // ← 변경
       />
       <TypeModal
         isOpen={modal === "type"}
         onClose={closeModal}
-        onSubmit={onTypeSelect}
+        onSubmit={handleTypeSubmit} // ← 변경
       />
       <DayModal
         isOpen={modal === "day"}
         onClose={closeModal}
-        onSubmit={onDaySelect}
+        onSubmit={handleDaySubmit} // ← 변경
       />
       <TimeModal
         isOpen={modal === "time"}
         onClose={closeModal}
-        onSubmit={onTimeSelect}
+        onSubmit={handleTimeSubmit} // ← 변경
       />
     </>
   );
