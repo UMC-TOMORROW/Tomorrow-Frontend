@@ -1,7 +1,8 @@
 import { axiosInstance } from "./axios";
 import type { MyInfo } from "../types/member";
 import type { ApiEnvelope, ApiEnvelopeNoResult, MyPostItem, MyPostStatus } from "../types/employer";
-import type { Applicant, ApplicantResume } from "../types/applicant";
+import type { Applicant, ApplicantResume, ApplicantResumeRaw } from "../types/applicant";
+import { parseApplicantContent } from "../utils/parseApplicantContent";
 
 export const getMyInfo = async (): Promise<MyInfo> => {
   const response = await axiosInstance.get<MyInfo>("/api/v1/members/me");
@@ -52,8 +53,12 @@ export const getApplicantResume = async (
   postId: number,
   applicantId: number
 ): Promise<ApplicantResume> => {
-  const res = await axiosInstance.get<ApiEnvelope<ApplicantResume>>(
+  const res = await axiosInstance.get<ApiEnvelope<ApplicantResumeRaw>>(
     `/api/v1/posts/${postId}/applicants/${applicantId}/resume`
   );
-  return res.data.result;
+
+  const raw = res.data.result;
+  const parsedContent = parseApplicantContent(raw.content);
+
+  return { ...raw, parsedContent };
 };

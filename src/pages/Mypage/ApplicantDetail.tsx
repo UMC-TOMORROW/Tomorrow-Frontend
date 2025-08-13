@@ -6,14 +6,17 @@ import { useApplicantStore } from "../../stores/useApplicantStore";
 import type { ApplicantResume } from "../../types/applicant";
 import { getApplicantResume } from "../../apis/employerMyPage";
 
-
 const ApplicantDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const qs = new URLSearchParams(location.search);
-  const postId = Number(qs.get("jobId"));
-  const applicantId = Number(qs.get("applicantId"));
+  const jobIdParam = qs.get("jobId") ?? qs.get("postId");
+  const applicantIdParam = qs.get("applicantId") ?? qs.get("id");
+
+  const invalidParam = !jobIdParam || !applicantIdParam;
+  const postId = invalidParam ? NaN : Number(jobIdParam);
+  const applicantId = invalidParam ? NaN : Number(applicantIdParam);
 
   const { setResultLocal } = useApplicantStore();
 
@@ -21,7 +24,7 @@ const ApplicantDetail = () => {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  const invalid = !postId || !applicantId;
+  const invalid = invalidParam || Number.isNaN(postId) || Number.isNaN(applicantId);
 
   useEffect(() => {
     if (invalid) {
@@ -48,10 +51,19 @@ const ApplicantDetail = () => {
     };
   }, [postId, applicantId, invalid]);
 
-  const profile = data?.userProfile;
+  const gender = data?.parsedContent?.gender ?? "-";
+  const ageDisplay =
+    (data?.parsedContent?.age ?? null) !== null
+      ? String(data?.parsedContent?.age)
+      : data?.parsedContent?.ageRaw ?? "-";
+  const locationText = data?.parsedContent?.location ?? "-";
+  const introduction =
+    data?.parsedContent?.introduction ?? data?.resumeInfo?.resumeContent ?? "-";
+
   const resume = data?.resumeInfo;
 
   const handlePass = () => {
+    // TODO: 백엔드 합/불 API 확정되면 여기서 호출 후 성공 시 상태 반영
     setResultLocal(applicantId, "합격");
     navigate(`/MyPage/ApplicantList?jobId=${postId}`);
   };
@@ -65,6 +77,7 @@ const ApplicantDetail = () => {
     return (
       <div className="p-4">
         잘못된 접근입니다. 공고 ID 또는 지원자 ID가 없습니다.
+        <div className="text-xs text-gray-500 mt-1">받은 쿼리: {location.search}</div>
         <button className="underline ml-2" onClick={() => navigate(-1)}>
           돌아가기
         </button>
@@ -103,31 +116,28 @@ const ApplicantDetail = () => {
               <div className="flex flex-col gap-[3px]">
                 <div className="flex items-center gap-[10px]">
                   <p className="text-[18px]" style={{ fontWeight: 800 }}>
-                    {profile?.userName ?? "-"}
+                    {data?.userProfile?.userName}
                   </p>
                   <p
                     className="text-[12px] text-[#555555D9]"
                     style={{ fontWeight: 400 }}
                   >
-                    {profile?.phoneNumber ?? "-"}
+                    {data?.userProfile?.phoneNumber ?? "휴대폰 번호 없음"}
                   </p>
                 </div>
-                <p
-                  className="text-[14px] text-[#555555D9]"
-                  style={{ fontWeight: 400 }}
-                >
-                  {data?.status ?? "-"} 
+
+                <p className="text-[14px]" style={{ fontWeight: 400 }}>
+                  {gender}/{ageDisplay}세/{locationText}
                 </p>
-                <p
-                  className="text-[14px] text-[#555555D9]"
-                  style={{ fontWeight: 400 }}
-                >
-                  {resume?.resumeContent ?? "-"}
+
+                {/* content에서 추출한 기본 인적사항 */}
+                <p className="text-[14px] text-[#555555D9]" style={{ fontWeight: 400 }}>
+                  {introduction}
                 </p>
               </div>
             </div>
 
-            {/* 자기소개/이력서 내용 */}
+            {/* 자기소개 / 이력서 내용 (content.introduction 우선, 없으면 resumeContent) */}
             <div className="flex flex-col justify-center gap-[15px] p-[15px]">
               <p className="text-[18px]" style={{ fontWeight: 700 }}>
                 자기소개
@@ -136,7 +146,7 @@ const ApplicantDetail = () => {
                 className="flex items-center min-h-[58px] border border-[#729A73] text-[#333333] text-[14px] p-[15px] whitespace-pre-wrap break-words"
                 style={{ borderRadius: "12px" }}
               >
-                {resume?.resumeContent ?? "-"}
+                {data?.resumeInfo?.resumeContent}
               </div>
             </div>
 
