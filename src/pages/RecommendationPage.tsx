@@ -8,6 +8,7 @@ import palette from "../styles/theme";
 import { getRecommendations } from "../apis/recommendation";
 import type { Recommendation } from "../types/recommendation";
 import { getMyInfo } from "../apis/employerMyPage";
+import recommendLogo from "../assets/logo/recommend_logo.png";
 
 const RecommendationPage = () => {
   const navigate = useNavigate();
@@ -25,7 +26,8 @@ const RecommendationPage = () => {
       setHasNext(data.hasNext);
 
       if (data.recommendationList.length > 0) {
-        const last = data.recommendationList[data.recommendationList.length - 1];
+        const last =
+          data.recommendationList[data.recommendationList.length - 1];
         setCursor(last.id);
       }
     } catch (err) {
@@ -162,7 +164,7 @@ const RecommendationPage = () => {
       ) : (
         <div className="flex flex-col items-center justify-center text-center mt-[100px] font-[Pretendard] font-semibold">
           <img
-            src="src/assets/logo/recommend_logo.png"
+            src={recommendLogo}
             alt="내일추천 퍼즐 이미지"
             className="w-[253.8px] h-auto mb-[40px]"
           />
