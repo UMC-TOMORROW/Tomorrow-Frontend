@@ -15,6 +15,15 @@ function Onboarding() {
   const addUniqueTag = (tag: string) =>
     setSelectedTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
 
+  const PREFERENCE_MAP: Record<string, string> = {
+    "앉아서 근무 중심": "SIT",
+    "서서 근무 중심": "STAND",
+    "물건 운반 중심": "DELIVERY",
+    "물건 운반": "DELIVERY",
+    "신체 활동 중심": "PHYSICAL",
+    "사람 응대 중심": "HUMAN",
+  };
+
   const ProgressDots = ({
     current,
     total,
@@ -190,8 +199,6 @@ function Onboarding() {
           </div>
         </div>
       )}
-
-      {/* page 3 ~ 7 그대로 (생략 없음, 네 코드 유지) */}
 
       {page === 3 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
@@ -562,20 +569,31 @@ function Onboarding() {
                   return;
                 }
 
+                const mapped = deduped
+                  .map((t) => PREFERENCE_MAP[t])
+                  .filter((v): v is string => Boolean(v));
+
+                if (mapped.length === 0) {
+                  alert("선호 태그 매핑에 실패했습니다. 다시 시도해 주세요.");
+                  return;
+                }
+
                 try {
                   isSavingRef.current = true;
 
                   const response = await postPreferences({
-                    preferences: deduped,
+                    preferences: mapped,
                   });
 
-                  console.log("보낸 데이터", { preferences: deduped });
+                  console.log("보낸 데이터", { preferences: mapped });
                   console.log("받은 응답", response);
 
-                  const result = response?.result as
-                    | { userId?: unknown }
-                    | undefined;
-                  if (typeof result?.userId === "number") {
+                  const saved = await postPreferences({ preferences: mapped });
+
+                  console.log("보낸 데이터", { preferences: mapped });
+                  console.log("저장 여부", saved);
+
+                  if (saved) {
                     navigate("/recommendation");
                   } else {
                     alert(

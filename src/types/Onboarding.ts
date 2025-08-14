@@ -12,7 +12,7 @@ export type PostPreferenceRequest = {
 };
 
 export type PostPreferenceResult = {
-  userId: number;
+  saved: boolean;
 };
 
 export type PostPreferenceResponse = ApiResponse<PostPreferenceResult>;

@@ -3,7 +3,7 @@ import Header from "../../components/Header";
 import { SlArrowRight } from "react-icons/sl";
 import resume from "../../assets/my/resume.png";
 import star_filled_black from "../../assets/my/star_filled_black.png";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getMe1 } from "../../apis/member";
 import { useCallback, useEffect, useState } from "react";
 import recommend from "../../assets/recommend.png";
@@ -30,7 +30,7 @@ const MyPage = () => {
     };
     fetchMyInfo();
   }, []);
-  
+
   const handleLogout = useCallback(async () => {
     if (isLoggingOut) return;
     try {
@@ -65,16 +65,14 @@ const MyPage = () => {
         : "알 수 없음";
       alert(`탈퇴가 접수되었습니다.\n복구 가능 기한: ${recoverableUntil}`);
 
-      // 토큰 비우고 이동
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("memberId");
       setShowUnregister(false);
-      navigate("/auth", { replace: true }); // 실제 존재하는 경로로
+      navigate("/auth", { replace: true });
     } catch (e: unknown) {
       const msg =
         e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
-      // 이미 탈퇴된 상태면 서버가 400/409/500 줄 수 있음
       alert(
         `탈퇴 처리에 실패했습니다.\n(이미 탈퇴된 계정일 수 있어요)\n${msg}`
       );
@@ -197,11 +195,23 @@ const MyPage = () => {
           <ul>
             <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>이용약관</span>
-              <SlArrowRight />
+              <Link
+                to={
+                  "https://lava-scion-9fd.notion.site/244cf0577e4180ee95abf93b26139a51?source=copy_link"
+                }
+              >
+                <SlArrowRight />
+              </Link>
             </li>
             <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>개인정보처리방침</span>
-              <SlArrowRight />
+              <Link
+                to={
+                  "https://lava-scion-9fd.notion.site/244cf0577e41803eae07ee61ed293c45?source=copy_link"
+                }
+              >
+                <SlArrowRight />
+              </Link>
             </li>
           </ul>
         </section>
