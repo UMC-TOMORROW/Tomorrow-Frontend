@@ -107,11 +107,13 @@ const EmployerMyPage = () => {
             약관 및 방침
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
+            onClick={() => window.open("https://lava-scion-9fd.notion.site/244cf0577e4180128dc9df50ee9b73e6?source=copy_link", "_blank")}>
               <span>이용약관</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
+            onClick={() => window.open("https://lava-scion-9fd.notion.site/244cf0577e4180658616e53b81ba4a5e?source=copy_link", "_blank")}>
               <span>개인정보처리방침</span>
               <SlArrowRight />
             </li>
