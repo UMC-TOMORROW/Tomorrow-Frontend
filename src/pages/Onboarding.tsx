@@ -6,6 +6,15 @@ import OnboardingSkipModal from "../components/Onboarding/OnboardingSkipModal";
 import { postPreferences, patchMemberType } from "../apis/Onboarding";
 import axios from "axios";
 
+import checklist from "../assets/onboarding/Checklist-pana.png";
+import typing from "../assets/onboarding/Typing-pana.png";
+import bricklayer from "../assets/onboarding/Bricklayer-pana.png";
+import heavybox from "../assets/onboarding/Heavybox-pana.png";
+import gardening from "../assets/onboarding/Gardening-pana.png";
+import waiters from "../assets/onboarding/Waiters-pana.png";
+import formingTeam from "../assets/onboarding/FormingTeamLeadership-pana.png";
+import logoWhite from "../assets/logo/logo_white.png";
+
 function Onboarding() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -140,10 +149,7 @@ function Onboarding() {
             <br />
             추천해드릴게요.
           </h1>
-          <img
-            src="/src/assets/onboarding/Checklist-pana.png"
-            className="w-[295px] h-[258px] mt-[16px]"
-          />
+          <img src={checklist} className="w-[295px] h-[258px] mt-[16px]" />
           <div className="flex flex-col gap-[12px]">
             <p
               className="text-center text-black text-[16px] font-extrabold leading-[30px] tracking-[-0.03em] mt-3 mb-2"
@@ -214,10 +220,7 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          <img
-            src="/src/assets/onboarding/Typing-pana.png"
-            className="w-[340px] h-[300px]"
-          />
+          <img src={typing} className="w-[340px] h-[300px]" />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -281,10 +284,7 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          <img
-            src="/src/assets/onboarding/Bricklayer-pana.png"
-            className="w-[340px] h-[300px]"
-          />
+          <img src={bricklayer} className="w-[340px] h-[300px]" />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -348,10 +348,7 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          <img
-            src="/src/assets/onboarding/Heavybox-pana.png"
-            className="w-[340px] h-[300px]"
-          />
+          <img src={heavybox} className="w-[340px] h-[300px]" />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -415,10 +412,7 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          <img
-            src="/src/assets/onboarding/Gardening-pana.png"
-            className="w-[340px] h-[300px]"
-          />
+          <img src={gardening} className="w-[340px] h-[300px]" />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -482,10 +476,7 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          <img
-            src="/src/assets/onboarding/Waiters-pana.png"
-            className="w-[340px] h-[300px]"
-          />
+          <img src={waiters} className="w-[340px] h-[300px]" />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -540,14 +531,8 @@ function Onboarding() {
           style={{ backgroundColor: palette.primary.primary }}
           className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10"
         >
-          <img
-            src="/src/assets/logo/logo_white.png"
-            className="w-[233px] h-[153px]"
-          />
-          <img
-            src="/src/assets/onboarding/FormingTeamLeadership-pana.png"
-            className="w-[340px] h-[300px]"
-          />
+          <img src={logoWhite} className="w-[233px] h-[153px]" />
+          <img src={formingTeam} className="w-[340px] h-[300px]" />
           <p
             className="text-[20px] !font-semibold text-white text-center"
             style={{ fontFamily: "Pretendard" }}
@@ -581,19 +566,20 @@ function Onboarding() {
                 try {
                   isSavingRef.current = true;
 
-                  const response = await postPreferences({
-                    preferences: mapped,
-                  });
+                  // ✅ POST 한 번만 호출
+                  const resp = await postPreferences({ preferences: mapped });
 
-                  console.log("보낸 데이터", { preferences: mapped });
-                  console.log("받은 응답", response);
+                  // ✅ 성공 판정: 불리언(true) 또는 result.saved === true 또는 result.userId 숫자
+                  let ok = false;
+                  if (typeof resp === "boolean") ok = resp;
+                  else if (resp && typeof resp === "object") {
+                    const r: any = (resp as any).result;
+                    if (r && typeof r.saved === "boolean")
+                      ok = r.saved === true;
+                    else if (r && typeof r.userId === "number") ok = true;
+                  }
 
-                  const saved = await postPreferences({ preferences: mapped });
-
-                  console.log("보낸 데이터", { preferences: mapped });
-                  console.log("저장 여부", saved);
-
-                  if (saved) {
+                  if (ok) {
                     navigate("/recommendation");
                   } else {
                     alert(
