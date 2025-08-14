@@ -56,7 +56,7 @@ const JobCard = ({
       <div className="px-[16px] pt-[10px] pb-[6px]">
         {/* 텍스트 + 사진 */}
         <div className="flex justify-between items-start">
-          <div className="flex-1 pr-3">
+          <div className="flex-1 pr-[80px]">
             <p className="text-[12px] text-black">{company}</p>
             <p className="text-[16px] font-bold">{title}</p>
             <p
@@ -78,7 +78,7 @@ const JobCard = ({
           </div>
 
           {/* 사진 */}
-          <div className="flex items-center !mt-3 justify-center h-full w-[60px]">
+          <div className="flex items-center !mt-[3px] justify-center h-full w-[60px]">
             <img
               src={image?.trim() ? image : defaultLogo}
               alt={title}
@@ -88,7 +88,7 @@ const JobCard = ({
         </div>
 
         {/* 구분선 (카드 내 선) */}
-        <div className="-mx-[0px] mt-[4px] h-[1px] bg-[#BFBFBF8C]" />
+        <div className="-mx-[0px] !mt-[10px] h-[1px] bg-[#BFBFBF8C]" />
 
         {/* 하단 위치 + 버튼 */}
         <div className="flex justify-between items-center !mb-1 !mt-2">
