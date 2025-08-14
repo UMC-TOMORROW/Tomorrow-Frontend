@@ -1,9 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { SlArrowLeft } from "react-icons/sl";
 import { patchMyProfile } from "../../apis/mypage";
 import { Link, useNavigate } from "react-router-dom";
 import type { MemberUpdate } from "../../types/mypage";
 import RegionModal from "../../components/Homepage/HomepageModal/RegionModal";
+import type { MyInfo } from "../../types/member";
+import { getMyInfo } from "../../apis/employerMyPage";
 
 const mapGender = (g?: "남자" | "여자"): "MALE" | "FEMALE" | undefined => {
   if (g === "남자") return "MALE";
@@ -24,6 +26,18 @@ const MemberInfo = () => {
   const [isPhoneEditing, setIsPhoneEditing] = useState(false);
   const [phoneSaving, setPhoneSaving] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement | null>(null);
+  const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
+
+  const getProviderLabel = (p?: string | null) => {
+    if (!p) return null;
+    const providerKo: Record<"NAVER" | "GOOGLE" | "KAKAO", string> = {
+      NAVER: "네이버",
+      GOOGLE: "구글",
+      KAKAO: "카카오",
+    };
+    const key = p.toUpperCase() as keyof typeof providerKo;
+    return providerKo[key] ?? null;
+  };
 
   const handleSave = async () => {
     if (saving) return;
@@ -82,6 +96,17 @@ const MemberInfo = () => {
     }
   };
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await getMyInfo();
+        setMyInfo({ provider: me.provider } as MyInfo);
+      } catch (e) {
+        console.error("내 정보 불러오기 실패:", e);
+      }
+    })();
+  }, []);
+
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <div className="bg-white min-h-screen">
@@ -115,9 +140,14 @@ const MemberInfo = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <p className="text-[12px] text-[#555555D9]">
-                카카오 로그인 사용중
-              </p>
+              {(() => {
+                const label = getProviderLabel(myInfo?.provider);
+                return label ? (
+                  <p className="text-[12px] text-[#555555D9]">
+                    {label} 로그인 사용 중
+                  </p>
+                ) : null;
+              })()}
             </div>
 
             {/* 이름 */}
