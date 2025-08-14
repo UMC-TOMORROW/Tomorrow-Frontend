@@ -11,7 +11,7 @@ interface ApplicantState {
   fetchApplicants: (postId: number, status?: "open" | "closed" | string) => Promise<void>;
 
   // 로컬 상태만 변경(합/불) — 백엔드 API 생기면 여기만 교체
-  setResultLocal: (applicantId: number, result: string) => void;
+  setResultLocal: (applicationId: number, result: string) => void;
 
   // 필요 시 수동 세터
   setApplicants: (list: Applicant[]) => void;
@@ -36,11 +36,12 @@ export const useApplicantStore = create<ApplicantState>((set, get) => ({
     }
   },
 
-  setResultLocal: (applicantId, result) => {
+  // 목록에서는 applicationId로 식별하는 게 안전 (동일 applicantId가 여러 지원서일 수 있으므로)
+  setResultLocal: (applicationId, result) => {
     const { applicants } = get();
     set({
       applicants: applicants.map((a) =>
-        a.applicantId === applicantId ? { ...a, status: result } : a
+        a.applicationId === applicationId ? { ...a, status: result } : a
       ),
     });
   },

@@ -7,7 +7,7 @@ import { getMyClosedPosts, getMyOpenPosts } from "../../apis/employerMyPage";
 const formatDotDate = (iso: string) => iso.replaceAll("-", ".");
 
 const mapToJob = (p: MyPostItem) => ({
-  id: p.postId,
+  id: p.jobId,
   date: formatDotDate(p.date),
   company: p.location,
   title: p.title,

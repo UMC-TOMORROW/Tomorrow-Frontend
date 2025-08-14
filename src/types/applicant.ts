@@ -1,26 +1,30 @@
-// ===== Applicant(목록) =====
 export type ApplicantStatus = "합격" | "불합격" | string;
 
 export interface Applicant {
   applicantId: number;
+  applicationId: number; 
+  resumeId: number;    
   userName: string;
-  applicationDate: string; // ISO datetime
+  phoneNumber: string | null;
+  applicationDate: string;    // ISO datetime
   status: ApplicantStatus;
-  resumeTitle: string;
+  content?: string | null;     // 목록에서도 슬래시 구분 문자열 제공
 }
 
-// ===== 공통 Envelope =====
-export interface ApiEnvelope<T> {
-  timestamp: string;
-  code: string;
-  message: string;
-  result: T;
+export interface ParsedApplicantContent {
+  name: string | null;
+  gender: string | null;
+  ageRaw: string | null; // "56세"
+  age?: number | null;   // 56
+  location: string | null;
+  introduction: string | null;
 }
 
 // ===== Resume(상세) =====
 // 백엔드 원본 스키마(+ content 포함)
 export interface ApplicantResumeRaw {
   applicantId: number;
+  applicationId: number; // ✅ 신규
   status: ApplicantStatus;
 
   // 서버에서 내려오는 슬래시 구분 문자열
@@ -48,16 +52,6 @@ export interface ApplicantResumeRaw {
       fileUrl: string | null;
     }>;
   };
-}
-
-// content 파싱 결과(프론트 편의)
-export interface ParsedApplicantContent {
-  name: string | null;
-  gender: string | null;
-  ageRaw: string | null; // "56세"
-  age?: number | null;   // 56
-  location: string | null;
-  introduction: string | null;
 }
 
 // 최종 사용 타입: 원본 + 파싱 결과를 함께 보유

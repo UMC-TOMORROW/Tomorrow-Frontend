@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { TfiClose } from "react-icons/tfi";
 import member from "../../assets/member.png";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useApplicantStore } from "../../stores/useApplicantStore";
 import type { ApplicantResume } from "../../types/applicant";
 import { getApplicantResume } from "../../apis/employerMyPage";
 
@@ -12,24 +11,25 @@ const ApplicantDetail = () => {
 
   const qs = new URLSearchParams(location.search);
   const jobIdParam = qs.get("jobId") ?? qs.get("postId");
-  const applicantIdParam = qs.get("applicantId") ?? qs.get("id");
 
-  const invalidParam = !jobIdParam || !applicantIdParam;
-  const postId = invalidParam ? NaN : Number(jobIdParam);
-  const applicantId = invalidParam ? NaN : Number(applicantIdParam);
+  const applicationIdParam =
+    qs.get("applicationId") ?? // 새 경로
+    qs.get("applicantId");     // (구버전 호환: 혹시 남아있다면)
 
-  const { setResultLocal } = useApplicantStore();
+  const invalidParam = !jobIdParam || !applicationIdParam;
+  const jobId = invalidParam ? NaN : Number(jobIdParam);
+  const applicationId = invalidParam ? NaN : Number(applicationIdParam);
 
   const [data, setData] = useState<ApplicantResume | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  const invalid = invalidParam || Number.isNaN(postId) || Number.isNaN(applicantId);
+  const invalid = invalidParam || Number.isNaN(jobId) || Number.isNaN(applicationId);
 
   useEffect(() => {
     if (invalid) {
       setLoading(false);
-      setErr("잘못된 접근입니다. 공고 ID 또는 지원자 ID가 없습니다.");
+      setErr("잘못된 접근입니다. 공고 ID 또는 지원서 ID가 없습니다.");
       return;
     }
     let cancel = false;
@@ -37,7 +37,7 @@ const ApplicantDetail = () => {
       try {
         setLoading(true);
         setErr(null);
-        const res = await getApplicantResume(postId, applicantId);
+        const res = await getApplicantResume(jobId, applicationId);
         if (!cancel) setData(res);
       } catch (e) {
         console.error("이력서 조회 실패:", e);
@@ -49,8 +49,9 @@ const ApplicantDetail = () => {
     return () => {
       cancel = true;
     };
-  }, [postId, applicantId, invalid]);
+  }, [jobId, applicationId, invalid]);
 
+  // 안전 처리
   const gender = data?.parsedContent?.gender ?? "-";
   const ageDisplay =
     (data?.parsedContent?.age ?? null) !== null
@@ -63,20 +64,20 @@ const ApplicantDetail = () => {
   const resume = data?.resumeInfo;
 
   const handlePass = () => {
-    // TODO: 백엔드 합/불 API 확정되면 여기서 호출 후 성공 시 상태 반영
-    setResultLocal(applicantId, "합격");
-    navigate(`/MyPage/ApplicantList?jobId=${postId}`);
+    // TODO: 백엔드 합/불 API 확정되면 호출 후 성공 시 상태 반영
+    // 상세 화면에서는 로컬 반영 대신 목록에서 처리하므로 단순히 뒤로가기
+    navigate(-1);
   };
 
   const handleFail = () => {
-    setResultLocal(applicantId, "불합격");
-    navigate(`/MyPage/ApplicantList?jobId=${postId}`);
+    // TODO: 동일
+    navigate(-1);
   };
 
   if (invalid) {
     return (
       <div className="p-4">
-        잘못된 접근입니다. 공고 ID 또는 지원자 ID가 없습니다.
+        잘못된 접근입니다. 공고 ID 또는 지원서 ID가 없습니다.
         <div className="text-xs text-gray-500 mt-1">받은 쿼리: {location.search}</div>
         <button className="underline ml-2" onClick={() => navigate(-1)}>
           돌아가기
@@ -137,7 +138,7 @@ const ApplicantDetail = () => {
               </div>
             </div>
 
-            {/* 자기소개 / 이력서 내용 (content.introduction 우선, 없으면 resumeContent) */}
+            {/* 자기소개 / 이력서 내용 */}
             <div className="flex flex-col justify-center gap-[15px] p-[15px]">
               <p className="text-[18px]" style={{ fontWeight: 700 }}>
                 자기소개
@@ -146,7 +147,7 @@ const ApplicantDetail = () => {
                 className="flex items-center min-h-[58px] border border-[#729A73] text-[#333333] text-[14px] p-[15px] whitespace-pre-wrap break-words"
                 style={{ borderRadius: "12px" }}
               >
-                {data?.resumeInfo?.resumeContent}
+                {data?.resumeInfo?.resumeContent ?? "-"}
               </div>
             </div>
 
@@ -164,7 +165,9 @@ const ApplicantDetail = () => {
                     <div key={c.id}>
                       <div>
                         <b>{c.company}</b>
-                        <p>{c.duration} / {c.position}</p>
+                        <p>
+                          {c.duration} / {c.position}
+                        </p>
                       </div>
                       <div>
                         <b>{c.description}</b>
@@ -211,7 +214,7 @@ const ApplicantDetail = () => {
           </div>
         </section>
 
-        {/* 하단 합/불 버튼 */}
+        {/* 하단 합/불 버튼 (현재는 네비만) */}
         <section className="fixed bottom-0 left-0 w-full px-[30px] py-[30px] z-10 flex justify-center items-center gap-[25px] bg-white">
           <button
             onClick={handlePass}

@@ -1,11 +1,12 @@
 import { SlArrowLeft } from "react-icons/sl";
 import { useNavigate, useLocation } from "react-router-dom";
 import member from "../../assets/member.png";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useApplicantStore } from "../../stores/useApplicantStore";
 import { useJobStore } from "../../stores/useJobStore";
-import { updateMyPostStatus, getApplicantResume } from "../../apis/employerMyPage";
-import type { ParsedApplicantContent } from "../../types/applicant"; // parsedContent 타입
+import { updateMyPostStatus } from "../../apis/employerMyPage";
+import type { ParsedApplicantContent } from "../../types/applicant";
+import { parseApplicantContent } from "../../utils/parseApplicantContent";
 
 const ApplicantList = () => {
   const navigate = useNavigate();
@@ -25,60 +26,20 @@ const ApplicantList = () => {
     setResultLocal, // 로컬 상태 합/불 변경(임시)
   } = useApplicantStore();
 
-  // 각 지원자의 parsedContent(이름/성별/나이/지역/자기소개) 캐시
-  const [parsedById, setParsedById] = useState<Record<number, ParsedApplicantContent>>({});
-  // 이력서 제목이 com.umc...@hash처럼 오는 경우를 위한 표시용 제목 캐시
-  const [titleById, setTitleById] = useState<Record<number, string>>({});
-
   useEffect(() => {
     if (!jobId) return;
-    fetchApplicants(jobId); // 전체 조회 (status 필터 필요하면 두 번째 파라미터에 "open"/"closed")
+    // 필요 시 status 필터: fetchApplicants(jobId, "open" | "closed")
+    fetchApplicants(jobId);
   }, [jobId, fetchApplicants]);
 
-  // applicants가 로드되면 각 항목의 resume 상세를 추가로 가져와 parsedContent를 채움
-  useEffect(() => {
-    let cancelled = false;
-    const loadParsed = async () => {
-      if (!applicants.length) return;
-
-      const tasks = applicants.map(async (a) => {
-        try {
-          const resume = await getApplicantResume(jobId, a.applicantId);
-          return { id: a.applicantId, parsed: resume.parsedContent, rawTitle: a.resumeTitle };
-        } catch {
-          return { id: a.applicantId, parsed: undefined, rawTitle: a.resumeTitle };
-        }
-      });
-
-      const results = await Promise.allSettled(tasks);
-      if (cancelled) return;
-
-      const nextParsed: Record<number, ParsedApplicantContent> = {};
-      const nextTitle: Record<number, string> = {};
-
-      results.forEach((r) => {
-        if (r.status === "fulfilled") {
-          const { id, parsed, rawTitle } = r.value;
-          if (parsed) nextParsed[id] = parsed;
-
-          // 제목 표시 최적화: 패키지@해시 형태면 "이력서"로 대체
-          const badTitlePattern = /^[a-zA-Z0-9_.]+@[a-f0-9]+$/;
-          nextTitle[id] =
-            badTitlePattern.test(rawTitle ?? "") || (rawTitle ?? "").includes("com.umc.")
-              ? "이력서"
-              : rawTitle ?? "-";
-        }
-      });
-
-      setParsedById((prev) => ({ ...prev, ...nextParsed }));
-      setTitleById((prev) => ({ ...prev, ...nextTitle }));
-    };
-
-    loadParsed();
-    return () => {
-      cancelled = true;
-    };
-  }, [applicants, jobId]);
+  // applicants에서 바로 content 파싱하여 캐시 없이 메모로 사용
+  const parsedById = useMemo<Record<number, ParsedApplicantContent>>(() => {
+    const map: Record<number, ParsedApplicantContent> = {};
+    for (const a of applicants) {
+      map[a.applicationId] = parseApplicantContent(a.content ?? null);
+    }
+    return map;
+  }, [applicants]);
 
   if (!jobId) {
     return (
@@ -101,9 +62,6 @@ const ApplicantList = () => {
       alert("모집 완료 변경에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   };
-
-  // 표시용 헬퍼
-  const formatAppliedAt = (iso: string) => new Date(iso).toLocaleString();
 
   return (
     <div style={{ fontFamily: "Pretendard" }}>
@@ -148,22 +106,19 @@ const ApplicantList = () => {
             ) : (
               <ul>
                 {applicants.map((applicant) => {
-                  const parsed = parsedById[applicant.applicantId];
-                  const displayMeta =
-                    parsed
-                      ? `${parsed.gender ?? "-"}/${
-                          parsed.age ?? parsed.ageRaw ?? "-"
-                        }세/${parsed.location ?? "-"}`
-                      : "";
-                  const displayResumeTitle =
-                    titleById[applicant.applicantId] ?? applicant.resumeTitle;
+                  const parsed = parsedById[applicant.applicationId];
+                  const displayMeta = parsed
+                    ? `${parsed.gender ?? "-"}/${parsed.age ?? parsed.ageRaw ?? "-"}세/${parsed.location ?? "-"}`
+                    : "";
+
+                  const introOrDash = parsed?.introduction ?? "-";
 
                   return (
                     <li
-                      key={applicant.applicantId}
+                      key={applicant.applicationId}
                       onClick={() =>
                         navigate(
-                          `/MyPage/ApplicantDetail?jobId=${jobId}&applicantId=${applicant.applicantId}`
+                          `/MyPage/ApplicantDetail?jobId=${jobId}&applicationId=${applicant.applicationId}`
                         )
                       }
                       className="flex h-[123px] items-center gap-[15px] px-[15px] py-[25px] border-b border-[#DEDEDE] cursor-pointer"
@@ -180,7 +135,7 @@ const ApplicantList = () => {
                                 className="text-[11px] text-[#555555D9]"
                                 style={{ fontWeight: 400 }}
                               >
-                                {formatAppliedAt(applicant.applicationDate)}
+                                {applicant.phoneNumber}
                               </p>
                             </div>
                             {displayMeta && (
@@ -193,7 +148,7 @@ const ApplicantList = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setResultLocal(applicant.applicantId, "합격");
+                                setResultLocal(applicant.applicationId, "합격");
                               }}
                               className={`flex justify-center items-center w-[39px] h-[26px] text-[11px] ${
                                 applicant.status === "합격"
@@ -206,7 +161,7 @@ const ApplicantList = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setResultLocal(applicant.applicantId, "불합격");
+                                setResultLocal(applicant.applicationId, "불합격");
                               }}
                               className={`flex justify-center items-center w-[39px] h-[26px] text-[11px] ${
                                 applicant.status === "불합격"
@@ -219,11 +174,9 @@ const ApplicantList = () => {
                           </div>
                         </div>
 
-                        {/* 이력서 제목(보기 좋은 형태로) 또는 간단 소개 프리뷰 */}
+                        {/* 간단 소개 프리뷰 */}
                         <p className="text-[13px] text-[#555555D9] break-all">
-                          {parsed?.introduction
-                            ? parsed.introduction
-                            : displayResumeTitle}
+                          {introOrDash}
                         </p>
                       </div>
                     </li>

@@ -1,7 +1,7 @@
 export type MyPostStatus = "모집중" | "모집완료";
 
 export interface MyPostItem {
-  postId: number;
+  jobId: number;
   title: string;
   status: MyPostStatus;
   date: string;
