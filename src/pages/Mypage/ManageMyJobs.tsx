@@ -1,12 +1,54 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useJobStore } from "../../stores/useJobStore";
+import type { MyPostItem } from "../../types/employer";
+import { getMyClosedPosts, getMyOpenPosts } from "../../apis/employerMyPage";
+
+const formatDotDate = (iso: string) => iso.replaceAll("-", ".");
+
+const mapToJob = (p: MyPostItem) => ({
+  id: p.jobId,
+  date: formatDotDate(p.date),
+  company: p.location,
+  title: p.title,
+  status: p.status,
+  tags: p.tags ?? [],
+});
 
 const ManageMyJobs = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"모집중" | "모집완료">("모집중");
-  const { jobs } = useJobStore();
-  const filteredJobs = jobs.filter((job) => job.status === activeTab);
+  const { jobs, setJobs } = useJobStore(); 
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchAll = async () => {
+      try {
+        const [open, closed] = await Promise.all([
+          getMyOpenPosts(),
+          getMyClosedPosts(),
+        ]);
+
+        if (cancelled) return;
+
+        const openJobs = open.map(mapToJob);
+        const closedJobs = closed.map(mapToJob);
+
+        setJobs([...openJobs, ...closedJobs]);
+      } catch (e) {
+        console.error("내 공고 불러오기 실패:", e);
+      }
+    };
+
+    fetchAll();
+    return () => { cancelled = true; };
+  }, [setJobs]);
+
+  const filteredJobs = useMemo(
+    () => jobs.filter((job) => job.status === activeTab),
+    [jobs, activeTab]
+  );
 
   return (
     <div style={{ fontFamily: "Pretendard" }}>
@@ -40,11 +82,10 @@ const ManageMyJobs = () => {
         <div className="flex text-[12px] items-center pl-[20px] h-[36px] border-b border-[#DEDEDE]">
           {filteredJobs.length}건
         </div>
-        {/* <div className="px-[15px] h-[13px] w-full bg-white "></div> */}
         <ul>
-          {filteredJobs.map((job, index) => (
+          {filteredJobs.map((job) => (
             <div
-              key={index}
+              key={job.id}
               onClick={() => navigate(`/MyPage/ApplicantList?jobId=${job.id}`)}
             >
               <li>
@@ -58,7 +99,7 @@ const ManageMyJobs = () => {
                         {job.title}
                       </p>
                       <div
-                        className={`flex items-center justify-center h-[19px] text-[11px] bg-[#D9D9D9] text-[#729A73] ${
+                        className={`flex items-center justify-center h-[19px] text-[11px] bg-[#D9D9D9] ${
                           job.status === "모집중"
                             ? "w-[36px] text-[#729A73]"
                             : "w-[45px] text-[#EE0606CC]"

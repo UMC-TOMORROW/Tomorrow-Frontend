@@ -1,13 +1,13 @@
 import { useState } from "react";
 import palette from "../../../styles/theme";
 
-const RegionModal = ({
-  isOpen,
-  onClose,
-}: {
+interface RegionModalProps {
   isOpen: boolean;
   onClose: () => void;
-}) => {
+  onSubmit: (regions: string[]) => void;
+}
+
+const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
   const regions = [
     "전체",
     "강남구",
@@ -35,66 +35,84 @@ const RegionModal = ({
     "종로구",
     "중구",
     "중랑구",
-    "",
   ];
 
-  const [selectedRegion, setSelectedRegion] = useState("");
-
+  const [selectedRegion, setSelectedRegion] = useState<string>("전체");
   if (!isOpen) return null;
+
+  const handleSubmit = () => {
+    onSubmit(selectedRegion === "전체" ? [] : [selectedRegion]);
+    onClose();
+  };
+
+  // 🔧 모서리 인덱스 계산(3열 그리드)
+  const COLS = 3;
+  const last = regions.length - 1;
+  const rem = regions.length % COLS; // 0, 1, 2
+  const bottomRightIdx = last;
+  const bottomLeftIdx =
+    rem === 0
+      ? last - (COLS - 1) // 끝줄이 3개 꽉 찼을 때: length-2
+      : rem === 1
+      ? last // 끝줄이 1개일 때: 그 1개가 좌/우 아래 모서리 둘 다
+      : last - 1; // 끝줄이 2개일 때: length-1이 오른쪽, length-2가 왼쪽
 
   return (
     <div
       className="fixed inset-0 bg-black/30 flex justify-center items-end"
       style={{ zIndex: 9999, fontFamily: "Pretendard" }}
     >
-      <div className="w-[360px] h-[562px] bg-white rounded-[20px] flex flex-col items-center relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.1)] -translate-y-5">
-        {/* 상단 헤더 */}
+      <div className="w-[360px] h-[562px] bg-white rounded-t-[20px] flex flex-col items-center relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.1)]">
+        {/* 상단 바 */}
         <div
-          className="w-full h-[55px] flex items-center justify-center text-[18px] font-bold text-black relative"
+          className="w-full h-[55px] flex items-center justify-center text-[18px] font-semibold text-black relative"
           style={{ backgroundColor: palette.primary.primaryLight }}
         >
           근무 지역 선택
           <button
             onClick={onClose}
-            className="absolute right-[16px] top-1/2 transform -translate-y-1/2 w-[10px] h-[10px] text-[16px] flex items-center justify-center"
+            className="absolute right-[16px] top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-[16px] flex items-center justify-center"
           >
             ✕
           </button>
         </div>
 
-        {/* 선택 경로 */}
+        {/* 선택 경로 박스 */}
         <div
-          className="w-[300px] h-[52px] mt-[15px] mb-[25px] flex items-center justify-center rounded-[12px] text-[16px] font-bold text-black gap-[8px]"
-          style={{
-            backgroundColor: palette.primary.primaryLight,
-            fontFamily: "Pretendard",
-          }}
+          className="w-[300px] h-[52px] mt-[15px] mb-[25px] rounded-[18px] flex items-center justify-center gap-[8px] text-[16px] font-bold"
+          style={{ backgroundColor: palette.primary.primaryLight }}
         >
-          <span className="font-bold">서울</span>
-          <span className="text-[18px] font-medium">&gt;</span>
-          <span className="font-bold">{selectedRegion || "전체"}</span>
+          <span>서울</span>
+          <span className="text-[18px]">&gt;</span>
+          <span>{selectedRegion}</span>
         </div>
+
         {/* 동 리스트 */}
         <div className="overflow-y-scroll h-[300px]">
           <div className="grid grid-cols-3">
             {regions.map((dong, index) => {
               let radiusClass = "";
-              if (index === 0) radiusClass = "rounded-tl-[12px]";
-              if (index === 2) radiusClass = "rounded-tr-[12px]";
-              if (index === regions.length - 3)
-                radiusClass = "rounded-bl-[12px]";
-              if (index === regions.length - 1)
-                radiusClass = "rounded-br-[12px]";
+              if (index === 0) radiusClass += " rounded-tl-[12px]";
+              if (index === COLS - 1) radiusClass += " rounded-tr-[12px]";
+              if (index === bottomLeftIdx) radiusClass += " rounded-bl-[12px]";
+              if (index === bottomRightIdx) radiusClass += " rounded-br-[12px]";
+
+              const isSelected = selectedRegion === dong;
 
               return (
                 <button
                   key={dong}
                   onClick={() => setSelectedRegion(dong)}
-                  className={`w-[110px] h-[60px] text-[14px] border border-[#ccc] font-[Pretendard] ${radiusClass} ${
-                    selectedRegion === dong
-                      ? "bg-[#B8CDB9] !font-bold"
-                      : "bg-white"
+                  className={`w-[110px] h-[60px] text-[14px] border font-bold${radiusClass} ${
+                    isSelected
+                      ? "bg-[#B8CDB9] text-black"
+                      : "bg-white text-black"
                   }`}
+                  style={{
+                    borderColor: isSelected ? "#B8CDB9" : "#DDDDDD",
+                    fontWeight: isSelected ? "700" : "500",
+                    fontFamily: "Pretendard",
+                  }}
                 >
                   {dong}
                 </button>
@@ -106,9 +124,9 @@ const RegionModal = ({
         {/* 선택 완료 버튼 */}
         <div className="w-full mt-auto mb-[30px] flex justify-center">
           <button
-            className="w-[316px] h-[50px] rounded-[12px] !text-white text-[18px] !font-bold"
+            className="w-[316px] h-[50px] rounded-[12px] !text-white text-[16px] !font-bold"
             style={{ backgroundColor: palette.primary.primary }}
-            onClick={onClose}
+            onClick={handleSubmit}
           >
             선택 완료
           </button>

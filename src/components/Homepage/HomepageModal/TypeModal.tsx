@@ -1,25 +1,28 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import palette from "../../../styles/theme";
 
 interface TypeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: (types: string[]) => void;
 }
 
-const jobs = [
-  "서빙",
-  "주방보조/설거지",
-  "카페/베이커리",
-  "심부름/소일거리",
-  "전단지/홍보",
-  "어르신 돌봄",
-  "아이 돌봄",
-  "미용/뷰티",
-  "과외/학원",
-  "사무보조",
-];
+const jobCategoryMap = {
+  서빙: "SERVING",
+  "주방보조/설거지": "KITCHEN_ASSIST",
+  "카페/베이커리": "CAFE",
+  "심부름/소일거리": "ODD_JOBS",
+  "전단지/홍보": "PROMOTION",
+  "어르신 돌봄": "ELDERLY_CARE",
+  "아이 돌봄": "CHILD_CARE",
+  "미용/뷰티": "BEAUTY",
+  "과외/학원": "TUTORING",
+  사무보조: "OFFICE_WORK",
+} as const;
 
-const TypeModal: React.FC<TypeModalProps> = ({ isOpen, onClose }) => {
+const jobs = Object.keys(jobCategoryMap);
+
+const TypeModal = ({ isOpen, onClose, onSubmit }: TypeModalProps) => {
   const [selectedJob, setSelectedJob] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -28,14 +31,17 @@ const TypeModal: React.FC<TypeModalProps> = ({ isOpen, onClose }) => {
     setSelectedJob((prev) => (prev === job ? null : job));
   };
 
+  const handleSubmit = () => {
+    const englishType = selectedJob
+      ? jobCategoryMap[selectedJob as keyof typeof jobCategoryMap]
+      : null;
+    onSubmit(englishType ? [englishType] : []);
+    onClose();
+  };
+
   return (
-    <div
-      className="fixed inset-0 z-[9999] flex justify-center items-end bg-black/30"
-      style={{ fontFamily: "Pretendard" }}
-    >
-      {/* 모달 내용 */}
+    <div className="fixed inset-0 z-[9999] flex justify-center items-end bg-black/30 font-[Pretendard]">
       <div className="w-[380px] bg-white rounded-[20px] flex flex-col shadow-[0_4px_20px_rgba(0,0,0,0.1)] -translate-y-5">
-        {/* 상단 영역 */}
         <div
           className="w-full h-[55px] flex items-center justify-center relative rounded-t-[20px]"
           style={{ backgroundColor: palette.primary.primaryLight }}
@@ -49,7 +55,6 @@ const TypeModal: React.FC<TypeModalProps> = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* 버튼들 */}
         <div className="flex flex-wrap !px-3 !py-5 gap-x-[10px] gap-y-[20px] justify-start">
           {jobs.map((job) => {
             const isSelected = selectedJob === job;
@@ -77,11 +82,10 @@ const TypeModal: React.FC<TypeModalProps> = ({ isOpen, onClose }) => {
           })}
         </div>
 
-        {/* 하단 버튼 + 여백 포함 */}
         <div className="w-full !mt-2 !mb-6 flex justify-center">
           <button
-            onClick={onClose}
-            className="w-[316px] h-[50px] rounded-[12px] text-[18px] font-bold !text-white"
+            onClick={handleSubmit}
+            className="w-[316px] h-[50px] rounded-[12px] text-[18px] !font-bold !text-white"
             style={{ backgroundColor: palette.primary.primary }}
           >
             선택 완료

@@ -1,82 +1,85 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import palette from "../styles/theme";
 import Header from "../components/Header";
 import SearchBar from "../components/search/SearchBar";
+import { getJobsByKeyword } from "../apis/HomePage";
+import { SlArrowLeft } from "react-icons/sl";
 
 const SearchPage = () => {
   const navigate = useNavigate();
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
-  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    const input = document.querySelector("input[type='text']");
-    if (!input) return;
-
-    inputRef.current = input as HTMLInputElement;
-
-    let isComposing = false;
-
-    const handleCompositionStart = () => {
-      isComposing = true;
-    };
-
-    const handleCompositionEnd = () => {
-      isComposing = false;
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        if (isComposing) return;
-        const value = inputRef.current?.value.trim();
-        if (!value) return;
-
-        setRecentSearches((prev) => {
-          if (prev[0] === value) return prev;
-          const updated = [value, ...prev.filter((s) => s !== value)];
-          return updated.slice(0, 5);
-        });
-
-        inputRef.current!.value = "";
-      }
-    };
-
-    input.addEventListener("compositionstart", handleCompositionStart);
-    input.addEventListener("compositionend", handleCompositionEnd);
-    input.addEventListener("keydown", handleKeyDown as EventListener);
-
-    return () => {
-      input.removeEventListener("compositionstart", handleCompositionStart);
-      input.removeEventListener("compositionend", handleCompositionEnd);
-      input.removeEventListener("keydown", handleKeyDown as EventListener);
-    };
+    const saved = localStorage.getItem("recentSearches");
+    if (saved) {
+      setRecentSearches(JSON.parse(saved));
+    }
   }, []);
 
+  const handleSearch = async (value: string) => {
+    const keyword = value.trim();
+    if (!keyword) return;
+
+    console.log("보내는 키워드:", keyword);
+
+    setRecentSearches((prev) => {
+      if (prev[0] === keyword) return prev;
+      const updated = [keyword, ...prev.filter((s) => s !== keyword)].slice(
+        0,
+        5
+      );
+      localStorage.setItem("recentSearches", JSON.stringify(updated));
+      return updated;
+    });
+
+    try {
+      const result = await getJobsByKeyword(keyword);
+
+      navigate("/", {
+        state: { keyword, jobList: result },
+      });
+    } catch (error) {
+      console.error("키워드 검색 실패", error);
+    }
+  };
+
   const removeSearch = (index: number) => {
-    setRecentSearches((prev) => prev.filter((_, i) => i !== index));
+    setRecentSearches((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      localStorage.setItem("recentSearches", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const clearAllSearches = () => {
     if (recentSearches.length > 0) {
       setRecentSearches([]);
+      localStorage.removeItem("recentSearches");
     }
   };
 
   return (
     <div className="pt-[50px] bg-white min-h-screen font-[Pretendard]">
       <Header title="내일" />
-      <div className="h-[7px]" />
 
-      {/* 검색바 + 뒤로가기 */}
-      <div className="flex items-center justify-start px-4 gap-[8px] mt-4 max-w-[393px] mx-auto">
-        <button
-          className="flex items-center text-[25px] ml-[18px] text-[#555555] cursor-pointer"
-          onClick={() => navigate("/")}
-        >
-          {"<"}
-        </button>
-        <div className="w-full max-w-[330px] mx-auto">
-          <SearchBar />
+      {/* 헤더 하단 선 가리기 + 검색바 */}
+      <div className="relative mt-4">
+        {/* 화면 전체 폭으로 선 덮기 (클릭 막지 않도록 pointer-events-none) */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-px w-screen h-[1px] bg-white z-[200] pointer-events-none" />
+
+        <div className="h-[7px]" />
+        <div className="flex items-center justify-start px-4 gap-[8px] max-w-[393px] mx-auto bg-white">
+          <button
+            className="flex items-center text-7 !font-bold ml-[18px] text-[#555555] cursor-pointer"
+            onClick={() => navigate("/")}
+          >
+            <SlArrowLeft />
+          </button>
+
+          <div className="w-full max-w-[330px] mx-auto">
+            <SearchBar onSearch={handleSearch} />
+          </div>
         </div>
       </div>
 
@@ -100,10 +103,10 @@ const SearchPage = () => {
               <span className="mr-[4px]">{word}</span>
               <button
                 onClick={() => removeSearch(idx)}
-                className="text-[13px] leading-none"
+                className="text-[11px] leading-none"
                 style={{ color: palette.gray.default }}
               >
-                ×
+                X
               </button>
             </div>
           ))}
@@ -112,7 +115,7 @@ const SearchPage = () => {
         {/* 오른쪽 아래 모두 삭제 */}
         <div className="absolute bottom-0 right-0">
           <button
-            className="text-[13px]"
+            className="text-[13px] underline"
             style={{ color: palette.gray.default }}
             onClick={clearAllSearches}
           >
