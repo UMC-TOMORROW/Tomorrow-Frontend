@@ -161,6 +161,7 @@ const HomePage = () => {
           jobList.map((jobCard) => (
             <JobCard
               key={jobCard.jobId}
+              jobId={jobCard.jobId}
               title={jobCard.title}
               company={jobCard.companyName}
               location={jobCard.location}
