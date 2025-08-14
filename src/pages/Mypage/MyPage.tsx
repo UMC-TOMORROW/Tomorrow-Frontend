@@ -4,6 +4,7 @@ import { SlArrowRight } from "react-icons/sl";
 import resume from "../../assets/my/resume.png";
 import star_filled_black from "../../assets/my/star_filled_black.png";
 import { Link, useNavigate } from "react-router-dom";
+import { getMe1 } from "../../apis/member";
 import { useCallback, useEffect, useState } from "react";
 import recommend from "../../assets/recommend.png";
 import member from "../../assets/member.png";
@@ -81,6 +82,27 @@ const MyPage = () => {
     }
   }, [isDeactivating, navigate]);
 
+  const [resumeId, setResumeId] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await getMe1();
+        setResumeId(me.resumeId ?? null);
+      } catch (e) {
+        console.error("resumeId 조회 실패:", e);
+      }
+    })();
+  }, []);
+
+  const handleGoResumeManage = () => {
+    if (resumeId == null) {
+      navigate(`/MyPage/ResumeManage`);
+    } else {
+      navigate(`/MyPage/ResumeManage/${resumeId}`);
+    }
+  };
+
   return (
     <div className="bg-white" style={{ fontFamily: "Pretendard" }}>
       <Header title="마이페이지" />
@@ -103,7 +125,8 @@ const MyPage = () => {
 
         <section className="flex justify-around h-[100px] border-b border-[#DEDEDE] px-[20px] py-[15px]">
           <div
-            onClick={() => navigate("/MyPage/ResumeManage")}
+            //onClick={() => navigate(`/MyPage/ResumeManage/${resumeId}`)}
+            onClick={handleGoResumeManage}
             className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
           >
             <p>이력서 관리</p>
