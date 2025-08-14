@@ -9,15 +9,15 @@ interface TypeModalProps {
 
 const jobCategoryMap = {
   서빙: "SERVING",
-  "주방보조/설거지": "KITCHEN_ASSIST",
-  "카페/베이커리": "CAFE",
-  "심부름/소일거리": "ODD_JOBS",
+  "주방보조/설거지": "KITCHEN_HELP",
+  "과외/학원": "TUTORING",
+  "카페/베이커리": "CAFE_BAKERY",
+  "심부름/소일거리": "ERRAND",
   "전단지/홍보": "PROMOTION",
-  "어르신 돌봄": "ELDERLY_CARE",
+  "어르신 돌봄": "SENIOR_CARE",
   "아이 돌봄": "CHILD_CARE",
   "미용/뷰티": "BEAUTY",
-  "과외/학원": "TUTORING",
-  사무보조: "OFFICE_WORK",
+  사무보조: "OFFICE_HELP",
 } as const;
 
 const jobs = Object.keys(jobCategoryMap);

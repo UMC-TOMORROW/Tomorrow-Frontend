@@ -45,17 +45,12 @@ const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
     onClose();
   };
 
-  // 🔧 모서리 인덱스 계산(3열 그리드)
   const COLS = 3;
   const last = regions.length - 1;
-  const rem = regions.length % COLS; // 0, 1, 2
+  const rem = regions.length % COLS;
   const bottomRightIdx = last;
   const bottomLeftIdx =
-    rem === 0
-      ? last - (COLS - 1) // 끝줄이 3개 꽉 찼을 때: length-2
-      : rem === 1
-      ? last // 끝줄이 1개일 때: 그 1개가 좌/우 아래 모서리 둘 다
-      : last - 1; // 끝줄이 2개일 때: length-1이 오른쪽, length-2가 왼쪽
+    rem === 0 ? last - (COLS - 1) : rem === 1 ? last : last - 1;
 
   return (
     <div

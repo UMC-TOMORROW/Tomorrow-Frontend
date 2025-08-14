@@ -20,11 +20,7 @@ const MemberInfo = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
   const [saving, setSaving] = useState(false);
-
-  // 주소 모달
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
-
-  // 휴대폰 변경 토글
   const [isPhoneEditing, setIsPhoneEditing] = useState(false);
   const [phoneSaving, setPhoneSaving] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement | null>(null);
@@ -55,7 +51,6 @@ const MemberInfo = () => {
     }
   };
 
-  // 휴대폰 변경 버튼
   const handlePhoneChangeClick = async () => {
     if (!isPhoneEditing) {
       setIsPhoneEditing(true);
@@ -63,7 +58,6 @@ const MemberInfo = () => {
       return;
     }
 
-    // 완료(저장)
     if (phoneSaving) return;
     if (!phoneNumber.trim()) {
       alert("휴대폰 번호를 입력해 주세요.");

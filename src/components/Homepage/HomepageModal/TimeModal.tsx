@@ -17,7 +17,6 @@ export default function TimeModal({
 
   if (!isOpen) return null;
 
-  // 30분 간격 라벨
   const times: string[] = [];
   for (let h = 0; h < 24; h++) {
     for (let m = 0; m < 60; m += 30) {
@@ -28,7 +27,6 @@ export default function TimeModal({
     }
   }
 
-  // 시작(오전 12:00) 위로 2칸, 끝(오후 11:30) 아래로 2칸 패딩
   const paddedTimes = ["", "", ...times, "", ""];
 
   const to24HourFormat = (time: string): string => {
@@ -84,7 +82,6 @@ export default function TimeModal({
                   disabled={isBlank}
                   className="w-[67px] h-[16px] text-[13px] !font-bold"
                   style={{
-                    // 빈 칸도 같은 높이 유지(텍스트만 없음)
                     color: isBlank
                       ? "transparent"
                       : selectedLeft === time
