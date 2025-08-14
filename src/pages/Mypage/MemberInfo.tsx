@@ -1,17 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { SlArrowLeft } from "react-icons/sl";
-import { patchMyProfile } from "../../apis/mypage";
+import { putMyProfile } from "../../apis/mypage";
 import { Link, useNavigate } from "react-router-dom";
-import type { MemberUpdate } from "../../types/mypage";
 import RegionModal from "../../components/Homepage/HomepageModal/RegionModal";
 import type { MyInfo } from "../../types/member";
 import { getMyInfo } from "../../apis/employerMyPage";
-
-const mapGender = (g?: "남자" | "여자"): "MALE" | "FEMALE" | undefined => {
-  if (g === "남자") return "MALE";
-  if (g === "여자") return "FEMALE";
-  return undefined;
-};
 
 const MemberInfo = () => {
   const navigate = useNavigate();
@@ -28,6 +21,17 @@ const MemberInfo = () => {
   const phoneInputRef = useRef<HTMLInputElement | null>(null);
   const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
 
+  const mapGenderToKo = (
+    g?: "MALE" | "FEMALE" | null
+  ): "남자" | "여자" | undefined =>
+    g === "MALE" ? "남자" : g === "FEMALE" ? "여자" : undefined;
+
+  const mapGender = (g?: "남자" | "여자"): "MALE" | "FEMALE" | undefined => {
+    if (g === "남자") return "MALE";
+    if (g === "여자") return "FEMALE";
+    return undefined;
+  };
+
   const getProviderLabel = (p?: string | null) => {
     if (!p) return null;
     const providerKo: Record<"NAVER" | "GOOGLE" | "KAKAO", string> = {
@@ -42,24 +46,36 @@ const MemberInfo = () => {
   const handleSave = async () => {
     if (saving) return;
 
-    const payload: MemberUpdate = {
-      email: email || undefined,
-      name: name || undefined,
-      gender: mapGender(gender),
-      ...(phoneNumber ? { phoneNumber } : {}),
-      ...(address ? { address } : {}),
-    };
+    // 📌 필수값 검사 추가
+    if (!email.trim()) {
+      alert("이메일은 필수 입력 항목입니다.");
+      return;
+    }
+    if (!name.trim()) {
+      alert("이름은 필수 입력 항목입니다.");
+      return;
+    }
 
     try {
       setSaving(true);
-      await patchMyProfile(payload);
+      const me = myInfo ?? (await getMyInfo());
+
+      const overrides = {
+        email: email || undefined,
+        name: name || undefined,
+        gender: mapGender(gender) ?? undefined,
+        phoneNumber: phoneNumber || undefined,
+        address: address || undefined,
+      };
+
+      const fullBody = buildFullBody(me, overrides);
+
+      await putMyProfile(fullBody);
       alert("회원 정보가 수정되었습니다.");
       navigate(-1);
     } catch (e) {
-      const msg =
-        e instanceof Error ? e.message : "수정 중 오류가 발생했습니다.";
-      alert(msg);
       console.error(e);
+      alert("수정 중 오류가 발생했습니다.");
     } finally {
       setSaving(false);
     }
@@ -71,26 +87,25 @@ const MemberInfo = () => {
       setTimeout(() => phoneInputRef.current?.focus(), 0);
       return;
     }
-
     if (phoneSaving) return;
     if (!phoneNumber.trim()) {
       alert("휴대폰 번호를 입력해 주세요.");
       phoneInputRef.current?.focus();
       return;
     }
-
     try {
       setPhoneSaving(true);
-      await patchMyProfile({ phoneNumber });
+      const me = myInfo ?? (await getMyInfo());
+      const fullBody = buildFullBody(me, { phoneNumber });
+
+      console.log("[PUT /members/me] phone body =", fullBody);
+
+      await putMyProfile(fullBody);
       alert("휴대폰 번호가 변경되었습니다.");
       setIsPhoneEditing(false);
     } catch (e) {
-      const msg =
-        e instanceof Error
-          ? e.message
-          : "휴대폰 번호 변경 중 오류가 발생했습니다.";
-      alert(msg);
       console.error(e);
+      alert("휴대폰 번호 변경 중 오류가 발생했습니다.");
     } finally {
       setPhoneSaving(false);
     }
@@ -100,12 +115,54 @@ const MemberInfo = () => {
     (async () => {
       try {
         const me = await getMyInfo();
-        setMyInfo({ provider: me.provider } as MyInfo);
+        setMyInfo(me);
+        setEmail(me.email ?? "");
+        setName(me.name ?? "");
+        setGender(mapGenderToKo(me.gender as "MALE" | "FEMALE" | null));
+        setPhoneNumber(me.phoneNumber ?? "");
+        setAddress(me.address ?? "");
       } catch (e) {
         console.error("내 정보 불러오기 실패:", e);
       }
     })();
   }, []);
+
+  const buildFullBody = (me: any, overrides?: Partial<any>) => {
+    const rawProviderUserId =
+      overrides?.providerUserId ?? me.providerUserId ?? me.providerUseId ?? "";
+    const providerUserId = String(rawProviderUserId).slice(0, 10);
+
+    const isOnboarded =
+      typeof overrides?.isOnboarded === "boolean"
+        ? overrides!.isOnboarded
+        : typeof me.isOnboarded === "boolean"
+        ? me.isOnboarded
+        : typeof me.inOnboarded === "boolean"
+        ? me.inOnboarded
+        : false;
+
+    const status = overrides?.status ?? me.status ?? "ACTIVE";
+
+    return {
+      id: me.id,
+      username: me.username,
+
+      status,
+      isOnboarded,
+      provider: me.provider,
+      providerUserId,
+      resumeId: me.resumeId,
+
+      email: overrides?.email ?? me.email,
+      name: overrides?.name ?? me.name,
+      gender: overrides?.gender ?? me.gender,
+      phoneNumber: overrides?.phoneNumber ?? me.phoneNumber,
+      address: overrides?.address ?? me.address,
+
+      createdAt: me.createdAt,
+      updatedAt: me.updatedAt,
+    };
+  };
 
   return (
     <div style={{ fontFamily: "Pretendard" }}>

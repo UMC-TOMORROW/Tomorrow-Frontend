@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BottomNavbar from "../components/BottomNavbar";
 import type { JobsView } from "../types/homepage";
@@ -131,7 +131,9 @@ const HomePage = () => {
     <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px] bg-white min-h-screen">
       {/* 헤더 */}
       <div className="flex-shrink-0 pt-[50px] bg-white">
-        <Header title="내일" />
+        <Link to={"/"}>
+          <Header title="내일" />
+        </Link>
 
         {/* 검색바 */}
         <div className="relative bg-white">

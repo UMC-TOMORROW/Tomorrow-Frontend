@@ -13,7 +13,7 @@ export interface MemberMe {
   inactiveAt: string;
   inOnboarded: boolean;
   provider?: SocialProvider | string;
-  providerUseId: string;
+  providerUserId: string;
   createdAt: string;
   updatedAt: string;
   resumeId: number;
