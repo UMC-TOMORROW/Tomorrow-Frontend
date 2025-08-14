@@ -1,3 +1,9 @@
+export type MemberType = "EMPLOYER" | "JOB_SEEKER";
+
+export interface GetUserTypeResponse {
+  memberType: MemberType;
+}
+
 export interface MyInfo {
   id: number;
   role: string | null;
