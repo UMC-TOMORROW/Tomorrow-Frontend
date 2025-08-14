@@ -117,7 +117,7 @@ export default function TimeModal({
         <div className="flex justify-center gap-[20px] mt-[20px] pb-[15px]">
           <button
             onClick={handleReset}
-            className="w-[132px] h-[50px] text-[18px] font-bold rounded-[10px] border"
+            className="w-[132px] h-[50px] text-[18px] !font-bold rounded-[10px] border"
             style={{
               borderColor: palette.primary.primary,
               color: palette.primary.primary,
@@ -127,7 +127,7 @@ export default function TimeModal({
           </button>
           <button
             onClick={handleApply}
-            className="w-[172px] h-[50px] text-[18px] font-bold rounded-[10px]"
+            className="w-[172px] h-[50px] text-[18px] !font-bold rounded-[10px]"
             style={{
               backgroundColor: palette.primary.primary,
               color: "white",
