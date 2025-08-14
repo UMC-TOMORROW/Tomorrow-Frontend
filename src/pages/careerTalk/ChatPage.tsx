@@ -1,19 +1,26 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import type { IMessage, StompSubscription } from "@stomp/stompjs";
-import { ChevronLeft, Send } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { getCareerTalkDetail } from "../../apis/careerTalk";
 import palette from "../../styles/theme";
+import sendIcon from "../../assets/chat_send.png";
 
 interface ChatMessage {
   messageId?: number;
   chattingRoomId?: number;
   content: string;
   senderId?: number | null;
-  anonymousName?: string | null;   // "작성자"/"익명N"
-  sentAt: string;                  // ISO
+  anonymousName?: string | null; // "작성자"/"익명N"
+  sentAt: string; // ISO
 }
 
 interface ChatMessageOut {
@@ -39,7 +46,7 @@ const ChatPage: React.FC = () => {
   // 작성자 여부 / 소유자 정보 / 내 익명명 / 제목
   const [myId, setMyId] = useState<number | null>(null);
   const [ownerId, setOwnerId] = useState<number | null>(null); // 숫자 id 지원
-  const [isOwner, setIsOwner] = useState<boolean>(false);      // boolean 지원
+  const [isOwner, setIsOwner] = useState<boolean>(false); // boolean 지원
   const [myAlias, setMyAlias] = useState<string | null>(null);
   const [title, setTitle] = useState<string>("채팅");
 
@@ -129,7 +136,9 @@ const ChatPage: React.FC = () => {
           data?.anonymousName ??
           data?.result?.nickname;
         if (alias) setMyAlias(String(alias));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     },
     [base]
   );
@@ -187,7 +196,9 @@ const ChatPage: React.FC = () => {
         onConnect: () => {
           setIsConnecting(false);
           setIsConnected(true);
-          try { subscriptionRef.current?.unsubscribe(); } catch {}
+          try {
+            subscriptionRef.current?.unsubscribe();
+          } catch {}
           subscriptionRef.current = client.subscribe(
             `${SUB_BASE}/${roomId}`,
             handleIncoming
@@ -207,7 +218,9 @@ const ChatPage: React.FC = () => {
               bodyText = frame.body;
             }
           } catch {}
-          setError((frame.headers["message"] as string) || bodyText || "STOMP error");
+          setError(
+            (frame.headers["message"] as string) || bodyText || "STOMP error"
+          );
         },
         onWebSocketClose: () => {
           setIsConnected(false);
@@ -219,15 +232,29 @@ const ChatPage: React.FC = () => {
       setIsConnecting(false);
       setError(e?.message || "연결 실패");
     }
-  }, [base, prefix, isConnected, isConnecting, roomId, joinRoom, fetchMessages, handleIncoming]);
+  }, [
+    base,
+    prefix,
+    isConnected,
+    isConnecting,
+    roomId,
+    joinRoom,
+    fetchMessages,
+    handleIncoming,
+  ]);
 
   // ----- effects -----
   // 정리
   useEffect(() => {
     return () => {
-      try { subscriptionRef.current?.unsubscribe(); } catch {}
+      try {
+        subscriptionRef.current?.unsubscribe();
+      } catch {}
       subscriptionRef.current = null;
-      if (clientRef.current) { clientRef.current.deactivate(); clientRef.current = null; }
+      if (clientRef.current) {
+        clientRef.current.deactivate();
+        clientRef.current = null;
+      }
       setIsConnected(false);
       lastConnectRoomRef.current = null;
       lastSubRoomRef.current = null;
@@ -291,9 +318,13 @@ const ChatPage: React.FC = () => {
           credentials: "include",
           headers: { accept: "application/json" },
         });
-      if (!res.ok) return;
+        if (!res.ok) return;
         const data = await res.json().catch(() => null);
-        const idRaw = data?.id ?? data?.result?.id ?? data?.result?.memberId ?? data?.memberId;
+        const idRaw =
+          data?.id ??
+          data?.result?.id ??
+          data?.result?.memberId ??
+          data?.memberId;
         const parsed = Number(idRaw);
         if (!Number.isNaN(parsed)) setMyId(parsed);
       } catch (e) {
@@ -312,8 +343,13 @@ const ChatPage: React.FC = () => {
     const client = clientRef.current;
     if (!client?.connected) return;
     if (lastSubRoomRef.current === roomId) return;
-    try { subscriptionRef.current?.unsubscribe(); } catch {}
-    subscriptionRef.current = client.subscribe(`${SUB_BASE}/${roomId}`, handleIncoming);
+    try {
+      subscriptionRef.current?.unsubscribe();
+    } catch {}
+    subscriptionRef.current = client.subscribe(
+      `${SUB_BASE}/${roomId}`,
+      handleIncoming
+    );
     lastSubRoomRef.current = roomId;
     void fetchMessages();
   }, [roomId, handleIncoming, fetchMessages]);
@@ -330,7 +366,10 @@ const ChatPage: React.FC = () => {
     const text = message.trim();
     if (!roomId || !text) return;
 
-    const payload: ChatMessageOut = { chattingRoomId: Number(roomId), content: text };
+    const payload: ChatMessageOut = {
+      chattingRoomId: Number(roomId),
+      content: text,
+    };
 
     const receiptId = `send-${Date.now()}`;
     client.watchForReceipt(receiptId, () => {
@@ -340,12 +379,16 @@ const ChatPage: React.FC = () => {
     try {
       client.publish({
         destination: PUB_SEND,
-        headers: { "content-type": "application/json;charset=utf-8", receipt: receiptId },
+        headers: {
+          "content-type": "application/json;charset=utf-8",
+          receipt: receiptId,
+        },
         body: JSON.stringify(payload),
       });
 
       // 낙관적 반영
-      const iAmOwner = isOwner || (myId != null && ownerId != null && myId === ownerId);
+      const iAmOwner =
+        isOwner || (myId != null && ownerId != null && myId === ownerId);
       setLogs((prev) => [
         ...prev,
         {
@@ -367,7 +410,13 @@ const ChatPage: React.FC = () => {
     (m: ChatMessage) => {
       if (myId != null && m.senderId === myId) return true; // WS/낙관
       if (isOwner && m.anonymousName === "작성자") return true;
-      if (myId != null && ownerId != null && myId === ownerId && m.anonymousName === "작성자") return true;
+      if (
+        myId != null &&
+        ownerId != null &&
+        myId === ownerId &&
+        m.anonymousName === "작성자"
+      )
+        return true;
       if (!isOwner && myAlias && m.anonymousName === myAlias) return true;
       return false;
     },
@@ -379,64 +428,77 @@ const ChatPage: React.FC = () => {
     <div className="min-h-screen bg-white text-gray-900 flex flex-col">
       {/* 상단 헤더 */}
       <div className="absolute top-[18px] left-4">
-              <button className="cursor-pointer" onClick={() => navigate(-1)}>
-                <ChevronLeft size={24} color={palette.gray.default} />
-              </button>
-              
-            </div>
-            
-        <strong
-          className="text-[18px] font-bold leading-none text-center mt-[20px] px-4"
-          style={{ color: palette.gray.dark }}
-        >
-          {title}
-        </strong>
-<div className="border-b mt-[20px]" style={{ borderColor: palette.gray.default }} />
+        <button className="cursor-pointer" onClick={() => navigate(-1)}>
+          <ChevronLeft size={24} color={palette.gray.default} />
+        </button>
+      </div>
+
+      <strong
+        className="text-[18px] font-[Pretendard] leading-none text-center mt-[20px] px-4"
+        style={{ color: palette.gray.dark }}
+      >
+        {title}
+      </strong>
+      <div
+        className="border-b mt-[20px]"
+        style={{ borderColor: palette.gray.default }}
+      />
       {/* 오류 안내 */}
       {error && (
-        <div className="px-4 py-2 text-xs text-red-600 bg-red-50 border-b">{error}</div>
+        <div className="px-4 py-2 text-xs text-red-600 bg-red-50 border-b">
+          {error}
+        </div>
       )}
 
       {/* 메시지 리스트 */}
-      <main className="flex-1 px-4 py-3 overflow-y-auto bg-[#F7F7F8]">
+      <main className="flex-1 px-4 py-3 overflow-y-auto">
         {sections.map(([dateLabel, items]) => (
-          <div key={dateLabel} className="mb-4">
-            <div className="flex justify-center my-3">
-              <span className="text-[11px] text-gray-500 bg-white px-3 py-1 rounded-full">
-                {dateLabel}
-              </span>
+          <div key={dateLabel} className="mb-4 mt-[10px]">
+            <div className="my-6 px-1">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-[#555555]" />
+                <span className="text-[14px] leading-none text-[#555555] whitespace-nowrap tracking-[0.02em]">
+                  {dateLabel}
+                </span>
+                <div className="h-px flex-1 bg-[#555555]" />
+              </div>
             </div>
 
             <ul className="space-y-3">
               {items.map((m) => {
                 const mine = isMine(m);
                 const who = resolveDisplayName(m);
-                const showMyAuthor = mine && (isOwner || (myId != null && ownerId != null && myId === ownerId));
+                const showMyAuthor =
+                  mine &&
+                  (isOwner ||
+                    (myId != null && ownerId != null && myId === ownerId));
 
                 return (
                   <li
                     key={`${m.messageId ?? `${m.sentAt}-${Math.random()}`}`}
                     className={`flex ${mine ? "justify-end" : "justify-start"}`}
                   >
-                    <div className="max-w-[82%]">
+                    <div className="max-w-[82%] flex flex-col gap-1">
                       {/* 상단 라벨 */}
-                      <div className={`mb-1 text-[11px] ${mine ? "text-right" : "text-left"}`}>
-                        <span className="text-gray-500">
+                      <div className={`${mine ? "text-right" : "text-left"}`}>
+                        <span className="font-[Pretendard] text-[16px] font-medium text-[#1C1C1E]">
                           {mine ? (showMyAuthor ? "작성자" : undefined) : who}
                         </span>
                       </div>
 
                       {/* 말풍선 */}
-                      <div
-                        className={`rounded-2xl px-4 py-2 shadow-sm ${
-                          mine
-                            ? "bg-[#DDEEDB] text-[#12381F]" // 연둣빛
-                            : "bg-[#EBECEF] text-gray-800" // 연회색
-                        }`}
-                      >
-                        <p className="whitespace-pre-wrap break-words text-[14px] leading-[22px]">
+                      <div className="flex flex-col gap-[10px]">
+                        <div
+                          className={[
+                            "inline-block rounded-[10px] py-[10px] px-[15px]",
+                            "font-[Pretendard] text-[14px] leading-[22px] whitespace-pre-wrap break-words",
+                            mine
+                              ? "bg-[#B8CDB9] text-[#12381F]" // 내 버블
+                              : "bg-[#555555] text-white", // 상대 버블
+                          ].join(" ")}
+                        >
                           {m.content}
-                        </p>
+                        </div>
                       </div>
                     </div>
                   </li>
@@ -449,7 +511,7 @@ const ChatPage: React.FC = () => {
       </main>
 
       {/* 하단 입력바 */}
-      <div className="sticky bottom-0 bg-white px-3 py-2 border-t">
+      <div className="sticky bottom-0 bg-white px-3 py-[10px] border-t">
         <div className="flex items-center gap-2">
           <input
             type="text"
@@ -457,7 +519,7 @@ const ChatPage: React.FC = () => {
             onChange={(e) => setMessage(e.target.value)}
             placeholder={isConnected ? "메시지 보내기" : "연결 중..."}
             disabled={!isConnected}
-            className="flex-1 h-11 px-4 rounded-full bg-[#F3F4F6] border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-70"
+            className="flex-1 h-11 px-4 rounded-[15px] border border-[#729A73]"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -466,14 +528,15 @@ const ChatPage: React.FC = () => {
             }}
           />
           <button
-            onClick={send}
-            disabled={!isConnected || !message.trim()}
-            className="h-11 w-11 rounded-full bg-emerald-500 text-white flex items-center justify-center disabled:opacity-60 active:scale-[0.98] transition"
-            aria-label="전송"
-            title="전송"
-          >
-            <Send size={18} />
-          </button>
+  onClick={send}
+  disabled={!isConnected || !message.trim()}
+  className="h-11 w-11 rounded-full bg-emerald-500 text-white flex items-center justify-center disabled:opacity-60 active:scale-[0.98] transition"
+  aria-label="전송"
+  title="전송"
+>
+  <img src={sendIcon} alt="전송" className="w-[18px] h-[18px] object-contain" draggable={false} />
+</button>
+
         </div>
       </div>
     </div>
