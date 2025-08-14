@@ -566,20 +566,8 @@ function Onboarding() {
                 try {
                   isSavingRef.current = true;
 
-                  // ✅ POST 한 번만 호출
-                  const resp = await postPreferences({ preferences: mapped });
-
-                  // ✅ 성공 판정: 불리언(true) 또는 result.saved === true 또는 result.userId 숫자
-                  let ok = false;
-                  if (typeof resp === "boolean") ok = resp;
-                  else if (resp && typeof resp === "object") {
-                    const r: any = (resp as any).result;
-                    if (r && typeof r.saved === "boolean")
-                      ok = r.saved === true;
-                    else if (r && typeof r.userId === "number") ok = true;
-                  }
-
-                  if (ok) {
+                  const saved = await postPreferences({ preferences: mapped });
+                  if (saved) {
                     navigate("/recommendation");
                   } else {
                     alert(
