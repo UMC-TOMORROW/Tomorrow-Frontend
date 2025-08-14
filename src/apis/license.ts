@@ -1,43 +1,64 @@
-import type { PostCertificateResponse } from "../types/license";
 import { axiosInstance } from "./axios";
+import { isAxiosError } from "axios";
 
-// 이력서 자격증 업로드
-export const uploadCertificate = async (
+export type CertificateDTO = {
+  id: number;
+  fileUrl: string;
+  filename: string;
+};
+
+export type DeleteCertificateResponse = {
+  timestamp: string;
+  code: string;
+  message: string;
+  result: CertificateDTO;
+};
+
+type ListCertificateResponse = { result: CertificateDTO[] };
+type UploadCertificateResponse = { result: CertificateDTO };
+
+// 조회
+export async function listCertificate(
+  resumeId: number
+): Promise<ListCertificateResponse> {
+  try {
+    const { data } = await axiosInstance.get<ListCertificateResponse>(
+      `/api/v1/resumes/${resumeId}/certificates`,
+      { withCredentials: true }
+    );
+    return data;
+  } catch (e: unknown) {
+    if (isAxiosError(e) && e.response?.status === 404) return { result: [] };
+    throw e;
+  }
+}
+
+// 업로드
+export async function uploadCertificate(
   resumeId: number,
   file: File
-): Promise<PostCertificateResponse> => {
-  const formData = new FormData();
-  formData.append("file", file);
+): Promise<UploadCertificateResponse> {
+  const form = new FormData();
+  form.append("file", file);
 
-  try {
-    const response = await axiosInstance.post(
-      `/api/v1/resumes/${resumeId}/certificates`,
-      formData,
-      {
-        withCredentials: true,
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error("업로드 에러:", error);
-    throw error;
-  }
-};
+  const { data } = await axiosInstance.post<UploadCertificateResponse>(
+    `/api/v1/resumes/${resumeId}/certificates`,
+    form,
+    {
+      withCredentials: true,
+    }
+  );
+  return data;
+}
 
-export const deleteCertificate = async (
+// 삭제
+export async function deleteCertificate(
   resumeId: number,
   certificateId: number
-): Promise<void> => {
-  try {
-    await axiosInstance.delete(
-      `/api/v1/resumes/${resumeId}/certificates/${certificateId}`,
-      {
-        withCredentials: true,
-      }
-    );
-    console.log("삭제 성공");
-  } catch (error) {
-    console.error("삭제 실패:", error);
-    throw error;
-  }
-};
+): Promise<DeleteCertificateResponse> {
+  const { data } = await axiosInstance.delete<DeleteCertificateResponse>(
+    `/api/v1/resumes/${resumeId}/certificates/${certificateId}`,
+    { withCredentials: true }
+  );
+  return data;
+}

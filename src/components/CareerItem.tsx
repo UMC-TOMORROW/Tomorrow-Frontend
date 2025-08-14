@@ -20,7 +20,7 @@ const CareerItem: React.FC<CareerItemProps> = ({
 
   return (
     <div
-      className="relative flex text-[14px] h-[92px] border border-[#729A73] p-[10px] "
+      className="relative flex text-[14px] h-[92px] border border-[#729A73] p-[10px] mb-[10px]"
       style={{ borderRadius: "12px", maxHeight: "92px" }}
     >
       <button
@@ -45,7 +45,7 @@ const CareerItem: React.FC<CareerItemProps> = ({
       {menuOpen && (
         <div
           className="flex flex-col w-[43px] h-[32px] bg-[#EDEDED] items-center justify-center gap-[10px] absolute right-[25px] z-10"
-          style={{ borderRadius: "8px" }}
+          style={{ borderRadius: "5px" }}
         >
           <button
             onClick={onDelete}
