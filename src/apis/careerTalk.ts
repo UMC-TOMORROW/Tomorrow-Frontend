@@ -69,3 +69,23 @@ export const searchCareerTalksByTitle = async (
   );
   return response.data;
 };
+
+// 커리어톡 카테고리로 검색
+export const searchCareerTalksByCategory = async (
+  category: string,
+  size: number,
+  cursor?: number
+): Promise<GetCareerTalksResponse> => {
+  if (!category?.trim()) {
+    throw new Error("category가 필요합니다.");
+  }
+
+  const params = { category, size, ...(cursor !== undefined && { cursor }) };
+
+  const response = await axiosInstance.get<GetCareerTalksResponse>(
+    "/api/v1/careertalks/search/category",
+    { params }
+  );
+
+  return response.data;
+};
