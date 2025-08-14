@@ -9,7 +9,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import type { IMessage, StompSubscription } from "@stomp/stompjs";
-import { ChevronLeft, Send } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { getCareerTalkDetail } from "../../apis/careerTalk";
 import palette from "../../styles/theme";
 import sendIcon from "../../assets/chat_send.png";
