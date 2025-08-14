@@ -61,6 +61,7 @@ const router = createBrowserRouter([
       { index: true, element: <MyPage /> },
       { path: "EmployerMyPage", element: <EmployerMyPage /> },
       { path: "ResumeManage", element: <ResumeManage /> },
+      { path: "ResumeManage/:resumeId", element: <ResumeManage /> },
       { path: "MemberInfo", element: <MemberInfo /> },
       { path: "ApplyStatus", element: <ApplyStatus /> },
       { path: "ManageMyJobs", element: <ManageMyJobs /> },
