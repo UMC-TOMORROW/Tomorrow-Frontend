@@ -1,4 +1,3 @@
-import React from "react";
 import PersonalStep from "../../components/jobPost/PerSonalStep";
 
 export default function PersonalPostPage() {

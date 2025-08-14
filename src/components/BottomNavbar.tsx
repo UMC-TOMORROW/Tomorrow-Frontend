@@ -1,6 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import type { MemberType } from "../types/member";
 
 import home from "../assets/bottomNavbar/home.png";
 import home_selected from "../assets/bottomNavbar/home_selected.png";
@@ -11,6 +10,7 @@ import recommend_selected from "../assets/bottomNavbar/recommend_selected.png";
 import talk from "../assets/bottomNavbar/talk.png";
 import talk_selected from "../assets/bottomNavbar/talk_selected.png";
 import { getMyMemberType } from "../apis/employerMyPage";
+import type { MemberType } from "../types/member";
 
 const BottomNavbar = () => {
   const location = useLocation();

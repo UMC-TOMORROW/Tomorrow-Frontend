@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 const PREFERENCE_MAP: Record<string, WorkPreferenceType> = {
   "앉아서 근무 중심": "SIT",
   "서서 근무 중심": "STAND",
-  "물건 운반": "LIGHT_DELIVERY",
+  "물건 운반": "DELIVERY",
   "활동 중심": "PHYSICAL",
   "사람 응대 중심": "HUMAN",
 };

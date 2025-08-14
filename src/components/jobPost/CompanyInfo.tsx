@@ -1,5 +1,4 @@
 // components/jobPost/CompanyInfo.tsx
-import React from "react";
 import { Search } from "lucide-react";
 
 type Props = {

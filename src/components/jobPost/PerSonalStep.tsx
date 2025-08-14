@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Devider from "../common/Devider";
 import CommonButton from "../common/CommonButton";
@@ -29,8 +29,8 @@ export default function PersonalStep() {
   const [district, setDistrict] = useState(""); // payload.location
   const [phone, setPhone] = useState(""); // payload.contact
   const [request, setRequest] = useState(""); // payload.registrationPurpose
-  const [latitude, setLatitude] = useState<number | undefined>(undefined);
-  const [longitude, setLongitude] = useState<number | undefined>(undefined);
+  const [latitude, _setLatitude] = useState<number | undefined>(undefined);
+  const [longitude, _setLongitude] = useState<number | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
 
   // 서버 필수: name, location, contact, registrationPurpose, latitude, longitude
