@@ -17,6 +17,7 @@ export default function TimeModal({
 
   if (!isOpen) return null;
 
+  // 30분 간격 라벨
   const times: string[] = [];
   for (let h = 0; h < 24; h++) {
     for (let m = 0; m < 60; m += 30) {
@@ -26,6 +27,9 @@ export default function TimeModal({
       times.push(`${period} ${hour.toString().padStart(2, "0")}:${minute}`);
     }
   }
+
+  // 시작(오전 12:00) 위로 2칸, 끝(오후 11:30) 아래로 2칸 패딩
+  const paddedTimes = ["", "", ...times, "", ""];
 
   const to24HourFormat = (time: string): string => {
     const [period, rest] = time.split(" ");
@@ -67,42 +71,62 @@ export default function TimeModal({
         </div>
 
         <div className="flex justify-center mt-[20px] relative">
+          {/* 왼쪽 리스트 */}
           <div className="h-[120px] overflow-y-scroll flex flex-col gap-[10px] mr-[81px]">
-            {times.map((time) => (
-              <button
-                key={"L-" + time}
-                onClick={() => setSelectedLeft(time)}
-                className="w-[67px] h-[16px] text-[13px] !font-bold"
-                style={{
-                  color:
-                    selectedLeft === time
+            {paddedTimes.map((time, i) => {
+              const isBlank = time === "";
+              return (
+                <button
+                  key={`L-${i}`}
+                  onClick={() => {
+                    if (!isBlank) setSelectedLeft(time);
+                  }}
+                  disabled={isBlank}
+                  className="w-[67px] h-[16px] text-[13px] !font-bold"
+                  style={{
+                    // 빈 칸도 같은 높이 유지(텍스트만 없음)
+                    color: isBlank
+                      ? "transparent"
+                      : selectedLeft === time
                       ? palette.primary.primary
                       : palette.gray.default,
-                }}
-              >
-                {time}
-              </button>
-            ))}
+                    cursor: isBlank ? "default" : "pointer",
+                  }}
+                >
+                  {isBlank ? " " : time}
+                </button>
+              );
+            })}
           </div>
 
+          {/* 오른쪽 리스트 */}
           <div className="h-[120px] overflow-y-scroll flex flex-col gap-[10px]">
-            {times.map((time) => (
-              <button
-                key={"R-" + time}
-                onClick={() => setSelectedRight(time)}
-                className="w-[67px] h-[16px] text-[13px] !font-bold"
-                style={{
-                  color:
-                    selectedRight === time
+            {paddedTimes.map((time, i) => {
+              const isBlank = time === "";
+              return (
+                <button
+                  key={`R-${i}`}
+                  onClick={() => {
+                    if (!isBlank) setSelectedRight(time);
+                  }}
+                  disabled={isBlank}
+                  className="w-[67px] h-[16px] text-[13px] !font-bold"
+                  style={{
+                    color: isBlank
+                      ? "transparent"
+                      : selectedRight === time
                       ? palette.primary.primary
                       : palette.gray.default,
-                }}
-              >
-                {time}
-              </button>
-            ))}
+                    cursor: isBlank ? "default" : "pointer",
+                  }}
+                >
+                  {isBlank ? " " : time}
+                </button>
+              );
+            })}
           </div>
 
+          {/* ~ 표시 */}
           <div
             className="absolute left-1/2 top-[60px] text-[13px]"
             style={{
@@ -128,10 +152,7 @@ export default function TimeModal({
           <button
             onClick={handleApply}
             className="w-[172px] h-[50px] text-[18px] !font-bold rounded-[10px]"
-            style={{
-              backgroundColor: palette.primary.primary,
-              color: "white",
-            }}
+            style={{ backgroundColor: palette.primary.primary, color: "white" }}
           >
             적용하기
           </button>

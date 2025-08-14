@@ -11,7 +11,6 @@ import type {
 } from "../types/mypage";
 import { axiosInstance } from "./axios";
 
-/* ---------- 토큰 읽기: 쿠키 + localStorage + sessionStorage ---------- */
 function readCookie(name: string): string | null {
   const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
   return m ? decodeURIComponent(m[1]) : null;
@@ -23,7 +22,6 @@ function sanitizeToken(raw: string): string {
     .trim();
 }
 function getAuthHeader(): Record<string, string> {
-  // 프로젝트마다 저장 키가 다를 수 있어 몇 가지 후보를 모두 확인
   const rawCookie =
     readCookie("Authorization") ??
     readCookie("accessToken") ??
@@ -41,7 +39,6 @@ function getAuthHeader(): Record<string, string> {
   const token = sanitizeToken(rawCookie || rawLS || rawSS);
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
-/* ------------------------------------------------------------------- */
 
 // 지원 현황 조회
 export const getApplications = async (
@@ -68,12 +65,11 @@ export const getSavedJobs = async (): Promise<savedJobs[]> => {
       withCredentials: true,
       headers: {
         Accept: "application/json",
-        ...getAuthHeader(), // ← 실제 사용: ESLint/TS 경고 해소 + 헤더 인증 시도
+        ...getAuthHeader(),
       },
     }
   );
 
-  // 로그인 페이지(HTML) 방어
   const ct = res.headers?.["content-type"];
   if (typeof res.data !== "object" || (ct && ct.includes("text/html"))) {
     throw new Error("로그인이 필요합니다.");
