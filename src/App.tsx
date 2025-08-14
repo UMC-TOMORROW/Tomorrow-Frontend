@@ -29,6 +29,7 @@ import PersonalStep from "./components/jobPost/PerSonalStep";
 import WorkPreference from "./pages/Mypage/WorkPreference";
 import JobDetailPage from "./pages/job/JobDetailPage";
 import ChatPage from "./pages/careerTalk/ChatPage";
+import JobReviewPage from "./pages/job/JobReviewPage";
 
 const router = createBrowserRouter([
   { path: "/splash", element: <SplashScreenPage /> }, // 1) 스플래시
@@ -53,6 +54,7 @@ const router = createBrowserRouter([
       { path: "/post/business", element: <BusinessStep /> },
       { path: "/post/personal", element: <PersonalStep /> },
       { path: "jobs/:jobId", element: <JobDetailPage /> }, // 글 상세 페이지
+      { path: "jobs/:jobId/reviews", element: <JobReviewPage /> },
     ],
   },
   {
