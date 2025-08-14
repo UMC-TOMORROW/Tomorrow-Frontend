@@ -10,7 +10,6 @@ import starFilled from "../../assets/star/star_filled.png";
 import starHalf from "../../assets/star/star_half_filled.png";
 import bmEmpty from "../../assets/bookmark/star_empty.png";
 import bmFilled from "../../assets/bookmark/star_filled.png";
-import bmFill from "../../assets/bookmark/image.png";
 
 const Divider: React.FC = () => <div className="h-px bg-[#EAEAEA] -mx-4" />;
 
@@ -207,6 +206,7 @@ export default function JobDetailPage() {
 
   function onClickApplyCTA() {
     if (applied) return;
+    console.log("[Apply] open apply sheet");
     setApplyOpen(true);
   }
 
@@ -214,40 +214,52 @@ export default function JobDetailPage() {
   async function handleToggleAttach(checked: boolean) {
     if (!checked) {
       setAttachChecked(false);
+      console.log("[Apply] attach unchecked");
       return;
     }
     try {
       const { hasResume, resumeId: rid } = await getResumeSummary();
+      console.log("[Apply] resume summary ▶", { hasResume, resumeId: rid });
       if (!hasResume || !rid) {
         // 이력서 없으면 즉시 이동(요구사항)
+        console.warn("[Apply] resume not found → navigate /Mypage/ResumeManage");
         setApplyOpen(false);
         setAttachChecked(false);
         navigate("/Mypage/ResumeManage");
         return;
       }
+      console.log("[Apply] resume found → use resumeId:", rid);
       setResumeId(rid);
       setAttachChecked(true);
     } catch (e: any) {
+      console.error("[Apply] resume summary error ▶", e?.response ?? e);
       alert(e?.response?.data?.message ?? "이력서 확인 중 오류가 발생했어요.");
     }
   }
 
   // 제출: 체크박스 필수, resumeId 필수
   async function onSubmitApply() {
-    if (!attachChecked || !resumeId) return; // 방어
+    if (!attachChecked || !resumeId) {
+      console.warn("[Apply] blocked submit: attachChecked/resumeId not ready", { attachChecked, resumeId });
+      return;
+    } // 방어
     try {
       setSubmitting(true);
-      await postApplication({
-        content: applyContent.trim(), // 비워도 되면 그대로 전달
+      const payload = {
+        content: applyContent.trim(),
         jobId: Number(jobId),
         resumeId,
-      });
+      };
+      console.log("[Apply] POST /applications payload ▶", payload);
+
+      await postApplication(payload);
       alert("지원이 완료되었습니다.");
       setApplied(true);
       setApplyOpen(false);
       setApplyContent("");
       setAttachChecked(false); // 초기화
     } catch (e: any) {
+      console.error("[Apply] application error ▶", e?.response ?? e);
       alert(e?.response?.data?.message ?? "지원 중 오류가 발생했어요.");
     } finally {
       setSubmitting(false);
