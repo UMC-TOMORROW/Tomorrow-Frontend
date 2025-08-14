@@ -191,8 +191,6 @@ function Onboarding() {
         </div>
       )}
 
-      {/* page 3 ~ 7 그대로 (생략 없음, 네 코드 유지) */}
-
       {page === 3 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />

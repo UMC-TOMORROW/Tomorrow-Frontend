@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import locationIcon from "/src/assets/filter/location.png";
 import typeIcon from "/src/assets/filter/type.png";
 import calendarIcon from "/src/assets/filter/calender.png";
@@ -33,48 +33,105 @@ const HomepageTopBar = ({
   );
   const closeModal = () => setModal(null);
 
-  // 지역만 라벨 변경
+  // 라벨(적용 내용 표시)
   const [regionLabel, setRegionLabel] = useState<string | null>(null);
+  const [typeLabel, setTypeLabel] = useState<string | null>(null);
+  const [dayLabel, setDayLabel] = useState<string | null>(null);
+  const [timeLabel, setTimeLabel] = useState<string | null>(null);
 
-  // 나머지는 적용 여부만 표시(라벨은 고정)
-  const [isTypeApplied, setIsTypeApplied] = useState(false);
-  const [isDayApplied, setIsDayApplied] = useState(false);
-  const [isTimeApplied, setIsTimeApplied] = useState(false);
+  // ✅ overflow 감지해서 정렬 바꾸기
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const recomputeOverflow = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    const over = el.scrollWidth > el.clientWidth + 1;
+    setIsOverflowing(over);
+    if (over) el.scrollLeft = 0; // 넘치면 항상 왼쪽에서 시작
+  };
+  useEffect(() => {
+    // 라벨/모달 상태가 바뀌면 다시 계산
+    const id = setTimeout(recomputeOverflow, 0);
+    return () => clearTimeout(id);
+  }, [regionLabel, typeLabel, dayLabel, timeLabel, modal]);
+  useEffect(() => {
+    // 리사이즈 대응
+    const onResize = () => recomputeOverflow();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
-  // 모달 submit 핸들러들
+  const typeKorean: Record<string, string> = {
+    SERVING: "서빙",
+    KITCHEN_ASSIST: "주방보조/설거지",
+    CAFE: "카페/베이커리",
+    ODD_JOBS: "심부름/소일거리",
+    PROMOTION: "전단지/홍보",
+    ELDERLY_CARE: "어르신 돌봄",
+    CHILD_CARE: "아이 돌봄",
+    BEAUTY: "미용/뷰티",
+    TUTORING: "과외/학원",
+    OFFICE_WORK: "사무보조",
+  };
+  const dayKorean: Record<string, string> = {
+    MON: "월",
+    TUE: "화",
+    WED: "수",
+    THU: "목",
+    FRI: "금",
+    SAT: "토",
+    SUN: "일",
+  };
+
   const handleRegionSubmit = (regions: string[]) => {
     setRegionLabel(regions.length > 0 ? regions[0] : null);
     onRegionSelect(regions);
     closeModal();
   };
-
   const handleTypeSubmit = (types: string[]) => {
-    setIsTypeApplied(types.length > 0);
+    const label =
+      types.length > 0 ? types.map((t) => typeKorean[t] ?? t).join("·") : null;
+    setTypeLabel(label);
     onTypeSelect(types);
     closeModal();
   };
-
   const handleDaySubmit = (days: string[]) => {
-    setIsDayApplied(days.length > 0);
+    const order = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+    const label =
+      days.length > 0
+        ? [...days]
+            .sort((a, b) => order.indexOf(a) - order.indexOf(b))
+            .map((d) => dayKorean[d] ?? d)
+            .join(", ")
+        : null;
+    setDayLabel(label);
     onDaySelect(days);
     closeModal();
   };
-
   const handleTimeSubmit = (time: { start?: string; end?: string }) => {
-    const hasTime = Boolean(
-      (time.start && time.start.trim()) || (time.end && time.end.trim())
-    );
-    setIsTimeApplied(hasTime);
+    const trim = (t?: string) => (t ? t.slice(0, 5) : "");
+    const s = trim(time.start);
+    const e = trim(time.end);
+    const label = s || e ? `${s || "00:00"}~${e || "23:59"}` : null;
+    setTimeLabel(label);
     onTimeSelect(time);
     closeModal();
   };
 
   const isRegionApplied = !!regionLabel;
+  const isTypeApplied = !!typeLabel;
+  const isDayApplied = !!dayLabel;
+  const isTimeApplied = !!timeLabel;
 
   return (
     <>
+      {/* 기본은 가운데, 넘치면 왼쪽 정렬 + 가로 스크롤 */}
       <div
-        className="flex flex-wrap justify-center items-center gap-[8px] px-4 pb-[3px] pt-[3px] bg-white w-[393px] h-[40px] mx-auto"
+        ref={containerRef}
+        className={`flex items-center gap-[8px] px-4 pb-[3px] pt-[3px]
+                    bg-white w-[393px] h-[40px] mx-auto
+                    overflow-x-auto flex-nowrap
+                    ${isOverflowing ? "justify-start" : "justify-center"}`}
         style={{ fontFamily: "Pretendard" }}
       >
         <FilterButton
@@ -87,7 +144,7 @@ const HomepageTopBar = ({
           isActive={modal === "region" || isRegionApplied}
         />
         <FilterButton
-          label="업무 유형" // ← 라벨 고정
+          label={isTypeApplied ? typeLabel! : "업무 유형"}
           img={typeIcon}
           imgActive={typeIconWhite}
           arrow={arrowIcon}
@@ -96,7 +153,7 @@ const HomepageTopBar = ({
           isActive={modal === "type" || isTypeApplied}
         />
         <FilterButton
-          label="요일" // ← 라벨 고정
+          label={isDayApplied ? dayLabel! : "요일"}
           img={calendarIcon}
           imgActive={calendarIconWhite}
           arrow={arrowIcon}
@@ -105,7 +162,7 @@ const HomepageTopBar = ({
           isActive={modal === "day" || isDayApplied}
         />
         <FilterButton
-          label="시간" // ← 라벨 고정
+          label={isTimeApplied ? timeLabel! : "시간"}
           img={timeIcon}
           imgActive={timeIconWhite}
           arrow={arrowIcon}
@@ -166,18 +223,17 @@ const FilterButton = ({
     <button
       onClick={onClick}
       className={`
-        flex items-center justify-center gap-[4px] h-[25px] px-[8px] rounded-full text-[12px] border 
+        shrink-0 whitespace-nowrap
+        flex items-center justify-center gap-[4px] h-[25px] px-[8px]
+        rounded-full text-[12px] border
         ${
           isActive
             ? "bg-[#729A73] !text-white border-[#729A73]"
             : "bg-white text-[#555555D9] border-[#555555D9]"
-        } 
+        }
         ${className}
       `}
-      style={{
-        fontFamily: "Pretendard",
-        minWidth: label.length <= 3 ? "70px" : "90px",
-      }}
+      style={{ fontFamily: "Pretendard" }}
     >
       {iconSrc && (
         <img
