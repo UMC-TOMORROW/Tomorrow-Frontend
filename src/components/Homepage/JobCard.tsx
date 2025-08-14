@@ -101,7 +101,7 @@ const JobCard = ({
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             className={`w-[80px] h-[28px] text-[14px] mt-1 border rounded-[7px] transition-colors duration-200 flex items-center justify-center ${
-              isActive ? "text-white" : "text-[#555555D9]"
+              isActive ? "!text-white" : "text-[#555555D9]"
             }`}
             style={{
               fontFamily: "Pretendard",
