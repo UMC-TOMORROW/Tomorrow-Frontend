@@ -34,47 +34,35 @@ export default function BusinessStep() {
   const canSubmit = regNo && corpName && owner && openDate;
 
   const onSubmit = async () => {
-    if (!jobId) {
-      alert("유효하지 않은 접근입니다. 처음부터 다시 진행해주세요.");
-      return;
-    }
     if (!canSubmit) {
       alert("모든 항목을 입력해주세요.");
       return;
     }
 
-    // ✅ 스펙에 맞춘 payload (snake_case)
     const payload = {
-      biz_number: regNo.replace(/\D+/g, "").slice(0, 10),
-      company_name: corpName.trim(),
-      owner_name: owner.trim(),
-      opening_date: openDate, // YYYY-MM-DD
+      bizNumber: regNo.replace(/\D+/g, "").slice(0, 10),
+      companyName: corpName.trim(),
+      ownerName: owner.trim(),
+      openingDate: openDate.slice(0, 10), // YYYY-MM-DD
     };
 
     try {
       setSubmitting(true);
 
       console.log("[BusinessStep] POST /api/v1/business-verifications", payload);
-      await axiosInstance.post("/api/v1/business-verifications", payload, {
-        withCredentials: true, // 쿠키 인증
+
+      const { data: regRes } = await axiosInstance.post("/api/v1/jobs/business-verifications/register", payload, {
+        withCredentials: true,
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
       });
 
-      console.log("[BusinessStep] POST /api/v1/jobs/%s/publish", jobId);
-      await axiosInstance.post(
-        `/api/v1/jobs/${jobId}/publish`,
-        {},
-        {
-          withCredentials: true,
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
-
+      // 서버 스펙: "세션에 job이 있으면 일자리 등록까지 진행"
+      // 필요 시 응답에서 jobId 추출해 세션/상태에 저장
+      const jobId = regRes?.result?.jobId ?? regRes?.jobId ?? regRes?.result?.id ?? regRes?.id ?? null;
+      if (jobId) sessionStorage.setItem("jobId", String(jobId));
       navigate("/", { state: { jobId } });
     } catch (e: any) {
       const status = e?.response?.status;
@@ -82,11 +70,13 @@ export default function BusinessStep() {
       console.group("[BusinessStep] 제출 실패");
       console.log("status:", status);
       console.log("data:", data);
-      try {
-        const details = data?.result ?? data?.errors ?? data;
-        console.log("details:", typeof details === "string" ? details : JSON.stringify(details, null, 2));
-      } catch {}
       console.groupEnd();
+
+      // ❗ 세션에 job이 없을 때 나올 수 있는 케이스 처리
+      if (status === 400 || status === 409) {
+        alert("이전 단계(일자리 등록 폼)가 세션에 없습니다. 처음부터 다시 진행해주세요.");
+        return;
+      }
 
       const msg =
         data?.message ||
