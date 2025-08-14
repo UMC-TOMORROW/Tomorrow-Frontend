@@ -58,3 +58,11 @@ export interface ApplicantResumeRaw {
 export interface ApplicantResume extends ApplicantResumeRaw {
   parsedContent: ParsedApplicantContent;
 }
+
+// 지원서 상태 업데이트(서버 요청/응답) 타입
+export type ApplicationDecisionCode = "ACCEPTED" | "REJECTED";
+
+export interface UpdateApplicationStatusResult {
+  applicationId: number;
+  status: ApplicationDecisionCode;
+}

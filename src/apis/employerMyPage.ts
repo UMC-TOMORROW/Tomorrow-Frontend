@@ -10,7 +10,7 @@ import type {
   MyPostItem,
   MyPostStatus,
 } from "../types/employer";
-import type { Applicant, ApplicantResume, ApplicantResumeRaw } from "../types/applicant";
+import type { Applicant, ApplicantResume, ApplicantResumeRaw, ApplicationDecisionCode, UpdateApplicationStatusResult } from "../types/applicant";
 import { parseApplicantContent } from "../utils/parseApplicantContent";
 
 // 내 정보
@@ -80,4 +80,21 @@ export const getMyMemberType = async (): Promise<MemberType> => {
     "/api/v1/members/member-type"
   );
   return res.data.result.memberType;
+};
+
+export const updateApplicationStatus = async (
+  jobId: number,
+  applicationId: number,
+  status: ApplicationDecisionCode
+): Promise<UpdateApplicationStatusResult> => {
+  if (!Number.isFinite(jobId) || !Number.isFinite(applicationId)) {
+    console.error("[API] updateApplicationStatus: invalid ids =", { jobId, applicationId });
+    throw new Error("Invalid id(s)");
+  }
+
+  const res = await axiosInstance.patch<ApiEnvelope<UpdateApplicationStatusResult>>(
+    `/api/v1/jobs/${jobId}/applications/${applicationId}/status`,
+    { status }
+  );
+  return res.data.result;
 };

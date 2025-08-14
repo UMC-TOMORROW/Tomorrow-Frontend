@@ -1,38 +1,53 @@
 import { SlArrowLeft } from "react-icons/sl";
 import { useNavigate, useLocation } from "react-router-dom";
 import member from "../../assets/member.png";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useApplicantStore } from "../../stores/useApplicantStore";
 import { useJobStore } from "../../stores/useJobStore";
 import { updateMyPostStatus } from "../../apis/employerMyPage";
 import type { ParsedApplicantContent } from "../../types/applicant";
 import { parseApplicantContent } from "../../utils/parseApplicantContent";
 
+// 안전한 숫자 파라미터 파서
+const readNumberParam = (search: string, ...keys: string[]): number | null => {
+  const qs = new URLSearchParams(search);
+  for (const k of keys) {
+    const raw = qs.get(k);
+    if (raw == null) continue;
+    const n = Number(raw);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+};
+
 const ApplicantList = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const params = new URLSearchParams(location.search);
-  const jobId = Number(params.get("jobId"));
+  const jobId = readNumberParam(location.search, "jobId", "postId"); // postId 호환
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
 
   const { jobs, updateJobStatus } = useJobStore();
-  const targetJob = useMemo(() => jobs.find((job) => job.id === jobId), [jobs, jobId]);
+  const targetJob = useMemo(
+    () => jobs.find((job) => job.id === jobId),
+    [jobs, jobId]
+  );
 
   const {
     applicants,
     loading,
     error,
     fetchApplicants,
-    setResultLocal, // 로컬 상태 합/불 변경(임시)
+    updateApplicationStatus,
   } = useApplicantStore();
 
   useEffect(() => {
-    if (!jobId) return;
+    if (jobId == null) return;
     // 필요 시 status 필터: fetchApplicants(jobId, "open" | "closed")
     fetchApplicants(jobId);
   }, [jobId, fetchApplicants]);
 
-  // applicants에서 바로 content 파싱하여 캐시 없이 메모로 사용
+  // applicants에서 바로 content 파싱하여 메모로 사용
   const parsedById = useMemo<Record<number, ParsedApplicantContent>>(() => {
     const map: Record<number, ParsedApplicantContent> = {};
     for (const a of applicants) {
@@ -41,7 +56,7 @@ const ApplicantList = () => {
     return map;
   }, [applicants]);
 
-  if (!jobId) {
+  if (jobId == null) {
     return (
       <div className="p-4">
         잘못된 접근입니다. 공고 ID가 없습니다.
@@ -60,6 +75,28 @@ const ApplicantList = () => {
     } catch (e) {
       console.error("모집 완료 변경 실패:", e);
       alert("모집 완료 변경에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    }
+  };
+
+  const setAccepted = async (applicationId: number) => {
+    try {
+      setUpdatingId(applicationId);
+      await updateApplicationStatus(jobId, applicationId, "ACCEPTED");
+    } catch {
+      alert("상태 업데이트에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const setRejected = async (applicationId: number) => {
+    try {
+      setUpdatingId(applicationId);
+      await updateApplicationStatus(jobId, applicationId, "REJECTED");
+    } catch {
+      alert("상태 업데이트에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -110,8 +147,8 @@ const ApplicantList = () => {
                   const displayMeta = parsed
                     ? `${parsed.gender ?? "-"}/${parsed.age ?? parsed.ageRaw ?? "-"}세/${parsed.location ?? "-"}`
                     : "";
-
                   const introOrDash = parsed?.introduction ?? "-";
+                  const isUpdating = updatingId === applicant.applicationId;
 
                   return (
                     <li
@@ -135,7 +172,7 @@ const ApplicantList = () => {
                                 className="text-[11px] text-[#555555D9]"
                                 style={{ fontWeight: 400 }}
                               >
-                                {applicant.phoneNumber}
+                                {applicant.phoneNumber ?? "-"}
                               </p>
                             </div>
                             {displayMeta && (
@@ -143,33 +180,35 @@ const ApplicantList = () => {
                             )}
                           </div>
 
-                          {/* 합격/불합 토글 (현재는 로컬 반영만) */}
+                          {/* 합격/불합 토글 (서버 반영) */}
                           <div className="flex overflow-hidden rounded-md border border-[#729A73] shrink-0">
                             <button
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                setResultLocal(applicant.applicationId, "합격");
+                                if (!isUpdating) await setAccepted(applicant.applicationId);
                               }}
+                              disabled={isUpdating}
                               className={`flex justify-center items-center w-[39px] h-[26px] text-[11px] ${
                                 applicant.status === "합격"
                                   ? "bg-[#729A73] text-[#FFFFFF]"
                                   : "bg-[#FFFFFF] text-[#555555D9]"
-                              }`}
+                              } disabled:opacity-60`}
                             >
-                              합격
+                              {isUpdating && applicant.status !== "합격" ? "..." : "합격"}
                             </button>
                             <button
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                setResultLocal(applicant.applicationId, "불합격");
+                                if (!isUpdating) await setRejected(applicant.applicationId);
                               }}
+                              disabled={isUpdating}
                               className={`flex justify-center items-center w-[39px] h-[26px] text-[11px] ${
                                 applicant.status === "불합격"
                                   ? "bg-[#EE0606CC] text-[#FFFFFF]"
                                   : "bg-[#FFFFFF] text-[#555555D9]"
-                              }`}
+                              } disabled:opacity-60`}
                             >
-                              불합
+                              {isUpdating && applicant.status !== "불합격" ? "..." : "불합"}
                             </button>
                           </div>
                         </div>

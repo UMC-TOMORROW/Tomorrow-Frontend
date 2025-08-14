@@ -4,27 +4,36 @@ import member from "../../assets/member.png";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { ApplicantResume } from "../../types/applicant";
 import { getApplicantResume } from "../../apis/employerMyPage";
+import { useApplicantStore } from "../../stores/useApplicantStore";
+
+// 안전한 숫자 파라미터 파서 (jobId, applicationId용)
+const readNumberParam = (search: string, ...keys: string[]): number | null => {
+  const qs = new URLSearchParams(search);
+  for (const k of keys) {
+    const raw = qs.get(k);
+    if (raw == null) continue;
+    const n = Number(raw);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+};
 
 const ApplicantDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const qs = new URLSearchParams(location.search);
-  const jobIdParam = qs.get("jobId") ?? qs.get("postId");
-
-  const applicationIdParam =
-    qs.get("applicationId") ?? // 새 경로
-    qs.get("applicantId");     // (구버전 호환: 혹시 남아있다면)
-
-  const invalidParam = !jobIdParam || !applicationIdParam;
-  const jobId = invalidParam ? NaN : Number(jobIdParam);
-  const applicationId = invalidParam ? NaN : Number(applicationIdParam);
+  // 쿼리 파라미터 읽기 (postId 호환 유지, 상세는 applicationId 필수)
+  const jobId = readNumberParam(location.search, "jobId", "postId");
+  const applicationId = readNumberParam(location.search, "applicationId");
 
   const [data, setData] = useState<ApplicantResume | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [saving, setSaving] = useState<"ACCEPTED" | "REJECTED" | null>(null);
 
-  const invalid = invalidParam || Number.isNaN(jobId) || Number.isNaN(applicationId);
+  const invalid = jobId == null || applicationId == null;
+
+  const { updateApplicationStatus } = useApplicantStore();
 
   useEffect(() => {
     if (invalid) {
@@ -37,7 +46,7 @@ const ApplicantDetail = () => {
       try {
         setLoading(true);
         setErr(null);
-        const res = await getApplicantResume(jobId, applicationId);
+        const res = await getApplicantResume(jobId!, applicationId!);
         if (!cancel) setData(res);
       } catch (e) {
         console.error("이력서 조회 실패:", e);
@@ -51,7 +60,7 @@ const ApplicantDetail = () => {
     };
   }, [jobId, applicationId, invalid]);
 
-  // 안전 처리
+  // 표시용 안전 처리
   const gender = data?.parsedContent?.gender ?? "-";
   const ageDisplay =
     (data?.parsedContent?.age ?? null) !== null
@@ -60,18 +69,32 @@ const ApplicantDetail = () => {
   const locationText = data?.parsedContent?.location ?? "-";
   const introduction =
     data?.parsedContent?.introduction ?? data?.resumeInfo?.resumeContent ?? "-";
-
   const resume = data?.resumeInfo;
 
-  const handlePass = () => {
-    // TODO: 백엔드 합/불 API 확정되면 호출 후 성공 시 상태 반영
-    // 상세 화면에서는 로컬 반영 대신 목록에서 처리하므로 단순히 뒤로가기
-    navigate(-1);
+  const handlePass = async () => {
+    if (invalid || saving) return;
+    try {
+      setSaving("ACCEPTED");
+      await updateApplicationStatus(jobId!, applicationId!, "ACCEPTED");
+      navigate(`/MyPage/ApplicantList?jobId=${jobId}`);
+    } catch {
+      alert("상태 업데이트에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setSaving(null);
+    }
   };
 
-  const handleFail = () => {
-    // TODO: 동일
-    navigate(-1);
+  const handleFail = async () => {
+    if (invalid || saving) return;
+    try {
+      setSaving("REJECTED");
+      await updateApplicationStatus(jobId!, applicationId!, "REJECTED");
+      navigate(`/MyPage/ApplicantList?jobId=${jobId}`);
+    } catch {
+      alert("상태 업데이트에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setSaving(null);
+    }
   };
 
   if (invalid) {
@@ -214,21 +237,22 @@ const ApplicantDetail = () => {
           </div>
         </section>
 
-        {/* 하단 합/불 버튼 (현재는 네비만) */}
         <section className="fixed bottom-0 left-0 w-full px-[30px] py-[30px] z-10 flex justify-center items-center gap-[25px] bg-white">
           <button
             onClick={handlePass}
-            className="w-[160px] h-[48px] bg-[#729A73] text-[#FFFFFF] text-[18px]"
+            disabled={!!saving}
+            className="w-[160px] h-[48px] bg-[#729A73] text-[#FFFFFF] text-[18px] disabled:opacity-60"
             style={{ borderRadius: "12px", fontWeight: 600 }}
           >
-            합격
+            {saving === "ACCEPTED" ? "처리 중..." : "합격"}
           </button>
           <button
             onClick={handleFail}
-            className="w-[160px] h-[48px] border border-[#EE0606] text-[#EE0606] text-[18px]"
+            disabled={!!saving}
+            className="w-[160px] h-[48px] border border-[#EE0606] text-[#EE0606] text-[18px] disabled:opacity-60"
             style={{ borderRadius: "12px", fontWeight: 600 }}
           >
-            불합격
+            {saving === "REJECTED" ? "처리 중..." : "불합격"}
           </button>
         </section>
       </div>
