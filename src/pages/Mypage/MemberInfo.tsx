@@ -20,11 +20,7 @@ const MemberInfo = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
   const [saving, setSaving] = useState(false);
-
-  // 주소 모달
   const [isRegionModalOpen, setIsRegionModalOpen] = useState(false);
-
-  // 휴대폰 변경 토글
   const [isPhoneEditing, setIsPhoneEditing] = useState(false);
   const [phoneSaving, setPhoneSaving] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement | null>(null);
@@ -55,7 +51,6 @@ const MemberInfo = () => {
     }
   };
 
-  // 휴대폰 변경 버튼: 첫 클릭 → 입력 가능, 두 번째 클릭(완료) → 저장
   const handlePhoneChangeClick = async () => {
     if (!isPhoneEditing) {
       setIsPhoneEditing(true);
@@ -63,7 +58,6 @@ const MemberInfo = () => {
       return;
     }
 
-    // 완료(저장)
     if (phoneSaving) return;
     if (!phoneNumber.trim()) {
       alert("휴대폰 번호를 입력해 주세요.");
@@ -187,7 +181,6 @@ const MemberInfo = () => {
                   style={{ borderRadius: "10px" }}
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  readOnly={!isPhoneEditing} // ← 변경 버튼 누르기 전엔 읽기 전용
                 />
                 <button
                   type="button"
@@ -196,7 +189,7 @@ const MemberInfo = () => {
                   onClick={handlePhoneChangeClick}
                   disabled={phoneSaving}
                 >
-                  {isPhoneEditing ? (phoneSaving ? "저장…" : "완료") : "변경"}
+                  변경
                 </button>
               </div>
             </div>
@@ -208,12 +201,12 @@ const MemberInfo = () => {
               </p>
               <div className="flex gap-[32px] w-full">
                 <input
-                  type="text" // 표준 타입으로 유지
+                  type="text"
                   placeholder="서울시 OO구"
                   className="flex-1 w-[235px] h-[44px] px-[10px] border border-[#5555558C] text-[13px]"
                   style={{ borderRadius: "10px" }}
                   value={address}
-                  readOnly // 직접 타이핑 금지
+                  readOnly
                 />
                 <button
                   type="button"

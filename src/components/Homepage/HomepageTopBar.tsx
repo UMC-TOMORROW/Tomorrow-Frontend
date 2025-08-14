@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import locationIcon from "/src/assets/filter/location.png";
 import typeIcon from "/src/assets/filter/type.png";
 import calendarIcon from "/src/assets/filter/calender.png";
@@ -33,13 +33,34 @@ const HomepageTopBar = ({
   );
   const closeModal = () => setModal(null);
 
-  // ====== [추가] 버튼 표시용 상태 ======
-  const [regionLabel, setRegionLabel] = useState<string | null>(null); // 예: "강남구"
-  const [typeLabel, setTypeLabel] = useState<string | null>(null); // 예: "서빙"
-  const [dayLabel, setDayLabel] = useState<string | null>(null); // 예: "토"
-  const [timeLabel, setTimeLabel] = useState<string | null>(null); // 예: "11:00~17:00"
+  // 라벨(적용 내용 표시)
+  const [regionLabel, setRegionLabel] = useState<string | null>(null);
+  const [typeLabel, setTypeLabel] = useState<string | null>(null);
+  const [dayLabel, setDayLabel] = useState<string | null>(null);
+  const [timeLabel, setTimeLabel] = useState<string | null>(null);
 
-  // 영문 카테고리를 한국어 라벨로 (TypeModal이 영문코드 반환)
+  // ✅ overflow 감지해서 정렬 바꾸기
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const recomputeOverflow = () => {
+    const el = containerRef.current;
+    if (!el) return;
+    const over = el.scrollWidth > el.clientWidth + 1;
+    setIsOverflowing(over);
+    if (over) el.scrollLeft = 0; // 넘치면 항상 왼쪽에서 시작
+  };
+  useEffect(() => {
+    // 라벨/모달 상태가 바뀌면 다시 계산
+    const id = setTimeout(recomputeOverflow, 0);
+    return () => clearTimeout(id);
+  }, [regionLabel, typeLabel, dayLabel, timeLabel, modal]);
+  useEffect(() => {
+    // 리사이즈 대응
+    const onResize = () => recomputeOverflow();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const typeKorean: Record<string, string> = {
     SERVING: "서빙",
     KITCHEN_ASSIST: "주방보조/설거지",
@@ -52,7 +73,6 @@ const HomepageTopBar = ({
     TUTORING: "과외/학원",
     OFFICE_WORK: "사무보조",
   };
-
   const dayKorean: Record<string, string> = {
     MON: "월",
     TUE: "화",
@@ -63,32 +83,32 @@ const HomepageTopBar = ({
     SUN: "일",
   };
 
-  // ====== [추가] 모달 onSubmit을 한 번 감싸서 표시용 라벨도 갱신 ======
   const handleRegionSubmit = (regions: string[]) => {
-    // RegionModal은 [] 또는 ["강남구"] 형태로 전달
     setRegionLabel(regions.length > 0 ? regions[0] : null);
     onRegionSelect(regions);
     closeModal();
   };
-
   const handleTypeSubmit = (types: string[]) => {
-    // TypeModal은 ["SERVING"] 등 영문 코드 배열로 전달
-    const label = types.length > 0 ? typeKorean[types[0]] ?? types[0] : null;
+    const label =
+      types.length > 0 ? types.map((t) => typeKorean[t] ?? t).join("·") : null;
     setTypeLabel(label);
     onTypeSelect(types);
     closeModal();
   };
-
   const handleDaySubmit = (days: string[]) => {
-    // DayModal은 한 개만 선택하도록 되어 있음 (예: ["SAT"])
-    const label = days.length > 0 ? dayKorean[days[0]] ?? days[0] : null;
+    const order = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+    const label =
+      days.length > 0
+        ? [...days]
+            .sort((a, b) => order.indexOf(a) - order.indexOf(b))
+            .map((d) => dayKorean[d] ?? d)
+            .join(", ")
+        : null;
     setDayLabel(label);
     onDaySelect(days);
     closeModal();
   };
-
   const handleTimeSubmit = (time: { start?: string; end?: string }) => {
-    // "HH:MM" 형태만 표시(초 제거)
     const trim = (t?: string) => (t ? t.slice(0, 5) : "");
     const s = trim(time.start);
     const e = trim(time.end);
@@ -98,7 +118,6 @@ const HomepageTopBar = ({
     closeModal();
   };
 
-  // 적용 여부
   const isRegionApplied = !!regionLabel;
   const isTypeApplied = !!typeLabel;
   const isDayApplied = !!dayLabel;
@@ -106,8 +125,13 @@ const HomepageTopBar = ({
 
   return (
     <>
+      {/* 기본은 가운데, 넘치면 왼쪽 정렬 + 가로 스크롤 */}
       <div
-        className="flex flex-wrap justify-center items-center gap-[8px] px-4 pb-[3px] pt-[3px] bg-white w-[393px] h-[40px] mx-auto"
+        ref={containerRef}
+        className={`flex items-center gap-[8px] px-4 pb-[3px] pt-[3px]
+                    bg-white w-[393px] h-[40px] mx-auto
+                    overflow-x-auto flex-nowrap
+                    ${isOverflowing ? "justify-start" : "justify-center"}`}
         style={{ fontFamily: "Pretendard" }}
       >
         <FilterButton
@@ -117,7 +141,6 @@ const HomepageTopBar = ({
           arrow={arrowIcon}
           arrowActive={arrowIconWhite}
           onClick={() => setModal("region")}
-          // 모달 열림(active) 이거나 적용됨(applied)이면 초록 배경/흰 글씨
           isActive={modal === "region" || isRegionApplied}
         />
         <FilterButton
@@ -153,22 +176,22 @@ const HomepageTopBar = ({
       <RegionModal
         isOpen={modal === "region"}
         onClose={closeModal}
-        onSubmit={handleRegionSubmit} // ← 변경
+        onSubmit={handleRegionSubmit}
       />
       <TypeModal
         isOpen={modal === "type"}
         onClose={closeModal}
-        onSubmit={handleTypeSubmit} // ← 변경
+        onSubmit={handleTypeSubmit}
       />
       <DayModal
         isOpen={modal === "day"}
         onClose={closeModal}
-        onSubmit={handleDaySubmit} // ← 변경
+        onSubmit={handleDaySubmit}
       />
       <TimeModal
         isOpen={modal === "time"}
         onClose={closeModal}
-        onSubmit={handleTimeSubmit} // ← 변경
+        onSubmit={handleTimeSubmit}
       />
     </>
   );
@@ -200,18 +223,17 @@ const FilterButton = ({
     <button
       onClick={onClick}
       className={`
-        flex items-center justify-center gap-[4px] h-[25px] px-[8px] rounded-full text-[12px] border 
+        shrink-0 whitespace-nowrap
+        flex items-center justify-center gap-[4px] h-[25px] px-[8px]
+        rounded-full text-[12px] border
         ${
           isActive
             ? "bg-[#729A73] !text-white border-[#729A73]"
-            : "bg-white text-[#555555D9] border-[##555555D9]"
-        } 
+            : "bg-white text-[#555555D9] border-[#555555D9]"
+        }
         ${className}
       `}
-      style={{
-        fontFamily: "Pretendard",
-        minWidth: label.length <= 3 ? "70px" : "90px",
-      }}
+      style={{ fontFamily: "Pretendard" }}
     >
       {iconSrc && (
         <img

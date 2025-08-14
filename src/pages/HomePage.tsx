@@ -10,7 +10,7 @@ import HomepageTopBar from "../components/Homepage/HomepageTopBar";
 import { getJobsByDay, getJobsDefault } from "../apis/HomePage";
 
 type JobLike = JobsView & {
-  jobCategory?: string; // camel
+  jobCategory?: string;
   workStart?: string;
   workEnd?: string;
 };
@@ -54,7 +54,7 @@ const HomePage = () => {
         );
       }
 
-      // 3) 유형 필터 (snake/camel 동시 대응)
+      // 3) 유형 필터
       if (selectedType.length > 0) {
         jobs = jobs.filter((j: JobLike) => {
           type CatShape = {
@@ -67,7 +67,7 @@ const HomePage = () => {
         });
       }
 
-      // 4) 시간 필터 (snake/camel 동시 대응)
+      // 4) 시간 필터
       if (selectedTime.start || selectedTime.end) {
         const startMin = toMin(selectedTime.start || "00:00")!;
         const endMin = toMin(selectedTime.end || "23:59")!;
