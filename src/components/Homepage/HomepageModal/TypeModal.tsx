@@ -62,7 +62,7 @@ const TypeModal = ({ isOpen, onClose, onSubmit }: TypeModalProps) => {
               <button
                 key={job}
                 onClick={() => handleClick(job)}
-                className={`h-[25px] px-[10px] text-[16px] rounded-[10px] cursor-pointer border ${
+                className={`h-[25px] px-[10px] text-[14px] rounded-[10px] cursor-pointer border ${
                   isSelected
                     ? "!text-white"
                     : "text-[#555555D9] border-[#555555D9] bg-white"

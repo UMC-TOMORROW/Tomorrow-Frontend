@@ -27,7 +27,7 @@ export const getJobsByType = async (
   jobCategories: string[]
 ): Promise<JobsView[]> => {
   const params = new URLSearchParams();
-  jobCategories.forEach((c) => c && params.append("jobCategory", c));
+  jobCategories.forEach((c) => c && params.append("job_Category", c));
   const res = await axiosInstance.get("/api/v1/jobsView", { params });
   return asList<JobsView>(res.data);
 };
@@ -35,18 +35,18 @@ export const getJobsByType = async (
 // 요일 기반 일자리 조회
 export const getJobsByDay = async (days: string[]): Promise<JobsView[]> => {
   const params = new URLSearchParams();
-  days.forEach((d) => d && params.append("workDays", d));
+  days.forEach((d) => d && params.append("work_days", d));
   const res = await axiosInstance.get("/api/v1/jobsView", { params });
   return asList<JobsView>(res.data);
 };
 
 // 시간 기반 일자리 조회
 export const getJobsByTime = async (
-  workStart: string,
-  workEnd: string
+  work_start: string,
+  work_end: string
 ): Promise<JobsView[]> => {
   const res = await axiosInstance.get("/api/v1/jobsView", {
-    params: { workStart, workEnd },
+    params: { work_start, work_end },
   });
   return asList<JobsView>(res.data);
 };
