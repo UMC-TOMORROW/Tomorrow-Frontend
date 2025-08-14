@@ -1,3 +1,5 @@
+export type SocialProvider = "NAVER" | "GOOGLE" | "KAKAO";
+
 export interface MemberMe {
   id: number;
   role: string;
@@ -10,7 +12,7 @@ export interface MemberMe {
   status: string;
   inactiveAt: string;
   inOnboarded: boolean;
-  provider: string;
+  provider?: SocialProvider | string;
   providerUseId: string;
   createdAt: string;
   updatedAt: string;
