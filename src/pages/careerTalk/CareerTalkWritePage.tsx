@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import CommonButton from "../../components/common/CommonButton";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import palette from "../../styles/theme";
+import { postCareerTalk, putCareerTalk, getCareerTalkDetail } from "../../apis/careerTalk";
 
 const categoryOptions = [
   "무료 자격증 추천",
@@ -14,16 +15,81 @@ const categoryOptions = [
 
 const CareerTalkWritePage = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // 수정 모드일 경우 존재
+  const isEditMode = !!id;
+
   const [isOpen, setIsOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  const toggleDropdown = () => setIsOpen(!isOpen);
+  // 수정 모드일 경우 게시글 데이터 로딩
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const fetchDetail = async () => {
+      try {
+        const res = await getCareerTalkDetail(Number(id));
+        const data = res.result;
+
+        setSelectedCategory(data.category ?? "");
+        setTitle(data.title ?? "");
+        setContent(data.content ?? "");
+      } catch (error) {
+        console.error("게시글 로딩 실패:", error);
+        alert("게시글을 불러오는 중 오류가 발생했습니다.");
+        navigate(-1);
+      }
+    };
+
+    fetchDetail();
+  }, [id]);
+
+  const toggleDropdown = () => setIsOpen((prev) => !prev);
 
   const handleSelectCategory = (category: string) => {
     setSelectedCategory(category);
     setIsOpen(false);
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedCategory || !title.trim() || !content.trim()) {
+      alert("카테고리, 제목, 내용을 모두 입력해주세요.");
+      return;
+    }
+
+    // 일단 카테고리 문자열 그대로 사용
+    const category = selectedCategory;
+
+    // 추후 백엔드 ENUM 필요 시 매핑 예시..
+    // const categoryMap: Record<string, string> = {
+    //   "무료 자격증 추천": "CERTIFICATE",
+    //   "커리어 준비 루트": "ROUTE",
+    //   "제2 커리어 성공 사례": "SUCCESS",
+    //   "내일 서비스 후기": "REVIEW",
+    // };
+    // const category = categoryMap[selectedCategory];
+
+    try {
+      if (isEditMode) {
+        const res = await putCareerTalk(Number(id), {
+          category,
+          title,
+          content,
+        });
+        navigate(`/career-talk/${res.result.id}`);
+      } else {
+        const res = await postCareerTalk({
+          category,
+          title,
+          content,
+        });
+        navigate(`/career-talk/${res.result.id}`);
+      }
+    } catch (err) {
+      console.error("저장 실패:", err);
+      alert("게시글 저장 중 오류가 발생했습니다.");
+    }
   };
 
   return (
@@ -36,6 +102,7 @@ const CareerTalkWritePage = () => {
           <X size={24} />
         </button>
       </div>
+
       <div className="border-b" style={{ borderColor: palette.gray.default, marginTop: "90px" }} />
 
       {/* 드롭다운 */}
@@ -46,7 +113,7 @@ const CareerTalkWritePage = () => {
         >
           {selectedCategory ? (
             <span
-              className={`absolute left-1/2 transform -translate-x-1/2 text-[16px]`}
+              className="absolute left-1/2 transform -translate-x-1/2 text-[16px]"
               style={{
                 color:
                   selectedCategory === "무료 자격증 추천" || selectedCategory === "커리어 준비 루트"
@@ -80,9 +147,7 @@ const CareerTalkWritePage = () => {
                     isSelected ? "underline font-semibold" : ""
                   }`}
                   style={{
-                    color: isGreen
-                      ? palette.primary.primary
-                      : palette.gray.default,
+                    color: isGreen ? palette.primary.primary : palette.gray.default,
                   }}
                   onClick={() => handleSelectCategory(option)}
                 >
@@ -118,9 +183,9 @@ const CareerTalkWritePage = () => {
         }}
       />
 
-      {/* 등록 버튼 */}
+      {/* 버튼 */}
       <div className="fixed bottom-6 left-0 w-full px-4">
-        <CommonButton label="등록하기" onClick={() => {}} />
+        <CommonButton label={isEditMode ? "수정하기" : "등록하기"} onClick={handleSubmit} />
       </div>
     </div>
   );

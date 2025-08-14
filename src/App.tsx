@@ -10,7 +10,6 @@ import ResumeManage from "./pages/Mypage/ResumeManage";
 import CareerTalkListPage from "./pages/careerTalk/CareerTalkListPage";
 import CareerTalkWritePage from "./pages/careerTalk/CareerTalkWritePage";
 import CareerTalkDetailPage from "./pages/careerTalk/CareerTalkDetailPage";
-import SearchBarTest from "./pages/SearchBarTest";
 import RecommendationPage from "./pages/RecommendationPage";
 import SplashScreenPage from "./pages/SplashScreenPage";
 import AuthScreen from "./pages/auth/AuthScreen";
@@ -23,16 +22,17 @@ import ApplicantList from "./pages/Mypage/ApplicantList";
 import ApplicantDetail from "./pages/Mypage/ApplicantDetail";
 import EmployerMyPage from "./pages/Mypage/EmployerMyPage";
 import SearchPage from "./pages/SearchPage";
+import UserInfoForm from "./pages/auth/UserInfoForm";
+import JobPostForm from "./pages/post/JobPostPage";
+import BusinessStep from "./components/jobPost/BusinessStep";
+import PersonalStep from "./components/jobPost/PerSonalStep";
+import WorkPreference from "./pages/Mypage/WorkPreference";
+import ChatPage from "./pages/careerTalk/ChatPage";
 
 const router = createBrowserRouter([
-  {
-    path: "/splash",
-    element: <SplashScreenPage />,
-  },
-  {
-    path: "/auth",
-    element: <AuthScreen />,
-  },
+  { path: "/splash", element: <SplashScreenPage /> }, // 1) 스플래시
+  { path: "/auth", element: <AuthScreen /> }, // 2) 로그인
+  { path: "/auth/user-info", element: <UserInfoForm /> }, // 3) 회원정보 입력
   {
     path: "/",
     element: <HomeLayout />,
@@ -41,12 +41,16 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "onboarding", element: <OnboardingScreen /> },
       { path: "search", element: <SearchPage /> },
-      { path: "search-test", element: <SearchBarTest /> },
       { path: "career-talk", element: <CareerTalkListPage /> },
       { path: "career-talk/write", element: <CareerTalkWritePage /> },
       { path: "career-talk/:id", element: <CareerTalkDetailPage /> },
+      { path: "career-talk/edit/:id", element: <CareerTalkWritePage /> },
+      { path: "career-talk/chat", element: <ChatPage /> },
       { path: "MyPage", element: <MyPage /> },
       { path: "recommendation", element: <RecommendationPage /> },
+      { path: "post", element: <JobPostForm /> },
+      { path: "/post/business", element: <BusinessStep /> },
+      { path: "/post/personal", element: <PersonalStep /> },
     ],
   },
   {
@@ -57,6 +61,7 @@ const router = createBrowserRouter([
       { index: true, element: <MyPage /> },
       { path: "EmployerMyPage", element: <EmployerMyPage /> },
       { path: "ResumeManage", element: <ResumeManage /> },
+      { path: "ResumeManage/:resumeId", element: <ResumeManage /> },
       { path: "MemberInfo", element: <MemberInfo /> },
       { path: "ApplyStatus", element: <ApplyStatus /> },
       { path: "ManageMyJobs", element: <ManageMyJobs /> },
@@ -64,6 +69,7 @@ const router = createBrowserRouter([
       { path: "SavedJobs", element: <SavedJobs /> },
       { path: "ApplicantList", element: <ApplicantList /> },
       { path: "ApplicantDetail", element: <ApplicantDetail /> },
+      { path: "WorkPreference", element: <WorkPreference /> },
     ],
   },
 ]);
