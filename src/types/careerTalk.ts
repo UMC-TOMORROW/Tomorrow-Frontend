@@ -3,6 +3,7 @@ export interface CareerTalk {
   category: string;
   title: string;
   content: string | null;
+  chatroomId: number;
   createdAt: string;
   author: boolean;
 }
