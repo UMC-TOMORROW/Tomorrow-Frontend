@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import JobTypeSelector from "../../components/jobPost/JobTypeSelector";
@@ -15,7 +15,7 @@ import CommonButton from "../../components/common/CommonButton";
 
 import type { RegistrantType, JobDraftPayload } from "../../types/jobs";
 import { createJobDraft, getNextJobId } from "../../apis/jobs";
-
+console.log(getNextJobId)
 // --- 로컬 enum 매핑(디자인/구성 변경 X) ---
 const envMap: Record<string, "SIT" | "STAND" | "LIGHT_LIFTING" | "HEAVY_LIFTING" | "ACTIVE" | "CUSTOMER_SERVICE"> = {
   "앉아서 근무 중심": "SIT",
@@ -101,8 +101,8 @@ const JobPostForm = () => {
   const [imageFile, setImageFile] = useState<File | undefined>(undefined); // 별도 업로드 후 URL 사용
   const [companyName, setCompanyName] = useState("");
   const [location, setLocation] = useState("");
-  const [latitude, setLatitude] = useState<number | undefined>(undefined);
-  const [longitude, setLongitude] = useState<number | undefined>(undefined);
+  const [_latitude, setLatitude] = useState<number | undefined>(undefined);
+  const [_longitude, setLongitude] = useState<number | undefined>(undefined);
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 

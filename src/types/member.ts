@@ -15,7 +15,7 @@ export interface MemberMe {
   createdAt: string;
   updatedAt: string;
   resumeId: number;
-  
+}
 export type MemberType = "EMPLOYER" | "JOB_SEEKER";
 
 export interface GetUserTypeResponse {
