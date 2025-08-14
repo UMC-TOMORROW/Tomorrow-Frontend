@@ -53,15 +53,29 @@ const envMap: Record<string, "SIT" | "STAND" | "LIGHT_LIFTING" | "HEAVY_LIFTING"
 
 const categoryMap: Record<string, string> = {
   서빙: "SERVING",
-  "주방보조/설거지": "KITCHEN_ASSIST",
+
+  "주방보조/설거지": "KITCHEN_HELP",
+  "주방 보조": "KITCHEN_HELP",
+
   "카페/베이커리": "CAFE_BAKERY",
+
   "과외/학원": "TUTORING",
+  "과외/교육": "TUTORING",
+
   "심부름/소일거리": "ERRAND",
+  심부름: "ERRAND",
+
   "전단지/홍보": "PROMOTION",
-  "어르신 돌봄": "ELDER_CARE",
+
+  "어르신 돌봄": "SENIOR_CARE",
+
   "아이 돌봄": "CHILD_CARE",
+
   "미용/뷰티": "BEAUTY",
-  사무보조: "OFFICE_ASSIST",
+
+  사무보조: "OFFICE_HELP",
+  "사무 보조": "OFFICE_HELP",
+
   기타: "ETC",
 };
 
@@ -164,7 +178,9 @@ const JobPostForm = () => {
     if (!alwaysHiring && !deadlineISO) return alert("모집 마감일을 설정해주세요."), false;
 
     const primaryKo = selectedTags[0];
-    if (!categoryMap[primaryKo]) return alert(`업무 유형 '${primaryKo}'를 처리할 수 없습니다.`), false;
+    if (!categoryMap[primaryKo]) {
+      return alert(`업무 유형 '${primaryKo}'는(은) 지원하지 않습니다.`), false;
+    }
     if (!paymentMap[paymentLabel]) return alert("급여 유형이 올바르지 않습니다."), false;
     if (!periodMap[periodLabel]) return alert("근무 기간이 올바르지 않습니다."), false;
     return true;

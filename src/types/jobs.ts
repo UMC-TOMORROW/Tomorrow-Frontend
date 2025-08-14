@@ -9,12 +9,13 @@ export type WorkPeriod = "SHORT_TERM" | "OVER_ONE_MONTH" | "OVER_THREE_MONTH" | 
 
 export type JobCategory =
   | "SERVING"
-  | "KITCHEN_ASSIST"
+  | "KITCHEN_HELP"
   | "CAFE_BAKERY"
   | "TUTORING"
   | "ERRAND"
   | "PROMOTION"
   | "ELDER_CARE"
+  | "SENIOR_CARE"
   | "CHILD_CARE"
   | "BEAUTY"
   | "OFFICE_ASSIST"

@@ -1,4 +1,3 @@
-// src/apis/jobs.ts
 import { axiosInstance } from "../apis/axios";
 import type {
   JobDraftPayload,
@@ -206,7 +205,7 @@ export async function createJobDraft(
   const res = await axiosInstance.post("/api/v1/jobs", fd, {
     withCredentials: true,
     headers: {
-      "Content-Type": "multipart/form-data",
+      // "Content-Type": "multipart/form-data",
       Accept: "application/json",
     },
   });
@@ -221,6 +220,7 @@ export async function createJobDraft(
 
   let jobId: any = parsed?.jobId ?? (res?.data?.result as any)?.jobId ?? null;
   if (!jobId) jobId = getJobIdFromLocation(res?.headers) ?? null;
+  console.log("[jobsAPI] jobRequest string:", JSON.stringify(jobRequest));
 
   return { raw: res.data, jobId, registrantType, step };
 }
@@ -276,6 +276,7 @@ export async function verifyPersonal(payload: PersonalVerifyPayload): Promise<{
 /** 게시 */
 export async function publishJob(jobId?: number | string) {
   if (jobId == null) throw new Error("publishJob: jobId가 필요합니다.");
+
   await ensureAuth();
   const res = await axiosInstance.post(
     `/api/v1/jobs/${jobId}/publish`,
