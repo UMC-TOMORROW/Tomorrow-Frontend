@@ -45,6 +45,17 @@ const MemberInfo = () => {
 
   const handleSave = async () => {
     if (saving) return;
+
+    // 📌 필수값 검사 추가
+    if (!email.trim()) {
+      alert("이메일은 필수 입력 항목입니다.");
+      return;
+    }
+    if (!name.trim()) {
+      alert("이름은 필수 입력 항목입니다.");
+      return;
+    }
+
     try {
       setSaving(true);
       const me = myInfo ?? (await getMyInfo());
