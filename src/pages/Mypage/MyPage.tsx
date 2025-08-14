@@ -4,7 +4,7 @@ import { SlArrowRight } from "react-icons/sl";
 import resume from "../../assets/my/resume.png";
 import star_filled_black from "../../assets/my/star_filled_black.png";
 import { useNavigate } from "react-router-dom";
-import { getMe } from "../../apis/member";
+import { getMe1 } from "../../apis/member";
 import { useCallback, useEffect, useState } from "react";
 import recommend from "../../assets/recommend.png";
 import member from "../../assets/member.png";
@@ -89,7 +89,7 @@ const MyPage = () => {
   useEffect(() => {
     (async () => {
       try {
-        const me = await getMe();
+        const me = await getMe1();
         setResumeId(me.resumeId ?? null);
       } catch (e) {
         console.error("resumeId 조회 실패:", e);

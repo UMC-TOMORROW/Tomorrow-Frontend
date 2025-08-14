@@ -28,6 +28,7 @@ import JobPostForm from "./pages/post/JobPostPage";
 import BusinessStep from "./components/jobPost/BusinessStep";
 import PersonalStep from "./components/jobPost/PerSonalStep";
 import WorkPreference from "./pages/Mypage/WorkPreference";
+import ChatPage from "./pages/careerTalk/ChatPage";
 
 const router = createBrowserRouter([
   { path: "/splash", element: <SplashScreenPage /> }, // 1) 스플래시
@@ -46,6 +47,7 @@ const router = createBrowserRouter([
       { path: "career-talk/write", element: <CareerTalkWritePage /> },
       { path: "career-talk/:id", element: <CareerTalkDetailPage /> },
       { path: "career-talk/edit/:id", element: <CareerTalkWritePage /> },
+      { path: "career-talk/chat", element: <ChatPage /> },
       { path: "MyPage", element: <MyPage /> },
       { path: "recommendation", element: <RecommendationPage /> },
       { path: "post", element: <JobPostForm /> },
