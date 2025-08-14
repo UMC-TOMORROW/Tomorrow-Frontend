@@ -1,9 +1,11 @@
+// components/jobPost/SalaryInput.tsx
+import React, { useEffect, useState } from "react";
 import checkActive from "../../assets/check_active.png";
 import checkInactive from "../../assets/check_inactive.png";
 
 type Props = {
   paymentLabel: string; // 급여 형태 (시급, 건당 등)
-  amount: number; // 숫자 (10000)
+  amount: number; // 숫자 (예: 12000)
   negotiable?: boolean;
   onChange: (data: { paymentLabel: string; amount: number; negotiable?: boolean }) => void;
 };
@@ -11,14 +13,39 @@ type Props = {
 const payTypes = ["시급", "건당", "일급", "월급"];
 
 const SalaryInput = ({ paymentLabel, amount, negotiable = false, onChange }: Props) => {
-  const formatNumber = (num: number) => {
-    if (!num) return "";
-    return num.toLocaleString();
+  // 표시/타이핑용 로컬 버퍼
+  const [text, setText] = useState("");
+
+  // 부모 amount 동기화
+  useEffect(() => {
+    setText(amount ? amount.toLocaleString() : "");
+    console.log("[SalaryInput] open sync:", { amount }); // JobTimeSelector 스타일
+  }, [amount]);
+
+  const handlePayTypeClick = (type: string) => {
+    console.log("[SalaryInput] 타입 선택 -> onChange:", { prev: paymentLabel, next: type });
+    onChange({ paymentLabel: type, amount, negotiable });
   };
 
-  const parseNumber = (str: string) => {
-    const num = Number(str.replace(/,/g, ""));
-    return isNaN(num) ? 0 : num;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    const cleaned = raw.replace(/[^\d,]/g, "");
+    const num = Number(cleaned.replace(/,/g, "")) || 0;
+    setText(cleaned);
+    console.log("[SalaryInput] 금액 입력 변경:", { raw, cleaned, num });
+    onChange({ paymentLabel, amount: num, negotiable });
+  };
+
+  const handleBlur = () => {
+    const num = Number((text || "").replace(/,/g, ""));
+    console.log("[SalaryInput] blur format:", { textBefore: text, num });
+    setText(num ? num.toLocaleString() : "");
+  };
+
+  const toggleNegotiable = () => {
+    const next = !negotiable;
+    console.log("[SalaryInput] 협의 토글 -> onChange:", { prev: negotiable, next });
+    onChange({ paymentLabel, amount, negotiable: next });
   };
 
   return (
@@ -38,7 +65,7 @@ const SalaryInput = ({ paymentLabel, amount, negotiable = false, onChange }: Pro
             <button
               key={type}
               type="button"
-              onClick={() => onChange({ paymentLabel: type, amount, negotiable })}
+              onClick={() => handlePayTypeClick(type)}
               className={`px-[10px] py-[4px] rounded-[7px] border-[1px] text-[13px] leading-none whitespace-nowrap transition
                 ${
                   selected
@@ -56,25 +83,27 @@ const SalaryInput = ({ paymentLabel, amount, negotiable = false, onChange }: Pro
       <div className="relative w-full mb-2">
         <input
           type="text"
+          inputMode="numeric"
+          pattern="[0-9,]*"
           className="w-full h-[44px] border border-[#DEDEDE] rounded-[8px] px-4 text-[16px] text-[#333] !px-3"
-          value={formatNumber(amount)}
-          onChange={(e) => onChange({ paymentLabel, amount: parseNumber(e.target.value), negotiable })}
+          value={text}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          // 협의 시 입력 막고 싶으면 ↓ 주석 해제
+          // disabled={negotiable}
         />
-        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#333] text-sm">원</span>
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#333] text-sm pointer-events-none">원</span>
       </div>
 
       {/* 협의 가능 */}
-      <div
-        className="flex !mt-2 items-center gap-1 text-sm text-[#666] cursor-pointer"
-        onClick={() => onChange({ paymentLabel, amount, negotiable: !negotiable })}
-      >
+      <button type="button" className="flex !mt-2 items-center gap-1 text-sm text-[#666]" onClick={toggleNegotiable}>
         <img
           src={negotiable ? checkActive : checkInactive}
           alt={negotiable ? "선택됨" : "선택 안됨"}
           className="w-4 h-4"
         />
         협의 가능
-      </div>
+      </button>
     </div>
   );
 };
