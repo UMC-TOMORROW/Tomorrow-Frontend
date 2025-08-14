@@ -11,7 +11,6 @@ const LicenseForm = ({ onFileSelect }: LicenseFormProps) => {
         <input
           type="file"
           accept=".pdf, .jpg, .png"
-          multiple
           className="hidden"
           onChange={onFileSelect}
         />

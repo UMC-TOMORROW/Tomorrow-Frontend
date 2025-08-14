@@ -38,15 +38,19 @@ const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
   ];
 
   const [selectedRegion, setSelectedRegion] = useState<string>("전체");
-
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    const queryRegions =
-      selectedRegion === "전체" ? ["서울"] : ["서울", selectedRegion];
-    onSubmit(queryRegions);
+    onSubmit(selectedRegion === "전체" ? [] : [selectedRegion]);
     onClose();
   };
+
+  const COLS = 3;
+  const last = regions.length - 1;
+  const rem = regions.length % COLS;
+  const bottomRightIdx = last;
+  const bottomLeftIdx =
+    rem === 0 ? last - (COLS - 1) : rem === 1 ? last : last - 1;
 
   return (
     <div
@@ -56,13 +60,13 @@ const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
       <div className="w-[360px] h-[562px] bg-white rounded-t-[20px] flex flex-col items-center relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.1)]">
         {/* 상단 바 */}
         <div
-          className="w-full h-[55px] flex items-center justify-center text-[15px] font-semibold text-black relative"
+          className="w-full h-[55px] flex items-center justify-center text-[18px] font-semibold text-black relative"
           style={{ backgroundColor: palette.primary.primaryLight }}
         >
           근무 지역 선택
           <button
             onClick={onClose}
-            className="absolute right-[16px] top-1/2 transform -translate-y-1/2 text-[10px] w-[20px] h-[20px] flex items-center justify-center"
+            className="absolute right-[16px] top-1/2 -translate-y-1/2 w-[20px] h-[20px] text-[16px] flex items-center justify-center"
           >
             ✕
           </button>
@@ -70,7 +74,7 @@ const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
 
         {/* 선택 경로 박스 */}
         <div
-          className="w-[300px] h-[52px] mt-[15px] mb-[25px] rounded-[12px] flex items-center justify-center gap-[8px] text-[16px] font-bold"
+          className="w-[300px] h-[52px] mt-[15px] mb-[25px] rounded-[18px] flex items-center justify-center gap-[8px] text-[16px] font-bold"
           style={{ backgroundColor: palette.primary.primaryLight }}
         >
           <span>서울</span>
@@ -83,12 +87,10 @@ const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
           <div className="grid grid-cols-3">
             {regions.map((dong, index) => {
               let radiusClass = "";
-              if (index === 0) radiusClass = "rounded-tl-[12px]";
-              if (index === 2) radiusClass = "rounded-tr-[12px]";
-              if (index === regions.length - 3)
-                radiusClass = "rounded-bl-[12px]";
-              if (index === regions.length - 1)
-                radiusClass = "rounded-br-[12px]";
+              if (index === 0) radiusClass += " rounded-tl-[12px]";
+              if (index === COLS - 1) radiusClass += " rounded-tr-[12px]";
+              if (index === bottomLeftIdx) radiusClass += " rounded-bl-[12px]";
+              if (index === bottomRightIdx) radiusClass += " rounded-br-[12px]";
 
               const isSelected = selectedRegion === dong;
 
@@ -96,7 +98,7 @@ const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
                 <button
                   key={dong}
                   onClick={() => setSelectedRegion(dong)}
-                  className={`w-[110px] h-[60px] text-[14px] border font-bold ${radiusClass} ${
+                  className={`w-[110px] h-[60px] text-[14px] border font-bold${radiusClass} ${
                     isSelected
                       ? "bg-[#B8CDB9] text-black"
                       : "bg-white text-black"
@@ -104,6 +106,7 @@ const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
                   style={{
                     borderColor: isSelected ? "#B8CDB9" : "#DDDDDD",
                     fontWeight: isSelected ? "700" : "500",
+                    fontFamily: "Pretendard",
                   }}
                 >
                   {dong}
@@ -116,7 +119,7 @@ const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {
         {/* 선택 완료 버튼 */}
         <div className="w-full mt-auto mb-[30px] flex justify-center">
           <button
-            className="w-[316px] h-[50px] rounded-[12px] text-white text-[16px] font-bold"
+            className="w-[316px] h-[50px] rounded-[12px] !text-white text-[16px] !font-bold"
             style={{ backgroundColor: palette.primary.primary }}
             onClick={handleSubmit}
           >

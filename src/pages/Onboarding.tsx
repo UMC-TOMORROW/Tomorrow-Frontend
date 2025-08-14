@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import CommonButton from "../components/common/CommonButton";
 import palette from "../styles/theme";
 import { useNavigate } from "react-router-dom";
 import OnboardingSkipModal from "../components/Onboarding/OnboardingSkipModal";
-import { postPreferences } from "../apis/Onboarding";
+import { postPreferences, patchMemberType } from "../apis/Onboarding";
 import axios from "axios";
 
 function Onboarding() {
@@ -11,6 +11,18 @@ function Onboarding() {
   const [page, setPage] = useState(1);
   const [showSkipModal, setShowSkipModal] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const isSavingRef = useRef(false);
+  const addUniqueTag = (tag: string) =>
+    setSelectedTags((prev) => (prev.includes(tag) ? prev : [...prev, tag]));
+
+  const PREFERENCE_MAP: Record<string, string> = {
+    "앉아서 근무 중심": "SIT",
+    "서서 근무 중심": "STAND",
+    "물건 운반 중심": "DELIVERY",
+    "물건 운반": "DELIVERY",
+    "신체 활동 중심": "PHYSICAL",
+    "사람 응대 중심": "HUMAN",
+  };
 
   const ProgressDots = ({
     current,
@@ -54,11 +66,27 @@ function Onboarding() {
             {[
               {
                 label: "👥 직원을 찾고 있어요",
-                onClick: () => navigate("../MyPage/EmployerMyPage"),
+                onClick: async () => {
+                  try {
+                    await patchMemberType({ memberType: "EMPLOYER" });
+                  } catch (e) {
+                    console.error("회원유형 설정 실패(EMPLOYER):", e);
+                  } finally {
+                    navigate("../MyPage/EmployerMyPage");
+                  }
+                },
               },
               {
                 label: "💼 일을 찾고 있어요",
-                onClick: () => setPage(2),
+                onClick: async () => {
+                  try {
+                    await patchMemberType({ memberType: "JOB_SEEKER" });
+                  } catch (e) {
+                    console.error("회원유형 설정 실패(JOB_SEEKER):", e);
+                  } finally {
+                    setPage(2);
+                  }
+                },
               },
             ].map(({ label, onClick }) => (
               <button
@@ -125,14 +153,6 @@ function Onboarding() {
               <br />
               보다 편안하고 적합한 일자리와 활동을 추천해드립니다.
             </p>
-            <p
-              className="text-center text-black text-[14px] font-normal leading-[20px] tracking-[-0.03em] mb-10 mt-3"
-              style={{ fontFamily: "Pretendard" }}
-            >
-              본 질문은 의료 진단이나 치료 목적이 아닌,
-              <br />
-              서비스 추천을 위한 참고 정보로만 사용됩니다.
-            </p>
           </div>
           <div
             className="w-full max-w-[320px] font-bold text-[18px] flex flex-col gap-[15px] !mt-10"
@@ -183,7 +203,6 @@ function Onboarding() {
       {page === 3 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />
-          {/* 상단 안내 문구 */}
           <h1
             className="text-[30px] text-center !font-bold leading-[51.776px] tracking-[0.04em] mb-10"
             style={{
@@ -195,12 +214,10 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          {/* 이미지 */}
           <img
             src="/src/assets/onboarding/Typing-pana.png"
             className="w-[340px] h-[300px]"
           />
-          {/* 버튼 영역 */}
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -209,14 +226,11 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "앉아서 근무 중심"]);
+                  addUniqueTag("앉아서 근무 중심");
                   setPage(4);
                 },
               },
-              {
-                label: "아니오",
-                onClick: () => setPage(4),
-              },
+              { label: "아니오", onClick: () => setPage(4) },
             ].map(({ label, onClick }) => (
               <button
                 key={label}
@@ -256,7 +270,6 @@ function Onboarding() {
       {page === 4 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />
-          {/* 상단 안내 문구 */}
           <h1
             className="text-[30px] text-center !font-bold leading-[51.776px] tracking-[0.04em] mb-10"
             style={{
@@ -268,12 +281,10 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          {/* 이미지 */}
           <img
             src="/src/assets/onboarding/Bricklayer-pana.png"
             className="w-[340px] h-[300px]"
           />
-          {/* 버튼 영역 */}
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -282,14 +293,11 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "서서 근무 중심"]);
+                  addUniqueTag("서서 근무 중심");
                   setPage(5);
                 },
               },
-              {
-                label: "아니오",
-                onClick: () => setPage(5),
-              },
+              { label: "아니오", onClick: () => setPage(5) },
             ].map(({ label, onClick }) => (
               <button
                 key={label}
@@ -329,7 +337,6 @@ function Onboarding() {
       {page === 5 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />
-          {/* 상단 안내 문구 */}
           <h1
             className="text-[30px] text-center !font-bold leading-[51.776px] tracking-[0.04em] mb-10"
             style={{
@@ -341,12 +348,10 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          {/* 이미지 */}
           <img
             src="/src/assets/onboarding/Heavybox-pana.png"
             className="w-[340px] h-[300px]"
-          />{" "}
-          {/* 버튼 영역 */}
+          />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -355,14 +360,11 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "물건 운반 중심"]);
+                  addUniqueTag("물건 운반 중심");
                   setPage(6);
                 },
               },
-              {
-                label: "아니오",
-                onClick: () => setPage(6),
-              },
+              { label: "아니오", onClick: () => setPage(6) },
             ].map(({ label, onClick }) => (
               <button
                 key={label}
@@ -402,7 +404,6 @@ function Onboarding() {
       {page === 6 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />
-          {/* 상단 안내 문구 */}
           <h1
             className="text-[30px] text-center !font-bold leading-[51.776px] tracking-[0.04em] mb-10"
             style={{
@@ -414,12 +415,10 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          {/* 이미지 */}
           <img
             src="/src/assets/onboarding/Gardening-pana.png"
             className="w-[340px] h-[300px]"
-          />{" "}
-          {/* 버튼 영역 */}
+          />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -428,14 +427,11 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "신체 활동 중심"]);
+                  addUniqueTag("신체 활동 중심");
                   setPage(7);
                 },
               },
-              {
-                label: "아니오",
-                onClick: () => setPage(7),
-              },
+              { label: "아니오", onClick: () => setPage(7) },
             ].map(({ label, onClick }) => (
               <button
                 key={label}
@@ -475,7 +471,6 @@ function Onboarding() {
       {page === 7 && (
         <div className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10">
           <ProgressDots current={page} total={5} />
-          {/* 상단 안내 문구 */}
           <h1
             className="text-[30px] text-center !font-bold leading-[51.776px] tracking-[0.04em] mb-10"
             style={{
@@ -487,12 +482,10 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          {/* 이미지 */}
           <img
             src="/src/assets/onboarding/Waiters-pana.png"
             className="w-[340px] h-[300px]"
-          />{" "}
-          {/* 버튼 영역 */}
+          />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -501,14 +494,11 @@ function Onboarding() {
               {
                 label: "예",
                 onClick: () => {
-                  setSelectedTags((prev) => [...prev, "사람 응대 중심"]);
+                  addUniqueTag("사람 응대 중심");
                   setPage(8);
                 },
               },
-              {
-                label: "아니오",
-                onClick: () => setPage(8),
-              },
+              { label: "아니오", onClick: () => setPage(8) },
             ].map(({ label, onClick }) => (
               <button
                 key={label}
@@ -553,55 +543,88 @@ function Onboarding() {
           <img
             src="/src/assets/logo/logo_white.png"
             className="w-[233px] h-[153px]"
-          ></img>
-          {/* 이미지 */}
+          />
           <img
             src="/src/assets/onboarding/FormingTeamLeadership-pana.png"
             className="w-[340px] h-[300px]"
-          />{" "}
+          />
           <p
             className="text-[20px] !font-semibold text-white text-center"
-            style={{
-              fontFamily: "Pretendard",
-            }}
+            style={{ fontFamily: "Pretendard" }}
           >
             당신의 더 나은
             <br />
             '내일'을 위해 '내 일' 찾기
           </p>
-          {/* 버튼 영역 */}
           <div className="w-full max-w-[320px] font-bold items-center flex flex-col gap-3">
             <CommonButton
               label="시작하기"
               className="!w-[315px] !h-[52px] !rounded-[10px] !bg-white !text-[#729A73]"
               onClick={async () => {
+                if (isSavingRef.current) return;
+
+                const deduped = Array.from(new Set(selectedTags));
+                if (deduped.length === 0) {
+                  alert("선호 태그를 최소 1개 이상 선택해 주세요.");
+                  return;
+                }
+
+                const mapped = deduped
+                  .map((t) => PREFERENCE_MAP[t])
+                  .filter((v): v is string => Boolean(v));
+
+                if (mapped.length === 0) {
+                  alert("선호 태그 매핑에 실패했습니다. 다시 시도해 주세요.");
+                  return;
+                }
+
                 try {
+                  isSavingRef.current = true;
+
                   const response = await postPreferences({
-                    preferenceList: selectedTags,
+                    preferences: mapped,
                   });
 
-                  console.log("보낸 데이터", {
-                    preferences: selectedTags,
-                  });
+                  console.log("보낸 데이터", { preferences: mapped });
                   console.log("받은 응답", response);
 
-                  if (response.result.saved) {
-                    navigate("/");
-                  }
-                } catch (e) {
-                  console.error("선호 저장 실패", e);
+                  const saved = await postPreferences({ preferences: mapped });
 
-                  if (axios.isAxiosError(e) && e.response) {
-                    console.log("서버 응답 내용", e.response.data); // 👈 이 줄이 핵심
-                  }
+                  console.log("보낸 데이터", { preferences: mapped });
+                  console.log("저장 여부", saved);
 
-                  alert("선호 정보 저장에 실패했습니다.");
+                  if (saved) {
+                    navigate("/recommendation");
+                  } else {
+                    alert(
+                      "선호 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
+                    );
+                  }
+                } catch (err: unknown) {
+                  if (axios.isAxiosError(err)) {
+                    console.error(
+                      "AxiosError",
+                      err.response?.data ?? err.message
+                    );
+                    alert(
+                      "선호 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요."
+                    );
+                  } else if (err instanceof Error) {
+                    console.error(err.message);
+                    alert(`선호 정보 저장에 실패했습니다.\n${err.message}`);
+                  } else {
+                    console.error(err);
+                    alert("선호 정보 저장 중 알 수 없는 오류가 발생했습니다.");
+                  }
+                } finally {
+                  isSavingRef.current = false;
                 }
               }}
             />
           </div>
         </div>
       )}
+
       {showSkipModal && (
         <OnboardingSkipModal
           onAccept={() => {

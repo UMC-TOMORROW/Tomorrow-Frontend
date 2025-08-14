@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Devider from "../common/Devider";
 import CommonButton from "../common/CommonButton";
@@ -26,59 +26,55 @@ export default function PersonalStep() {
   const jobId = useStableJobId();
 
   const [name, setName] = useState("");
-  const [district, setDistrict] = useState("");
-  const [phone, setPhone] = useState("");
-  const [request, setRequest] = useState("");
+  const [district, setDistrict] = useState(""); // payload.location
+  const [phone, setPhone] = useState(""); // payload.contact
+  const [request, setRequest] = useState(""); // payload.registrationPurpose
+  const [latitude, _setLatitude] = useState<number | undefined>(undefined);
+  const [longitude, _setLongitude] = useState<number | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
 
-  const canSubmit = name && district && phone;
+  // 서버 필수: name, location, contact, registrationPurpose, latitude, longitude
+  const canSubmit = !!(name && district && phone && request);
 
   const onSubmit = async () => {
     if (!canSubmit) {
-      alert("필수 항목(이름, 동네 위치, 연락처)을 입력해주세요.");
+      alert("필수 항목(이름, 주소, 연락처, 요청 내용)을 입력해주세요.");
       return;
     }
 
-    // 서버 명세에 맞춰 키 이름만 필요 시 변경
-    const payload: any = {
+    // 지도 연동 전까지 테스트용 기본 좌표
+    const lat = latitude ?? 37.5665;
+    const lng = longitude ?? 126.978;
+
+    // 서버 검증 로그 기준 camelCase, 문서 스니펫 호환 위해 snake_case도 같이 전송
+    const payload = {
       name: name.trim(),
-      district: district.trim(),
-      phone: phone.trim(),
-      request: request.trim(),
+      location: district.trim(), // 문서 address 예시가 있지만 실제 서버는 location을 검증하는 케이스가 많음
+      latitude: lat,
+      longitude: lng,
+      contact: phone.trim(),
+      registrationPurpose: request.trim(), // ✅ 서버 검증
+      registration_purpose: request.trim(), // 📄 문서 예시 호환
+      // body에 jobId가 필요 없지만, 혹시 대비:
+      ...(jobId != null ? { jobId: Number(jobId) } : {}),
     };
-    if (jobId != null) payload.job_id = jobId;
 
     try {
       setSubmitting(true);
-      const token = localStorage.getItem("accessToken");
 
-      // 1) 개인 인증/추가정보 저장
-      await axiosInstance.post("/api/v1/jobs/personal/verify", payload, {
-        withCredentials: true,
+      // PathVariable 엔드포인트 우선
+      const url =
+        jobId != null ? `/api/v1/jobs/${jobId}/personal_registrations` : `/api/v1/jobs/personal_registrations`;
+
+      console.log("[PersonalStep] POST", url, payload);
+
+      await axiosInstance.post(url, payload, {
+        withCredentials: true, // 쿠키 인증
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
-
-      // 2) 최종 게시 (jobId가 있으면 path 사용, 없으면 서버가 현재 초안 기준으로 처리하도록)
-      if (jobId != null) {
-        await axiosInstance.post(
-          `/api/v1/jobs/${jobId}/publish`,
-          {},
-          {
-            withCredentials: true,
-            headers: {
-              Accept: "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-          }
-        );
-      } else {
-        // 만약 서버가 jobId 없이도 게시 지원한다면 아래처럼 별도 엔드포인트 사용
-        // await axiosInstance.post("/api/v1/jobs/publish", {}, { withCredentials: true });
-      }
 
       navigate("/", { state: { jobId } });
     } catch (e: any) {
@@ -87,8 +83,22 @@ export default function PersonalStep() {
       console.group("[PersonalStep] 제출 실패");
       console.log("status:", status);
       console.log("data:", data);
+      try {
+        const details = data?.result ?? data?.errors ?? data;
+        console.log("details:", typeof details === "string" ? details : JSON.stringify(details, null, 2));
+      } catch {}
       console.groupEnd();
-      alert(data?.message ?? e?.message ?? "등록에 실패했습니다.");
+
+      const msg =
+        data?.message ||
+        data?.result?.message ||
+        (data?.result && typeof data.result === "object"
+          ? Object.entries(data.result)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join("\n")
+          : null);
+
+      alert(msg ?? "등록에 실패했습니다. 입력값을 다시 확인해주세요.");
     } finally {
       setSubmitting(false);
     }
@@ -112,7 +122,7 @@ export default function PersonalStep() {
           사업자가 아니신가요?
         </h2>
         <p className="font-pretendard !font-semibold text-[14px] leading-[22px] tracking-[-0.41px] !text-[#333] !mb-5">
-          간단한 정보를 입력해주세요.
+          간단한 요청 내용을 적어주세요.
           <br />
           구직자가 확인하고 지원하는 데에 도움이 됩니다.
         </p>
@@ -134,9 +144,9 @@ export default function PersonalStep() {
           />
         </div>
 
-        {/* 동네 위치 */}
+        {/* 주소 → location */}
         <div>
-          <label className="block text-[14px] font-semibold text-[#333] !mb-2">동네 위치</label>
+          <label className="block text-[14px] font-semibold text-[#333] !mb-2">주소</label>
           <input
             type="text"
             placeholder="서울 강서구 oo로 ooo"
@@ -146,7 +156,7 @@ export default function PersonalStep() {
           />
         </div>
 
-        {/* 연락처 */}
+        {/* 연락처 → contact */}
         <div>
           <label className="block text-[14px] font-semibold text-[#333] !mb-2">연락처</label>
           <input
@@ -158,7 +168,7 @@ export default function PersonalStep() {
           />
         </div>
 
-        {/* 요청 내용 */}
+        {/* 요청 내용 → registrationPurpose */}
         <div className="!mb-6">
           <label className="block text-[14px] font-semibold text-[#333] !mb-2">요청 내용</label>
           <textarea

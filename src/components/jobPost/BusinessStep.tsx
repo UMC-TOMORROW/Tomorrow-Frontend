@@ -1,5 +1,5 @@
 // src/components/jobPost/BusinessStep.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Devider from "../common/Devider";
 import CommonButton from "../common/CommonButton";
@@ -34,33 +34,36 @@ export default function BusinessStep() {
   const canSubmit = regNo && corpName && owner && openDate;
 
   const onSubmit = async () => {
-    if (!jobId) return alert("유효하지 않은 접근입니다. 처음부터 다시 진행해주세요.");
-    if (!canSubmit) return alert("모든 항목을 입력해주세요.");
+    if (!jobId) {
+      alert("유효하지 않은 접근입니다. 처음부터 다시 진행해주세요.");
+      return;
+    }
+    if (!canSubmit) {
+      alert("모든 항목을 입력해주세요.");
+      return;
+    }
 
-    // 서버 명세에 맞춰 키만 필요 시 변경하세요.
-    const verifyPayload = {
-      job_id: jobId,
-      reg_no: regNo,
-      corp_name: corpName.trim(),
+    // ✅ 스펙에 맞춘 payload (snake_case)
+    const payload = {
+      biz_number: regNo.replace(/\D+/g, "").slice(0, 10),
+      company_name: corpName.trim(),
       owner_name: owner.trim(),
-      open_date: openDate, // YYYY-MM-DD
+      opening_date: openDate, // YYYY-MM-DD
     };
 
     try {
       setSubmitting(true);
-      const token = localStorage.getItem("accessToken");
 
-      // 2차 저장(사업자 인증)
-      await axiosInstance.post("/api/v1/jobs/business/verify", verifyPayload, {
-        withCredentials: true,
+      console.log("[BusinessStep] POST /api/v1/business-verifications", payload);
+      await axiosInstance.post("/api/v1/business-verifications", payload, {
+        withCredentials: true, // 쿠키 인증
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
 
-      // 최종 게시
+      console.log("[BusinessStep] POST /api/v1/jobs/%s/publish", jobId);
       await axiosInstance.post(
         `/api/v1/jobs/${jobId}/publish`,
         {},
@@ -68,14 +71,33 @@ export default function BusinessStep() {
           withCredentials: true,
           headers: {
             Accept: "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         }
       );
 
-      navigate("/", { state: { jobId } }); // 홈으로 이동
+      navigate("/", { state: { jobId } });
     } catch (e: any) {
-      alert(e?.response?.data?.message ?? e?.message ?? "등록에 실패했습니다.");
+      const status = e?.response?.status;
+      const data = e?.response?.data;
+      console.group("[BusinessStep] 제출 실패");
+      console.log("status:", status);
+      console.log("data:", data);
+      try {
+        const details = data?.result ?? data?.errors ?? data;
+        console.log("details:", typeof details === "string" ? details : JSON.stringify(details, null, 2));
+      } catch {}
+      console.groupEnd();
+
+      const msg =
+        data?.message ||
+        data?.result?.message ||
+        (data?.result && typeof data.result === "object"
+          ? Object.entries(data.result)
+              .map(([k, v]) => `${k}: ${v}`)
+              .join("\n")
+          : null);
+
+      alert(msg ?? "등록에 실패했습니다. 입력값을 다시 확인해주세요.");
     } finally {
       setSubmitting(false);
     }

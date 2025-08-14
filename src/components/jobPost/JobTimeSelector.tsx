@@ -1,5 +1,5 @@
 // components/jobPost/JobTimeSelector.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import checkActive from "../../assets/check_active.png";
 import checkInactive from "../../assets/check_inactive.png";
 import time from "../../assets/filter/time.png";

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { X, MoreVertical } from "lucide-react";
 import Header from "../../components/Header";
 import palette from "../../styles/theme";
@@ -15,21 +15,20 @@ const CareerTalkDetailPage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const handleDelete = async () => {
-  if (!career) return;
+    if (!career) return;
 
-  const confirmDelete = window.confirm("정말 이 게시글을 삭제하시겠습니까?");
-  if (!confirmDelete) return;
+    const confirmDelete = window.confirm("정말 이 게시글을 삭제하시겠습니까?");
+    if (!confirmDelete) return;
 
-  try {
-    await deleteCareerTalk(career.id);
-    alert("게시글이 삭제되었습니다.");
-    navigate("/career-talk");
-  } catch (error) {
-    console.error("게시글 삭제 실패:", error);
-    alert("게시글 삭제 중 오류가 발생했습니다.");
-  }
-};
-
+    try {
+      await deleteCareerTalk(career.id);
+      alert("게시글이 삭제되었습니다.");
+      navigate("/career-talk");
+    } catch (error) {
+      console.error("게시글 삭제 실패:", error);
+      alert("게시글 삭제 중 오류가 발생했습니다.");
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -47,6 +46,21 @@ const CareerTalkDetailPage = () => {
 
     fetchData();
   }, [id]);
+
+const handleGoChat = useCallback(() => {
+  if (!career) return;
+  const roomId = career.chatroomId;
+  if (!roomId) {
+    alert("채팅방 ID가 없습니다. 응답의 chatroomId를 확인해주세요.");
+    return;
+  }
+  const ownerId = career.author ?? false;
+  navigate(`/career-talk/chat?roomId=${career.chatroomId}` +
+  `&isOwner=${ownerId}` +
+  `&postId=${career.id}` +
+  `&title=${encodeURIComponent(career.title)}`);
+}, [career, navigate]);
+
 
   if (isLoading) {
     return <div className="px-4 pt-14 pb-10">로딩 중...</div>;
@@ -134,7 +148,11 @@ const CareerTalkDetailPage = () => {
         {career.content}
       </div>
 
-      <button className="fixed bottom-[90px] right-4 w-[50px] h-[50px] rounded-full flex items-center justify-center shadow-md z-50 cursor-pointer">
+      <button
+        onClick={handleGoChat}
+        className="fixed bottom-[90px] right-4 w-[50px] h-[50px] rounded-full flex items-center justify-center shadow-md z-50 cursor-pointer"
+        aria-label="채팅으로 이동"
+      >
         <img src={talk} alt="채팅" />
       </button>
     </div>

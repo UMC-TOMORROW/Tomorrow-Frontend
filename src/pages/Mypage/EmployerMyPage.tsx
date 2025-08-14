@@ -4,13 +4,26 @@ import { SlArrowRight } from "react-icons/sl";
 import resume from "../../assets/my/resume.png";
 import suitcase from "../../assets/my/suitcase.png";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import member from "../../assets/member.png";
+import type { MyInfo } from "../../types/member";
+import { getMyInfo } from "../../apis/employerMyPage";
 
 const EmployerMyPage = () => {
   const navigate = useNavigate();
   const [showUnregister, setShowUnregister] = useState(false);
-
+  const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
+  useEffect(() => {
+    const fetchMyInfo = async () => {
+      try {
+        const data = await getMyInfo();
+        setMyInfo(data);
+      } catch (error) {
+        console.error("내 정보 불러오기 실패:", error);
+      }
+    };
+    fetchMyInfo();
+  }, []);
   return (
     <div className="bg-white" style={{ fontFamily: "Pretendard" }}>
       <Header title="마이페이지" />
@@ -21,7 +34,7 @@ const EmployerMyPage = () => {
             <img src={member} />
             <div>
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
-                이내일
+                {myInfo?.name ?? "이름을 등록해주세요"}
               </p>
               <p className="text-[13px]">
                 서로를 이어주는 내일, 지금 시작해보세요
@@ -42,7 +55,7 @@ const EmployerMyPage = () => {
           </div>
           <div
             className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
-            onClick={() => navigate("")}
+            onClick={() => navigate("/MyPage/MemberInfo")}
           >
             <p>일자리 등록</p>
             <img src={suitcase} />
@@ -94,11 +107,13 @@ const EmployerMyPage = () => {
             약관 및 방침
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
+            onClick={() => window.open("https://lava-scion-9fd.notion.site/244cf0577e4180128dc9df50ee9b73e6?source=copy_link", "_blank")}>
               <span>이용약관</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
+            onClick={() => window.open("https://lava-scion-9fd.notion.site/244cf0577e4180658616e53b81ba4a5e?source=copy_link", "_blank")}>
               <span>개인정보처리방침</span>
               <SlArrowRight />
             </li>

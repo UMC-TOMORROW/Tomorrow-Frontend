@@ -27,6 +27,8 @@ export default function TimeModal({
     }
   }
 
+  const paddedTimes = ["", "", ...times, "", ""];
+
   const to24HourFormat = (time: string): string => {
     const [period, rest] = time.split(" ");
     const [hourStr, minute] = rest.split(":");
@@ -67,42 +69,61 @@ export default function TimeModal({
         </div>
 
         <div className="flex justify-center mt-[20px] relative">
+          {/* 왼쪽 리스트 */}
           <div className="h-[120px] overflow-y-scroll flex flex-col gap-[10px] mr-[81px]">
-            {times.map((time) => (
-              <button
-                key={"L-" + time}
-                onClick={() => setSelectedLeft(time)}
-                className="w-[67px] h-[16px] text-[13px] !font-bold"
-                style={{
-                  color:
-                    selectedLeft === time
+            {paddedTimes.map((time, i) => {
+              const isBlank = time === "";
+              return (
+                <button
+                  key={`L-${i}`}
+                  onClick={() => {
+                    if (!isBlank) setSelectedLeft(time);
+                  }}
+                  disabled={isBlank}
+                  className="w-[67px] h-[16px] text-[13px] !font-bold"
+                  style={{
+                    color: isBlank
+                      ? "transparent"
+                      : selectedLeft === time
                       ? palette.primary.primary
                       : palette.gray.default,
-                }}
-              >
-                {time}
-              </button>
-            ))}
+                    cursor: isBlank ? "default" : "pointer",
+                  }}
+                >
+                  {isBlank ? " " : time}
+                </button>
+              );
+            })}
           </div>
 
+          {/* 오른쪽 리스트 */}
           <div className="h-[120px] overflow-y-scroll flex flex-col gap-[10px]">
-            {times.map((time) => (
-              <button
-                key={"R-" + time}
-                onClick={() => setSelectedRight(time)}
-                className="w-[67px] h-[16px] text-[13px] !font-bold"
-                style={{
-                  color:
-                    selectedRight === time
+            {paddedTimes.map((time, i) => {
+              const isBlank = time === "";
+              return (
+                <button
+                  key={`R-${i}`}
+                  onClick={() => {
+                    if (!isBlank) setSelectedRight(time);
+                  }}
+                  disabled={isBlank}
+                  className="w-[67px] h-[16px] text-[13px] !font-bold"
+                  style={{
+                    color: isBlank
+                      ? "transparent"
+                      : selectedRight === time
                       ? palette.primary.primary
                       : palette.gray.default,
-                }}
-              >
-                {time}
-              </button>
-            ))}
+                    cursor: isBlank ? "default" : "pointer",
+                  }}
+                >
+                  {isBlank ? " " : time}
+                </button>
+              );
+            })}
           </div>
 
+          {/* ~ 표시 */}
           <div
             className="absolute left-1/2 top-[60px] text-[13px]"
             style={{
@@ -117,7 +138,7 @@ export default function TimeModal({
         <div className="flex justify-center gap-[20px] mt-[20px] pb-[15px]">
           <button
             onClick={handleReset}
-            className="w-[132px] h-[50px] text-[18px] font-bold rounded-[10px] border"
+            className="w-[132px] h-[50px] text-[18px] !font-bold rounded-[10px] border"
             style={{
               borderColor: palette.primary.primary,
               color: palette.primary.primary,
@@ -127,11 +148,8 @@ export default function TimeModal({
           </button>
           <button
             onClick={handleApply}
-            className="w-[172px] h-[50px] text-[18px] font-bold rounded-[10px]"
-            style={{
-              backgroundColor: palette.primary.primary,
-              color: "white",
-            }}
+            className="w-[172px] h-[50px] text-[18px] !font-bold rounded-[10px]"
+            style={{ backgroundColor: palette.primary.primary, color: "white" }}
           >
             적용하기
           </button>
