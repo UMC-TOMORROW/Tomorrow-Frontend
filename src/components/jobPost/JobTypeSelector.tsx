@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 type RegistrantType = "BUSINESS" | "PERSONAL";
 
 export default function JobTypeSelector({

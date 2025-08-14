@@ -10,7 +10,6 @@ import ResumeManage from "./pages/Mypage/ResumeManage";
 import CareerTalkListPage from "./pages/careerTalk/CareerTalkListPage";
 import CareerTalkWritePage from "./pages/careerTalk/CareerTalkWritePage";
 import CareerTalkDetailPage from "./pages/careerTalk/CareerTalkDetailPage";
-import SearchBarTest from "./pages/SearchBarTest";
 import RecommendationPage from "./pages/RecommendationPage";
 import SplashScreenPage from "./pages/SplashScreenPage";
 import AuthScreen from "./pages/auth/AuthScreen";
@@ -28,6 +27,7 @@ import JobPostForm from "./pages/post/JobPostPage";
 import BusinessStep from "./components/jobPost/BusinessStep";
 import PersonalStep from "./components/jobPost/PerSonalStep";
 import WorkPreference from "./pages/Mypage/WorkPreference";
+import JobDetailPage from "./pages/job/JobDetailPage";
 import ChatPage from "./pages/careerTalk/ChatPage";
 
 const router = createBrowserRouter([
@@ -42,7 +42,6 @@ const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "onboarding", element: <OnboardingScreen /> },
       { path: "search", element: <SearchPage /> },
-      { path: "search-test", element: <SearchBarTest /> },
       { path: "career-talk", element: <CareerTalkListPage /> },
       { path: "career-talk/write", element: <CareerTalkWritePage /> },
       { path: "career-talk/:id", element: <CareerTalkDetailPage /> },
@@ -53,6 +52,7 @@ const router = createBrowserRouter([
       { path: "post", element: <JobPostForm /> },
       { path: "/post/business", element: <BusinessStep /> },
       { path: "/post/personal", element: <PersonalStep /> },
+      { path: "jobs/:jobId", element: <JobDetailPage /> }, // 글 상세 페이지
     ],
   },
   {

@@ -1,4 +1,3 @@
-import React from "react";
 import checkActive from "../../assets/check_active.png";
 import checkInactive from "../../assets/check_inactive.png";
 

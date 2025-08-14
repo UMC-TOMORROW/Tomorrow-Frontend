@@ -1,5 +1,5 @@
 // src/components/jobPost/BusinessStep.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Devider from "../common/Devider";
 import CommonButton from "../common/CommonButton";
