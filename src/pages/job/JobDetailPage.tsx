@@ -4,6 +4,7 @@ import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
 import { postApplication } from "../../apis/applications";
+import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
 
 import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
@@ -153,6 +154,7 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
   const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarking, setBookmarking] = useState(false);
 
   useEffect(() => {
     const effectiveId = jobId ?? "36"; // 존재하는 ID로 테스트
@@ -170,6 +172,24 @@ export default function JobDetailPage() {
         setLoading(false);
       }
     })();
+  }, [jobId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const id = Number(jobId ?? data?.jobId);
+        if (!Number.isFinite(id)) return;
+
+        const ids = await fetchBookmarkedJobIds();
+        if (!cancelled) setBookmarked(ids.includes(id));
+      } catch (e: any) {
+        console.warn("[Bookmark] init failed ▶", e?.response ?? e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [jobId]);
 
   // 화면 바인딩용 기본값 (값이 비어도 레이아웃 유지)
@@ -270,6 +290,54 @@ export default function JobDetailPage() {
     if (window.history.length > 1) navigate(-1);
     else navigate("/"); // 필요하면 "/jobs" 등으로 변경
   };
+  async function onToggleBookmark() {
+    const id = Number(jobId ?? data?.jobId);
+    if (!Number.isFinite(id) || bookmarking) return;
+
+    try {
+      setBookmarking(true);
+
+      if (!bookmarked) {
+        // ▷ 찜 추가 시도
+        try {
+          await addJobBookmark(id);
+          setBookmarked(true);
+        } catch (e: any) {
+          const status = e?.response?.status;
+          const code = e?.response?.data?.code;
+          if (status === 409 || code === "BOOKMARK4002") {
+            // 이미 찜됨 → 성공으로 간주하고 UI만 채움
+            setBookmarked(true);
+          } else if (status === 401) {
+            alert("로그인이 필요합니다.");
+          } else {
+            alert(e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요.");
+            console.error("[Bookmark] add error ▶", e?.response ?? e);
+          }
+        }
+      } else {
+        // ▷ 찜 취소 시도
+        try {
+          await deleteJobBookmark(id);
+          setBookmarked(false);
+        } catch (e: any) {
+          const status = e?.response?.status;
+          const code = e?.response?.data?.code;
+          if (status === 404 || code === "BOOKMARK4001") {
+            // 서버엔 없지만 우리 UI는 찜 상태였던 케이스 → 성공으로 간주하고 비움
+            setBookmarked(false);
+          } else if (status === 401) {
+            alert("로그인이 필요합니다.");
+          } else {
+            alert(e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요.");
+            console.error("[Bookmark] delete error ▶", e?.response ?? e);
+          }
+        }
+      }
+    } finally {
+      setBookmarking(false);
+    }
+  }
 
   return (
     <div className="max-w-[375px] mx-auto bg-white">
@@ -376,9 +444,12 @@ export default function JobDetailPage() {
         <div className="px-4 !pt-4 !pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-3">
             <button
-              aria-label="찜하기"
-              className="w-12 h-12 shrink-0 rounded-[10px] bg-[#729A73] flex items-center justify-center"
-              onClick={() => setBookmarked((v) => !v)}
+              aria-label={bookmarked ? "찜 취소" : "찜하기"}
+              className={`w-12 h-12 shrink-0 rounded-[10px] ${
+                bookmarking ? "opacity-70" : ""
+              } bg-[#729A73] flex items-center justify-center`}
+              onClick={onToggleBookmark}
+              disabled={bookmarking}
             >
               <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-[45px] h-[45px]" />
             </button>
