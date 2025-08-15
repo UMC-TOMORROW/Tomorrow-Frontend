@@ -6,11 +6,16 @@ import Header from "../../components/Header";
 import writeIcon from "../../assets/write.png";
 import palette from "../../styles/theme";
 import SearchBar from "../../components/search/SearchBar";
-import { getCareerTalks, searchCareerTalksByTitle } from "../../apis/careerTalk";
+import {
+  getCareerTalks,
+  searchCareerTalksByTitle,
+  searchCareerTalksByCategory,
+} from "../../apis/careerTalk";
 import type { CareerTalk } from "../../types/careerTalk";
 import CareerTalkCardSkeleton from "../../components/careerTalk/CareerTalkCardSkeleton";
 
 const BATCH_SIZE = 8;
+type SearchMode = "none" | "title" | "category"; 
 
 function CareerTalkListPage() {
   const navigate = useNavigate();
@@ -21,32 +26,61 @@ function CareerTalkListPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const handleSearch = async (keyword: string) => {
-    const trimmedKeyword = keyword.trim();
+  const [searchMode, setSearchMode] = useState<SearchMode>("none");
+  const [searchKeyword, setSearchKeyword] = useState<string>("");
 
-    if (!trimmedKeyword) {
-      // 검색 초기화
-      setCursor(undefined);
-      setTalks([]);
-      setHasMore(true);
-      fetchCareerTalks();
+  const handleSearch = async (keyword: string) => {
+    const trimmed = keyword.trim();
+
+    setTalks([]);
+    setCursor(undefined);
+    setHasMore(true);
+
+    // 입력 비었으면 전체 리스트로 복귀
+    if (!trimmed) {
+      setSearchMode("none");
+      setSearchKeyword("");
+      setLoading(true);
+      try {
+        const res = await getCareerTalks(BATCH_SIZE);
+        const list = res.result.careertalkList ?? [];
+        setTalks(list);
+        setHasMore(res.result.hasNext);
+        if (list.length) setCursor(list[list.length - 1].id);
+      } catch (err) {
+        console.error("초기 목록 로딩 실패", err);
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
+    // 키워드 검색 시작
     setLoading(true);
-    setCursor(undefined);
-    setTalks([]);
+    setSearchKeyword(trimmed);
 
     try {
-      const res = await searchCareerTalksByTitle(trimmedKeyword, BATCH_SIZE);
-      setTalks(res.result.careertalkList);
-      setHasMore(res.result.hasNext);
-      if (res.result.careertalkList.length > 0) {
-        const lastId = res.result.careertalkList[res.result.careertalkList.length - 1].id;
-        setCursor(lastId);
+      // 1) 카테고리 검색 먼저 시도
+      const byCategory = await searchCareerTalksByCategory(trimmed, BATCH_SIZE);
+      const catList = byCategory.result.careertalkList ?? [];
+      if (catList.length > 0) {
+        setSearchMode("category");
+        setTalks(catList);
+        setHasMore(byCategory.result.hasNext);
+        setCursor(catList[catList.length - 1].id);
+        return;
       }
+
+      // 2) 없으면 제목 검색
+      const byTitle = await searchCareerTalksByTitle(trimmed, BATCH_SIZE);
+      const titleList = byTitle.result.careertalkList ?? [];
+      setSearchMode("title");
+      setTalks(titleList);
+      setHasMore(byTitle.result.hasNext);
+      if (titleList.length) setCursor(titleList[titleList.length - 1].id);
     } catch (err) {
       console.error("검색 실패", err);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
@@ -61,28 +95,47 @@ function CareerTalkListPage() {
 
     setLoading(true);
     try {
-      const res = await getCareerTalks(BATCH_SIZE, cursor);
-      const newTalks = res.result.careertalkList;
+      let list: CareerTalk[] = [];
+      let hasNext = true;
 
-      if (!Array.isArray(newTalks)) {
-        console.error("응답이 배열이 아님:", res);
+      if (searchMode === "category") {
+        const res = await searchCareerTalksByCategory(
+          searchKeyword,
+          BATCH_SIZE,
+          cursor
+        );
+        list = res.result.careertalkList ?? [];
+        hasNext = res.result.hasNext;
+      } else if (searchMode === "title") {
+        const res = await searchCareerTalksByTitle(
+          searchKeyword,
+          BATCH_SIZE,
+          cursor
+        );
+        list = res.result.careertalkList ?? [];
+        hasNext = res.result.hasNext;
+      } else {
+        const res = await getCareerTalks(BATCH_SIZE, cursor);
+        list = res.result.careertalkList ?? [];
+        hasNext = res.result.hasNext;
+      }
+
+      if (!Array.isArray(list)) {
+        console.error("응답이 배열이 아님:", list);
+        setLoading(false);
         return;
       }
 
       setTalks((prev) => {
-        const allTalks = [...prev, ...newTalks];
-        const uniqueTalks = Array.from(
-          new Map(allTalks.map((item) => [item.id, item])).values()
-        );
-        return uniqueTalks;
+        const all = [...prev, ...list];
+        // 중복 제거(id 기준)
+        return Array.from(new Map(all.map((it) => [it.id, it])).values());
       });
 
-      if (newTalks.length > 0) {
-        const lastId = Number(newTalks[newTalks.length - 1].id);
-        setCursor(lastId);
+      if (list.length > 0) {
+        setCursor(Number(list[list.length - 1].id));
       }
-
-      setHasMore(res.result.hasNext);
+      setHasMore(hasNext);
     } catch (error) {
       console.error("커리어톡 불러오기 실패", error);
     } finally {
@@ -90,6 +143,7 @@ function CareerTalkListPage() {
     }
   };
 
+  // 무한 스크롤 옵저버
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -99,13 +153,27 @@ function CareerTalkListPage() {
       },
       { threshold: 1 }
     );
-
     if (observerRef.current) observer.observe(observerRef.current);
     return () => observer.disconnect();
+    // cursor/hasMore 변경에 반응 (모드/키워드는 fetchCareerTalks 내부에서 참조)
   }, [cursor, hasMore]);
 
+  // 최초 로딩
   useEffect(() => {
-    fetchCareerTalks();
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await getCareerTalks(BATCH_SIZE);
+        const list = res.result.careertalkList ?? [];
+        setTalks(list);
+        setHasMore(res.result.hasNext);
+        if (list.length) setCursor(list[list.length - 1].id);
+      } catch (e) {
+        console.error("초기 로딩 실패", e);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   return (
