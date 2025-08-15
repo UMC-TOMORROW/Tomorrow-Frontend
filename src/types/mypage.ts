@@ -25,6 +25,12 @@ export interface savedJobs {
   isWished: boolean;
 }
 
+export type BookmarksPayload = {
+  bookmarks: savedJobs[];
+  hasNext: boolean;
+  lastCursor: string | null;
+};
+
 export interface deleteMember {
   status: string;
   deletedAt: string;

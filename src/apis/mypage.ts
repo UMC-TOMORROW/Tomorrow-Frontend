@@ -50,33 +50,40 @@ export const getApplications = async (
   );
 
   const list = res.data?.result;
-  if (!Array.isArray(list)) {
-    console.error("Unexpected response shape:", res.data);
-    return [];
-  }
-  return list;
+  return Array.isArray(list) ? list : [];
 };
 
-// 찜 목록 조회
+type BookmarksPayload = {
+  bookmarks: savedJobs[];
+  hasNext: boolean;
+  lastCursor: string | null;
+};
+
 export const getSavedJobs = async (): Promise<savedJobs[]> => {
-  const res = await axiosInstance.get<ApiResponse<savedJobs[]>>(
-    "/api/v1/job-bookmarks",
-    {
-      withCredentials: true,
-      headers: {
-        Accept: "application/json",
-        ...getAuthHeader(),
-      },
-    }
-  );
+  const res = await axiosInstance.get<
+    ApiResponse<savedJobs[] | BookmarksPayload>
+  >("/api/v1/job-bookmarks", {
+    withCredentials: true,
+    headers: {
+      Accept: "application/json",
+      ...getAuthHeader(),
+    },
+  });
 
   const ct = res.headers?.["content-type"];
   if (typeof res.data !== "object" || (ct && ct.includes("text/html"))) {
     throw new Error("로그인이 필요합니다.");
   }
 
-  const list = res.data?.result;
-  return Array.isArray(list) ? list : [];
+  const result = res.data?.result;
+
+  if (Array.isArray(result)) return result;
+  if (result && Array.isArray((result as BookmarksPayload).bookmarks)) {
+    return (result as BookmarksPayload).bookmarks;
+  }
+
+  console.warn("[getSavedJobs] Unexpected response shape:", res.data);
+  return [];
 };
 
 type MeRaw = {
