@@ -14,12 +14,74 @@ export default function BusinessStep() {
   const [submitting, setSubmitting] = useState(false);
 
   const canSubmit = regNo && corpName && owner && openDate;
+  // 응답/헤더에서 jobId 추출 유틸
+  const getJobIdFromHeaders = (headers: any) => {
+    const loc = headers?.location || headers?.Location;
+    if (!loc) return null;
+    const last = String(loc).split("/").filter(Boolean).pop();
+    return last && /^\d+$/.test(last) ? Number(last) : last ?? null;
+  };
+  // const onSubmit = async () => {
+  //   if (!canSubmit) {
+  //     alert("모든 항목을 입력해주세요.");
+  //     return;
+  //   }
 
+  //   const payload = {
+  //     bizNumber: regNo.replace(/\D+/g, "").slice(0, 10),
+  //     companyName: corpName.trim(),
+  //     ownerName: owner.trim(),
+  //     openingDate: openDate.slice(0, 10), // YYYY-MM-DD
+  //   };
+
+  //   try {
+  //     setSubmitting(true);
+
+  //     console.log("[BusinessStep] POST /api/v1/jobs/business-verifications/register", payload);
+
+  //     await axiosInstance.post("/api/v1/jobs/business-verifications/register", payload, {
+  //       withCredentials: true,
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Accept: "application/json",
+  //       },
+  //     });
+
+  //     // ✅ 스펙: jobId는 최종 완료 시에만 발급됨.
+  //     // 여기서는 추가 호출 없이 성공 처리만 하고 홈/완료 페이지로 이동.
+  //     alert("사업자 인증이 완료되었습니다. 등록이 마무리되면 목록에 반영됩니다.");
+  //     navigate("/", { replace: true });
+  //   } catch (e: any) {
+  //     const status = e?.response?.status;
+  //     const data = e?.response?.data;
+
+  //     console.group("[BusinessStep] 제출 실패");
+  //     console.log("status:", status);
+  //     console.log("data:", data);
+  //     console.groupEnd();
+
+  //     // 세션에 1차 폼이 없으면 서버가 400/409 등을 낼 수 있음
+  //     if (status === 400 || status === 409) {
+  //       alert("이전 단계(일자리 등록 1차 폼)가 세션에 없습니다. 처음부터 다시 진행해주세요.");
+  //       return;
+  //     }
+
+  //     const msg =
+  //       data?.message ||
+  //       data?.result?.message ||
+  //       (data?.result && typeof data.result === "object"
+  //         ? Object.entries(data.result)
+  //             .map(([k, v]) => `${k}: ${v}`)
+  //             .join("\n")
+  //         : null);
+
+  //     alert(msg ?? "등록에 실패했습니다. 입력값을 다시 확인해주세요.");
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
   const onSubmit = async () => {
-    if (!canSubmit) {
-      alert("모든 항목을 입력해주세요.");
-      return;
-    }
+    if (!canSubmit || submitting) return;
 
     const payload = {
       bizNumber: regNo.replace(/\D+/g, "").slice(0, 10),
@@ -33,17 +95,35 @@ export default function BusinessStep() {
 
       console.log("[BusinessStep] POST /api/v1/jobs/business-verifications/register", payload);
 
-      await axiosInstance.post("/api/v1/jobs/business-verifications/register", payload, {
+      // 1) 사업자 인증
+      const res = await axiosInstance.post("/api/v1/jobs/business-verifications/register", payload, {
         withCredentials: true,
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
       });
 
-      // ✅ 스펙: jobId는 최종 완료 시에만 발급됨.
-      // 여기서는 추가 호출 없이 성공 처리만 하고 홈/완료 페이지로 이동.
-      alert("사업자 인증이 완료되었습니다. 등록이 마무리되면 목록에 반영됩니다.");
+      // 2) jobId 추출 (result, data, Location 헤더 등 여러 경로 지원)
+      const body = res?.data?.result ?? res?.data ?? {};
+      let jobId: any = body?.jobId ?? body?.id ?? getJobIdFromHeaders(res?.headers) ?? null;
+
+      console.log("[BusinessStep] verify ok. jobId:", jobId);
+
+      // 3) jobId 있으면 즉시 게시
+      if (jobId != null) {
+        console.log("[BusinessStep] POST /api/v1/jobs/%s/publish", jobId);
+        await axiosInstance.post(
+          `/api/v1/jobs/${jobId}/publish`,
+          {},
+          {
+            withCredentials: true,
+            headers: { Accept: "application/json" },
+          }
+        );
+        alert("사업자 인증 및 게시까지 완료됐습니다.");
+      } else {
+        // 백엔드가 jobId를 안 주는 케이스: 인증만 성공(초안/대기 상태)
+        alert("사업자 인증이 완료되었습니다. (게시 대기) 목록 반영까지 시간이 조금 걸릴 수 있습니다.");
+      }
+
       navigate("/", { replace: true });
     } catch (e: any) {
       const status = e?.response?.status;
@@ -54,7 +134,6 @@ export default function BusinessStep() {
       console.log("data:", data);
       console.groupEnd();
 
-      // 세션에 1차 폼이 없으면 서버가 400/409 등을 낼 수 있음
       if (status === 400 || status === 409) {
         alert("이전 단계(일자리 등록 1차 폼)가 세션에 없습니다. 처음부터 다시 진행해주세요.");
         return;
