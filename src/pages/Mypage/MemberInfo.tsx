@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { SlArrowLeft } from "react-icons/sl";
 import { putMyProfile } from "../../apis/mypage";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import RegionModal from "../../components/Homepage/HomepageModal/RegionModal";
 import type { MyInfo } from "../../types/member";
 import { getMyInfo } from "../../apis/employerMyPage";
@@ -46,7 +46,7 @@ const MemberInfo = () => {
   const handleSave = async () => {
     if (saving) return;
 
-    // 📌 필수값 검사 추가
+    // 📌 필수값 검사 추
     if (!email.trim()) {
       alert("이메일은 필수 입력 항목입니다.");
       return;
@@ -168,9 +168,13 @@ const MemberInfo = () => {
     <div style={{ fontFamily: "Pretendard" }}>
       <div className="bg-white min-h-screen">
         <section className="relative flex justify-center items-center h-[52px] border-b border-[#DEDEDE]">
-          <Link to="/MyPage" className="absolute left-[15px]">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="absolute left-[15px]"
+          >
             <SlArrowLeft />
-          </Link>
+          </button>
           <div className="text-[20px]" style={{ fontWeight: 600 }}>
             회원 정보
           </div>

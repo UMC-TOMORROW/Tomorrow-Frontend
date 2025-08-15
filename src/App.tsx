@@ -1,5 +1,9 @@
 import "./App.css";
-import { createBrowserRouter, RouterProvider, redirect } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  redirect,
+} from "react-router-dom";
 import NotFoundPage from "./pages/NotFoundPage";
 import HomeLayout from "./layouts/HomeLayout";
 import HomePage from "./pages/HomePage";
@@ -58,7 +62,11 @@ const router = createBrowserRouter([
   // 1) 스플래시/로그인: 로그인 상태면 접근 금지(홈으로)
   { path: "/splash", element: <SplashScreenPage />, loader: requireAnonLoader },
   { path: "/auth", element: <AuthScreen />, loader: requireAnonLoader },
-  { path: "/auth/user-info", element: <UserInfoForm />, loader: requireAnonLoader },
+  {
+    path: "/auth/user-info",
+    element: <UserInfoForm />,
+    loader: requireAnonLoader,
+  },
 
   // 2) 메인 섹션
   {
@@ -84,18 +92,42 @@ const router = createBrowserRouter([
       { path: "career-talk", element: <CareerTalkListPage /> },
 
       // 작성/채팅 등 보호 라우트
-      { path: "career-talk/write", element: <CareerTalkWritePage />, loader: requireAuthLoader },
+      {
+        path: "career-talk/write",
+        element: <CareerTalkWritePage />,
+        loader: requireAuthLoader,
+      },
       { path: "career-talk/:id", element: <CareerTalkDetailPage /> },
-      { path: "career-talk/edit/:id", element: <CareerTalkWritePage />, loader: requireAuthLoader },
-      { path: "career-talk/chat", element: <ChatPage />, loader: requireAuthLoader },
+      {
+        path: "career-talk/edit/:id",
+        element: <CareerTalkWritePage />,
+        loader: requireAuthLoader,
+      },
+      {
+        path: "career-talk/chat",
+        element: <ChatPage />,
+        loader: requireAuthLoader,
+      },
 
       { path: "MyPage", element: <MyPage />, loader: requireAuthLoader },
-      { path: "recommendation", element: <RecommendationPage />, loader: requireAuthLoader },
+      {
+        path: "recommendation",
+        element: <RecommendationPage />,
+        loader: requireAuthLoader,
+      },
 
       // 글 등록 플로우 보호
       { path: "post", element: <JobPostForm />, loader: requireAuthLoader },
-      { path: "/post/business", element: <BusinessStep />, loader: requireAuthLoader },
-      { path: "/post/personal", element: <PersonalStep />, loader: requireAuthLoader },
+      {
+        path: "/post/business",
+        element: <BusinessStep />,
+        loader: requireAuthLoader,
+      },
+      {
+        path: "/post/personal",
+        element: <PersonalStep />,
+        loader: requireAuthLoader,
+      },
 
       { path: "jobs/:jobId", element: <JobDetailPage /> },
       { path: "jobs/:jobId/reviews", element: <JobReviewPage /> },
@@ -116,7 +148,7 @@ const router = createBrowserRouter([
       { path: "MemberInfo", element: <MemberInfo /> },
       { path: "ApplyStatus", element: <ApplyStatus /> },
       { path: "ManageMyJobs", element: <ManageMyJobs /> },
-      { path: "ReviewWritting", element: <ReviewWritting /> },
+      { path: "ReviewWritting/:postId", element: <ReviewWritting /> },
       { path: "SavedJobs", element: <SavedJobs /> },
       { path: "ApplicantList", element: <ApplicantList /> },
       { path: "ApplicantDetail", element: <ApplicantDetail /> },

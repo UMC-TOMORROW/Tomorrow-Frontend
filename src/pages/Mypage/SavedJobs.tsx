@@ -1,31 +1,34 @@
+// src/pages/Mypage/SavedJobs.tsx
 import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { getSavedJobs } from "../../apis/mypage";
-import type { savedJobs as SavedJobType } from "../../types/mypage";
+import type { BookmarkItem } from "../../types/mypage";
 
 const SavedJobs = () => {
-  const [savedJobs, setSavedJobs] = useState<SavedJobType[]>([]);
-  const [appliedJobs, setAppliedJobs] = useState<number[]>([]);
+  const navigate = useNavigate();
+  const [savedJobs, setSavedJobs] = useState<BookmarkItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
+        setLoading(true);
         const list = await getSavedJobs();
         setSavedJobs(Array.isArray(list) ? list : []);
       } catch (e) {
         console.error("저장한 공고 불러오기 실패:", e);
         setSavedJobs([]);
+      } finally {
+        setLoading(false);
       }
     };
     load();
   }, []);
 
-  const handleApplyClick = (index: number) => {
-    setAppliedJobs((prev) => (prev.includes(index) ? prev : [...prev, index]));
-  };
-
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <div className="bg-white min-h-screen">
+        {/* 헤더 */}
         <section>
           <div
             className="flex justify-center items-center text-[20px] h-[52px] border-b-[1.5px] border-[#DEDEDE]"
@@ -34,64 +37,58 @@ const SavedJobs = () => {
             저장
           </div>
         </section>
+
+        {/* 건수 */}
         <div className="flex items-center text-[12px] pl-[20px] h-[34px] border-b border-[#DEDEDE]">
-          {savedJobs.length}건
+          {loading ? "로딩 중..." : `${savedJobs.length}건`}
         </div>
 
-        {savedJobs.map((job, index) => {
-          const stars =
-            typeof job.rating === "number" ? job.rating.toFixed(1) : undefined;
-          const period = "";
-          return (
-            <section key={index}>
-              <div className="flex flex-col px-[20px]">
-                <div className="flex h-[102px] justify-between items-center">
-                  <div className="flex flex-col">
-                    <p className="text-[12px]">{job.company}</p>
-                    <p className="text-[16px]" style={{ fontWeight: 800 }}>
-                      {job.title}
-                    </p>
-                    <p className="text-[12px] text-[#729A73]">
-                      {(job.tags ?? []).join(", ")}
-                    </p>
-                    <p className="text-[12px] text-[#555555D9]">
-                      {period}
-                      {stars && (
-                        <span className="text-[#000000] ml-[10px]">
-                          ★{stars}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="w-[79px] h-[79px] border border-[#2121210]"></div>
+        {/* 리스트 */}
+        {savedJobs.map((bm) => (
+          <section key={bm.id}>
+            <div className="flex flex-col px-[20px]">
+              <div className="flex h-[102px] justify-between items-center">
+                <div className="flex flex-col">
+                  <p className="text-[12px]">{bm.companyName}</p>
+                  <p className="text-[16px]" style={{ fontWeight: 800 }}>
+                    {bm.jobTitle}
+                  </p>
+                  <p className="text-[12px] text-[#729A73]">
+                    {new Date(bm.bookmarkedAt).toLocaleString()}
+                  </p>
                 </div>
-                <div className="flex px-[15px] h-[1px] w-full bg-white border-b border-[#BFBFBF8C]"></div>
+
+                {/* 썸네일 클릭 시 상세 이동 */}
+                <div
+                  className="w-[79px] h-[79px] border cursor-pointer"
+                  onClick={() => navigate(`/jobs/${bm.jobId}`)}
+                  title="공고 상세로 이동"
+                />
               </div>
 
-              <div className="flex justify-between items-center border-b border-[#5555558C] h-[43px] px-[20px]">
-                <div className="flex">
-                  <p className="text-[12px]">{job.location}</p>
-                  <p className="text-[12px] ml-[10px]">{job.wage}</p>
-                </div>
-                <div>
-                  <button
-                    onClick={() => handleApplyClick(index)}
-                    className={`flex border w-[80px] h-[28px] items-center justify-center text-[14px] ${
-                      appliedJobs.includes(index)
-                        ? "bg-[#729A73] text-[#FFFFFF] border-transparent"
-                        : "border-[#555555D9] text-[#555555D9]"
-                    }`}
-                    style={{ borderRadius: "5px" }}
-                  >
-                    지원하기
-                  </button>
-                </div>
-              </div>
-            </section>
-          );
-        })}
+              <div className="flex px-[15px] h-[1px] w-full bg-white border-b border-[#BFBFBF8C]" />
+            </div>
 
-        <section></section>
+            {/* 하단 액션 바 */}
+            <div className="flex justify-end items-center border-b border-[#5555558C] h-[43px] px-[20px]">
+              <Link
+                to={`/jobs/${bm.jobId}`}
+                className="w-[80px] h-[28px] text-[14px] mt-1 border rounded-[7px] transition-colors duration-200 flex items-center justify-center text-[#555555D9] hover:bg-[#729A73] hover:text-white hover:border-[#729A73]"
+                style={{ fontFamily: "Pretendard", borderColor: "#555555D9" }}
+                role="button"
+              >
+                지원하기
+              </Link>
+            </div>
+          </section>
+        ))}
+
+        {/* 빈 상태 */}
+        {!loading && savedJobs.length === 0 && (
+          <p className="text-center mt-8 text-sm text-gray-500">
+            저장한 공고가 없습니다.
+          </p>
+        )}
       </div>
     </div>
   );
