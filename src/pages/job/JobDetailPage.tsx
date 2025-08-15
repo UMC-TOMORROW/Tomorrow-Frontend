@@ -73,6 +73,8 @@ const periodLabel = (p?: string) =>
     ? "1개월 이상"
     : p === "OVER_THREE_MONTH"
     ? "3개월 이상"
+    : p === "OVER_SIX_MONTH"
+    ? "6개월 이상"
     : p === "OVER_ONE_YEAR"
     ? "1년 이상"
     : p ?? "-";
