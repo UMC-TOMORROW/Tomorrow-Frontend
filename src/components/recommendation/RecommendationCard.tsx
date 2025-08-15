@@ -41,6 +41,7 @@ const formatTime = (time?: string | null): string => {
 
 const RecommendationCard = ({ job, variant = "default", userName }: Props) => {
   const [isApplied, setIsApplied] = useState(false);
+  console.log(setIsApplied)
   const navigate = useNavigate();
 
   const backgroundColor =
