@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
-import { postApplication } from "../../apis/applications";
+// import { postApplication } from "../../apis/applications";
+import { createApplication } from "../../apis/applications";
 import { ensureAuth, redirectToLogin, AuthRequiredError } from "../../apis/httpCommon";
 import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
 import { getMe } from "../../apis/mypage"; // /api/v1/members/me
@@ -308,39 +309,33 @@ export default function JobDetailPage() {
       if (submitting || applied) return;
       setSubmitting(true);
 
-      await ensureAuth(); // ✅ 세션 확인
-
-      const postId = Number(data?.jobId ?? jobId);
-      if (!Number.isFinite(postId)) {
+      // 상세의 진짜 PK 우선, 없으면 URL 파라미터
+      const pid = Number(data?.jobId ?? jobId);
+      if (!Number.isFinite(pid)) {
         alert("공고 식별자가 올바르지 않습니다.");
         return;
       }
 
       const payload = {
         content: applyContent.trim(),
+        postId: pid, // ✅ 바디에도 postId 포함
         ...(attachChecked && resumeId ? { resumeId } : {}),
       };
 
-      const res = await postApplication(postId, payload);
-      console.log("[Apply] success ▶", res);
-      const ct = String(res.headers?.["content-type"] || "");
-      if (!ct.includes("application/json")) {
-        throw new Error("로그인이 필요합니다."); // 서버가 HTML을 돌려주면 여기로
-      }
+      // ✅ Bearer 안 씀. jobs.ts와 같은 쿠키+가드 방식
+      const saved = await createApplication(pid, payload);
 
+      console.log("[Apply] saved ▶", saved);
       alert("지원이 완료되었습니다.");
       setApplied(true);
       setApplyOpen(false);
       setApplyContent("");
       setAttachChecked(false);
     } catch (e: any) {
-      if (e instanceof AuthRequiredError) {
-        alert("로그인이 필요합니다.");
-        redirectToLogin();
-        return;
-      }
+      // ensureAuth/redirectToLogin이 알아서 처리. 나머지는 메시지만 노출
+      const msg = e?.response?.data?.message ?? e?.message ?? "지원 중 오류가 발생했어요.";
       console.error("[Apply] error ▶", e?.response ?? e);
-      alert(e?.response?.data?.message ?? e?.message ?? "지원 중 오류가 발생했어요.");
+      alert(msg);
     } finally {
       setSubmitting(false);
     }

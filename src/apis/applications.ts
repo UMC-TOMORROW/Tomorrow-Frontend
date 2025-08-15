@@ -1,38 +1,32 @@
+// src/apis/applications.ts
 import { axiosInstance } from "./axios";
-import { ensureAuth, guardHtml, pickResult } from "./httpCommon";
-
-function readCookie(name: string): string | null {
-  const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
-  return m ? decodeURIComponent(m[1]) : null;
-}
-function sanitizeToken(raw: string): string {
-  return raw
-    .replace(/^Bearer\s+/i, "")
-    .replace(/^"|"$/g, "")
-    .trim();
-}
-function getAuthHeader(): Record<string, string> {
-  const rawCookie = readCookie("Authorization") ?? readCookie("accessToken") ?? readCookie("ACCESS_TOKEN") ?? "";
-  const rawLS = localStorage.getItem("Authorization") ?? localStorage.getItem("accessToken") ?? "";
-  const rawSS = sessionStorage.getItem("Authorization") ?? sessionStorage.getItem("accessToken") ?? "";
-  const token = sanitizeToken(rawCookie || rawLS || rawSS);
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
+import { ensureAuth, isHtmlResponse, pickResult, AuthRequiredError, redirectToLogin } from "./jobs";
 
 export type PostApplicationBody = {
   content: string;
-  resumeId?: number;
+  postId: number; // ✅ 백엔드 요구: 바디에도 postId 포함
+  resumeId?: number; // 첨부 시만
 };
 
-// POST /api/v1/posts/{postId}/applications
-export async function postApplication(postId: number, body: PostApplicationBody) {
+/** 지원 생성: POST /api/v1/posts/{postId}/applications */
+export async function createApplication(postId: number, body: PostApplicationBody) {
+  // 쿠키 세션 기준으로 로그인 확인(미인증이면 /auth로 보냄)
+  await ensureAuth();
+
+  // 서버가 종종 text/html(로그인 화면)로 돌려보내는 케이스 가드
   const res = await axiosInstance.post(`/api/v1/posts/${postId}/applications`, body, {
     withCredentials: true,
-    headers: {
-      Accept: "application/json",
-      "X-Requested-With": "XMLHttpRequest",
-      ...getAuthHeader(),
-    },
+    headers: { Accept: "application/json" },
+    // 여기서 3xx도 일단 받아서 아래에서 HTML 가드로 판별
+    validateStatus: (s) => s >= 200 && s < 400,
   });
-  return res;
+
+  if (isHtmlResponse(res?.data, res?.headers)) {
+    // 세션 만료 등으로 로그인 화면이 온 경우
+    redirectToLogin();
+    throw new AuthRequiredError();
+  }
+
+  // 공통 유틸: data.result || data.data || data
+  return pickResult<{ id?: number | string }>(res);
 }
