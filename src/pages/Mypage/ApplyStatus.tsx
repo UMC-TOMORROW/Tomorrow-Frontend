@@ -43,7 +43,7 @@ const ApplyStatus = () => {
       company: it.company,
       title: it.postTitle,
       tags: [],
-      status: it.status === "합격" ? "합격" : "",
+      status: it.status === "ACCEPTED" ? "합격" : "",
     };
   }, []);
 

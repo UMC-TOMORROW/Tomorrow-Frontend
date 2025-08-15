@@ -3,42 +3,13 @@ import type {
   ApiResponse,
   ApplicationFilter,
   applyStatus,
+  BookmarkItem,
   deleteMember,
   Member,
   MemberUpdate,
   reviews,
-  savedJobs,
 } from "../types/mypage";
 import { axiosInstance } from "./axios";
-
-function readCookie(name: string): string | null {
-  const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
-  return m ? decodeURIComponent(m[1]) : null;
-}
-function sanitizeToken(raw: string): string {
-  return raw
-    .replace(/^Bearer\s+/i, "")
-    .replace(/^"|"$/g, "")
-    .trim();
-}
-function getAuthHeader(): Record<string, string> {
-  const rawCookie =
-    readCookie("Authorization") ??
-    readCookie("accessToken") ??
-    readCookie("ACCESS_TOKEN") ??
-    "";
-  const rawLS =
-    window.localStorage.getItem("Authorization") ??
-    window.localStorage.getItem("accessToken") ??
-    "";
-  const rawSS =
-    window.sessionStorage.getItem("Authorization") ??
-    window.sessionStorage.getItem("accessToken") ??
-    "";
-
-  const token = sanitizeToken(rawCookie || rawLS || rawSS);
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // 지원 현황 조회
 export const getApplications = async (
@@ -53,37 +24,29 @@ export const getApplications = async (
   return Array.isArray(list) ? list : [];
 };
 
+// 북마크 API 응답 타입
 type BookmarksPayload = {
-  bookmarks: savedJobs[];
+  bookmarks: BookmarkItem[];
   hasNext: boolean;
   lastCursor: string | null;
 };
 
-export const getSavedJobs = async (): Promise<savedJobs[]> => {
-  const res = await axiosInstance.get<
-    ApiResponse<savedJobs[] | BookmarksPayload>
-  >("/api/v1/job-bookmarks", {
-    withCredentials: true,
-    headers: {
-      Accept: "application/json",
-      ...getAuthHeader(),
-    },
-  });
+// 북마크 목록 조회
+export const getSavedJobs = async (): Promise<BookmarkItem[]> => {
+  const res = await axiosInstance.get<ApiResponse<BookmarksPayload>>(
+    "/api/v1/job-bookmarks",
+    {
+      withCredentials: true,
+      headers: { Accept: "application/json" },
+    }
+  );
 
-  const ct = res.headers?.["content-type"];
-  if (typeof res.data !== "object" || (ct && ct.includes("text/html"))) {
-    throw new Error("로그인이 필요합니다.");
+  const payload = res.data?.result;
+  if (!payload || !Array.isArray(payload.bookmarks)) {
+    console.warn("[getSavedJobs] Unexpected response:", res.data);
+    return [];
   }
-
-  const result = res.data?.result;
-
-  if (Array.isArray(result)) return result;
-  if (result && Array.isArray((result as BookmarksPayload).bookmarks)) {
-    return (result as BookmarksPayload).bookmarks;
-  }
-
-  console.warn("[getSavedJobs] Unexpected response shape:", res.data);
-  return [];
+  return payload.bookmarks;
 };
 
 type MeRaw = {
@@ -93,6 +56,7 @@ type MeRaw = {
 
 type MeWrapped = ApiResponse<MeRaw> | MeRaw;
 
+// 내 회원 ID 추출
 function extractMemberId(data: unknown): string | null {
   if (
     typeof data === "object" &&
@@ -122,6 +86,7 @@ function extractMemberId(data: unknown): string | null {
   return null;
 }
 
+// 내 회원 ID 조회
 export const getMe = async (): Promise<string | null> => {
   try {
     const res = await axiosInstance.get<MeWrapped>("/api/v1/members/me");
@@ -167,6 +132,7 @@ export const deactivateMember = async (
   }
 };
 
+// 리뷰 작성
 export const postReview = async (reviewData: reviews): Promise<number> => {
   const res = await axiosInstance.post<ApiResponse<{ reviewId: number }>>(
     "/api/v1/reviews",
@@ -177,6 +143,7 @@ export const postReview = async (reviewData: reviews): Promise<number> => {
   return res.data.result.reviewId;
 };
 
+// 내 프로필 수정
 export const putMyProfile = async (body: MemberUpdate): Promise<void> => {
   const payload: Record<string, unknown> = {};
   Object.entries(body).forEach(([k, v]) => {

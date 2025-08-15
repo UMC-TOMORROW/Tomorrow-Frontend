@@ -1,4 +1,3 @@
-// src/pages/ReviewWritting.tsx
 import { SlArrowLeft } from "react-icons/sl";
 import star_empty from "../../assets/star_empty.png";
 import star_filled from "../../assets/star_filled.png";
@@ -7,34 +6,31 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../apis/axios";
 import type { ApiResponse } from "../../types/mypage";
 
-type JobDetail = {
-  id: number;
-  title: string;
-};
+type JobDetail = { id: number; title: string };
 
 const ReviewWritting = () => {
   const navigate = useNavigate();
-  const { postId } = useParams<{ postId: string }>();
+  const { postId } = useParams<{ postId: string }>(); // 라우트는 그대로 사용
   const location = useLocation();
 
-  // 이전 페이지에서 state로 넘어온 제목을 우선 사용
-  const titleFromState = (location.state as { title?: string } | null)?.title;
+  const titleFromState =
+    (location.state as { title?: string; jobTitle?: string } | null)?.title ??
+    (location.state as { title?: string; jobTitle?: string } | null)
+      ?.jobTitle ??
+    "";
 
   const [rating, setRating] = useState(3);
   const [review, setReview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 제목 상태 (state 우선, 없으면 조회)
-  const [jobTitle, setJobTitle] = useState<string>(titleFromState ?? "");
+  const [jobTitle, setJobTitle] = useState<string>(titleFromState);
   const [loadingTitle, setLoadingTitle] = useState<boolean>(!titleFromState);
 
   useEffect(() => {
-    // state에 제목이 있으면 추가 조회 불필요
     if (titleFromState) {
       setLoadingTitle(false);
       return;
     }
-
     const fetchTitle = async () => {
       if (!postId) return;
       try {
@@ -43,23 +39,20 @@ const ReviewWritting = () => {
           `/api/v1/jobs/${encodeURIComponent(postId)}`
         );
         const t = res.data?.result?.title;
-        if (t && typeof t === "string") setJobTitle(t);
+        if (typeof t === "string") setJobTitle(t);
       } catch (e) {
         console.error("리뷰용 제목 조회 실패:", e);
       } finally {
         setLoadingTitle(false);
       }
     };
-
     fetchTitle();
   }, [postId, titleFromState]);
 
-  const handleStarClick = (index: number) => {
-    setRating(index + 1);
-  };
+  const handleStarClick = (index: number) => setRating(index + 1);
 
   const handleSubmit = async () => {
-    if (!postId) {
+    if (!postId || Number.isNaN(Number(postId))) {
       alert("공고 정보를 불러올 수 없습니다.");
       return;
     }
@@ -67,21 +60,18 @@ const ReviewWritting = () => {
       alert("후기를 작성해주세요.");
       return;
     }
-
     try {
       setIsSubmitting(true);
       const body = {
-        postId: Number(postId),
+        jobId: Number(postId),
         stars: rating,
         review: review.trim(),
       };
-
       const res = await axiosInstance.post<ApiResponse<{ reviewId: number }>>(
         "/api/v1/reviews",
         body
       );
       console.log("리뷰 등록 응답:", res.data);
-
       alert("후기가 등록되었습니다.");
       navigate(-1);
     } catch (err) {
