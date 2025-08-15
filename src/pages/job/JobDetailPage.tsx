@@ -4,6 +4,7 @@ import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
 import { postApplication } from "../../apis/applications";
+import { ensureAuth, redirectToLogin, AuthRequiredError } from "../../apis/httpCommon";
 import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
 import { getMe } from "../../apis/mypage"; // /api/v1/members/me
 import { authApi } from "../../apis/authApi";
@@ -152,6 +153,12 @@ function mapSwaggerJobDetail(api: any) {
   };
 }
 
+function isHtmlResponse(res: any): boolean {
+  const ct = String(res?.headers?.["content-type"] || "");
+  const url = String(res?.request?.responseURL || "");
+  return ct.includes("text/html") || url.includes("/login");
+}
+
 export default function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [data, setData] = useState<any>(null);
@@ -292,7 +299,7 @@ export default function JobDetailPage() {
 
   function gotoLogin() {
     // 서버 로그인 페이지로 이동(탑레벨 네비게이션 → 쿠키 1st-party로 심김)
-    window.location.href = `/auth?redirect=${encodeURIComponent(location.href)}`;
+    window.location.href = `https://umctomorrow.shop/login?redirect=${encodeURIComponent(window.location.href)}`;
   }
 
   // 지원하기
@@ -301,45 +308,39 @@ export default function JobDetailPage() {
       if (submitting || applied) return;
       setSubmitting(true);
 
-      const authed = await ensureLoggedIn();
-      if (!authed) {
-        alert("로그인이 필요합니다.");
-        gotoLogin();
-        return;
-      }
+      await ensureAuth(); // ✅ 세션 확인
 
-      const postId = Number(data?.jobId ?? jobId); // 상세에서 받은 진짜 PK 우선
+      const postId = Number(data?.jobId ?? jobId);
       if (!Number.isFinite(postId)) {
         alert("공고 식별자가 올바르지 않습니다.");
         return;
       }
 
-      const base = { content: applyContent.trim(), jobId: postId };
-      const body = attachChecked && resumeId ? { ...base, resumeId } : base;
+      const payload = {
+        content: applyContent.trim(),
+        ...(attachChecked && resumeId ? { resumeId } : {}),
+      };
 
-      const res = await postApplication(postId, body);
-
-      // ✅ 응답 검증 (201/200 + JSON)
-      const status = res.status;
+      const res = await postApplication(postId, payload);
+      console.log("[Apply] success ▶", res);
       const ct = String(res.headers?.["content-type"] || "");
-      if (!(status === 201 || status === 200) || !ct.includes("application/json")) {
-        throw new Error(`정상 저장 아님 (status=${status}, ct=${ct})`);
+      if (!ct.includes("application/json")) {
+        throw new Error("로그인이 필요합니다."); // 서버가 HTML을 돌려주면 여기로
       }
 
-      console.log("[Apply] success ▶", { postId, usedResume: !!(attachChecked && resumeId), status });
       alert("지원이 완료되었습니다.");
       setApplied(true);
       setApplyOpen(false);
       setApplyContent("");
       setAttachChecked(false);
     } catch (e: any) {
-      if (e?.isHtml || `${e?.response?.headers?.["content-type"]}`.includes("text/html")) {
-        alert("로그인이 필요합니다. 다시 로그인해 주세요.");
-        console.error("[Apply] HTML/Redirect ▶", e?.response ?? e);
-      } else {
-        console.error("[Apply] error ▶", e?.response ?? e);
-        alert(e?.response?.data?.message ?? e?.message ?? "지원 중 오류가 발생했어요.");
+      if (e instanceof AuthRequiredError) {
+        alert("로그인이 필요합니다.");
+        redirectToLogin();
+        return;
       }
+      console.error("[Apply] error ▶", e?.response ?? e);
+      alert(e?.response?.data?.message ?? e?.message ?? "지원 중 오류가 발생했어요.");
     } finally {
       setSubmitting(false);
     }
@@ -350,6 +351,12 @@ export default function JobDetailPage() {
     else navigate("/"); // 필요하면 "/jobs" 등으로 변경
   };
   async function onToggleBookmark() {
+    const authed = await ensureLoggedIn();
+    if (!authed) {
+      alert("로그인이 필요합니다.");
+      gotoLogin();
+      return;
+    }
     const id = Number(jobId ?? data?.jobId);
     if (!Number.isFinite(id) || bookmarking) return;
 

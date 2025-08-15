@@ -1,20 +1,5 @@
 import { axiosInstance } from "./axios";
-
-export type PostApplicationBody = {
-  content: string;
-  jobId?: number;
-  resumeId?: number;
-};
-
-// 스웨거: POST /api/v1/posts/{postId}/applications
-export const postApplication = (postId: number, body: PostApplicationBody) =>
-  axiosInstance.post(`/api/v1/posts/${postId}/applications`, body, {
-    withCredentials: true,
-    headers: {
-      Accept: "application/json",
-      ...getAuthHeader(),
-    },
-  });
+import { ensureAuth, guardHtml, pickResult } from "./httpCommon";
 
 function readCookie(name: string): string | null {
   const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
@@ -26,10 +11,28 @@ function sanitizeToken(raw: string): string {
     .replace(/^"|"$/g, "")
     .trim();
 }
-export function getAuthHeader(): Record<string, string> {
+function getAuthHeader(): Record<string, string> {
   const rawCookie = readCookie("Authorization") ?? readCookie("accessToken") ?? readCookie("ACCESS_TOKEN") ?? "";
   const rawLS = localStorage.getItem("Authorization") ?? localStorage.getItem("accessToken") ?? "";
   const rawSS = sessionStorage.getItem("Authorization") ?? sessionStorage.getItem("accessToken") ?? "";
   const token = sanitizeToken(rawCookie || rawLS || rawSS);
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export type PostApplicationBody = {
+  content: string;
+  resumeId?: number;
+};
+
+// POST /api/v1/posts/{postId}/applications
+export async function postApplication(postId: number, body: PostApplicationBody) {
+  const res = await axiosInstance.post(`/api/v1/posts/${postId}/applications`, body, {
+    withCredentials: true,
+    headers: {
+      Accept: "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+      ...getAuthHeader(),
+    },
+  });
+  return res;
 }
