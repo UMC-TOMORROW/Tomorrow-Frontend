@@ -5,7 +5,11 @@ import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
 // import { postApplication } from "../../apis/applications";
 import { createApplication, AuthRequiredError } from "../../apis/applications";
-import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
+import {
+  fetchBookmarkedJobIds,
+  addJobBookmark,
+  deleteJobBookmark,
+} from "../../apis/jobBookmarks";
 import { getMe } from "../../apis/mypage"; // /api/v1/members/me
 import { authApi } from "../../apis/authApi";
 
@@ -23,17 +27,28 @@ const Badge: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
+  title,
+  children,
+}) => (
   <section className="space-y-3">
-    <h3 className="text-[16px] leading-[100%] !font-bold text-[#333] font-pretendard font-bold !pb-4">{title}</h3>
+    <h3 className="text-[16px] leading-[100%] !font-bold text-[#333] font-pretendard font-bold !pb-4">
+      {title}
+    </h3>
     {children}
   </section>
 );
 
-const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({ k, v, helper }) => (
+const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({
+  k,
+  v,
+  helper,
+}) => (
   <div className="!py-1 ">
     <div className="flex items-start gap-4 ">
-      <span className="w-[72px] shrink-0 text-[12px] text-[#666] whitespace-nowrap">{k}</span>
+      <span className="w-[72px] shrink-0 text-[12px] text-[#666] whitespace-nowrap">
+        {k}
+      </span>
       <div className="text-[14px] text-[#222] leading-5">{v}</div>
     </div>
     {helper ? (
@@ -45,8 +60,15 @@ const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({ k, v
   </div>
 );
 
-const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({ value = 0, size = 17, gap = 2 }) => {
-  const safe = Math.max(0, Math.min(5, Number.isFinite(value as number) ? (value as number) : 0));
+const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({
+  value = 0,
+  size = 17,
+  gap = 2,
+}) => {
+  const safe = Math.max(
+    0,
+    Math.min(5, Number.isFinite(value as number) ? (value as number) : 0)
+  );
   const full = Math.floor(safe);
   const frac = safe - full;
   const parts = Array.from({ length: 5 }, (_, i) => {
@@ -57,9 +79,17 @@ const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({ v
     }
     return "empty" as const;
   });
-  const srcMap = { full: starFilled, half: starHalf, empty: starEmpty } as const;
+  const srcMap = {
+    full: starFilled,
+    half: starHalf,
+    empty: starEmpty,
+  } as const;
   return (
-    <div className="flex items-center" style={{ gap }} aria-label={`평점 ${safe.toFixed(1)} / 5`}>
+    <div
+      className="flex items-center"
+      style={{ gap }}
+      aria-label={`평점 ${safe.toFixed(1)} / 5`}
+    >
       {parts.map((p, idx) => (
         <img key={idx} src={srcMap[p]} alt="" width={size} height={size} />
       ))}
@@ -68,7 +98,15 @@ const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({ v
 };
 
 // ---------- 매핑 유틸 (응답 → 화면 모델) ----------
-const DAY_KO: Record<string, string> = { mon: "월", tue: "화", wed: "수", thu: "목", fri: "금", sat: "토", sun: "일" };
+const DAY_KO: Record<string, string> = {
+  mon: "월",
+  tue: "화",
+  wed: "수",
+  thu: "목",
+  fri: "금",
+  sat: "토",
+  sun: "일",
+};
 const periodLabel = (p?: string) =>
   p === "SHORT_TERM"
     ? "단기"
@@ -82,7 +120,15 @@ const periodLabel = (p?: string) =>
     ? "1년 이상"
     : p ?? "-";
 const paymentLabel = (t?: string) =>
-  t === "HOURLY" ? "시급" : t === "DAILY" ? "일급" : t === "MONTHLY" ? "월급" : t === "PER_TASK" ? "건별" : t ?? "-";
+  t === "HOURLY"
+    ? "시급"
+    : t === "DAILY"
+    ? "일급"
+    : t === "MONTHLY"
+    ? "월급"
+    : t === "PER_TASK"
+    ? "건별"
+    : t ?? "-";
 
 const JOB_CATEGORY_KO: Record<string, string> = {
   SERVING: "서빙",
@@ -121,10 +167,14 @@ function mapSwaggerJobDetail(api: any) {
   const time = api?.isTimeNegotiable
     ? "시간협의"
     : api?.workStart || api?.workEnd
-    ? `${hhmm(api.workStart)}${api.workStart && api.workEnd ? " - " : ""}${hhmm(api.workEnd)}`
+    ? `${hhmm(api.workStart)}${api.workStart && api.workEnd ? " - " : ""}${hhmm(
+        api.workEnd
+      )}`
     : "-";
   // 환경 태그
-  const envTags = Array.isArray(api?.workEnvironment) ? api.workEnvironment.map((k: string) => ENV_KO[k] ?? k) : [];
+  const envTags = Array.isArray(api?.workEnvironment)
+    ? api.workEnvironment.map((k: string) => ENV_KO[k] ?? k)
+    : [];
 
   return {
     jobId: api.jobId ?? api.id,
@@ -137,12 +187,19 @@ function mapSwaggerJobDetail(api: any) {
 
     paymentType: paymentLabel(api.paymentType),
     salary: api.salary ?? 0,
-    minWageNote: api.paymentType === "HOURLY" ? "2025년 최저시급 10,030원" : undefined,
-    period: `${periodLabel(api.workPeriod)}${api.isPeriodNegotiable ? " (협의가능)" : ""}`,
+    minWageNote:
+      api.paymentType === "HOURLY" ? "2025년 최저시급 10,030원" : undefined,
+    period: `${periodLabel(api.workPeriod)}${
+      api.isPeriodNegotiable ? " (협의가능)" : ""
+    }`,
     weekdays,
     time,
 
-    role: api.alwaysHiring ? "상시모집" : api.deadline ? String(api.deadline).slice(0, 10) : "상시모집",
+    role: api.alwaysHiring
+      ? "상시모집"
+      : api.deadline
+      ? String(api.deadline).slice(0, 10)
+      : "상시모집",
     headcount: api.recruitmentLimit ?? "-",
     preference: api.preferredQualifications ?? "-",
 
@@ -165,6 +222,8 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
   const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarking, setBookmarking] = useState(false);
+
   console.log(loading, error);
   useEffect(() => {
     const effectiveId = jobId ?? "36"; // 존재하는 ID로 테스트
@@ -252,7 +311,9 @@ export default function JobDetailPage() {
       console.log("[Apply] resume summary ▶", { hasResume, resumeId: rid });
       if (!hasResume || !rid) {
         // 이력서 없으면 즉시 이동(요구사항)
-        console.warn("[Apply] resume not found → navigate /Mypage/ResumeManage");
+        console.warn(
+          "[Apply] resume not found → navigate /Mypage/ResumeManage"
+        );
         setApplyOpen(false);
         setAttachChecked(false);
         navigate("/Mypage/ResumeManage");
@@ -297,7 +358,9 @@ export default function JobDetailPage() {
 
   function gotoLogin() {
     // 서버 로그인 페이지로 이동(탑레벨 네비게이션 → 쿠키 1st-party로 심김)
-    window.location.href = `https://umctomorrow.shop/login?redirect=${encodeURIComponent(window.location.href)}`;
+    window.location.href = `https://umctomorrow.shop/login?redirect=${encodeURIComponent(
+      window.location.href
+    )}`;
   }
 
   // 지원하기
@@ -327,7 +390,9 @@ export default function JobDetailPage() {
 
       if (e instanceof AuthRequiredError) {
         alert("로그인이 필요합니다.");
-        window.location.href = `/auth?next=${encodeURIComponent(location.href)}`;
+        window.location.href = `/auth?next=${encodeURIComponent(
+          location.href
+        )}`;
         return;
       }
 
@@ -377,7 +442,9 @@ export default function JobDetailPage() {
           } else if (status === 401) {
             alert("로그인이 필요합니다.");
           } else {
-            alert(e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요.");
+            alert(
+              e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요."
+            );
             console.error("[Bookmark] add error ▶", e?.response ?? e);
           }
         }
@@ -395,7 +462,9 @@ export default function JobDetailPage() {
           } else if (status === 401) {
             alert("로그인이 필요합니다.");
           } else {
-            alert(e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요.");
+            alert(
+              e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요."
+            );
             console.error("[Bookmark] delete error ▶", e?.response ?? e);
           }
         }
@@ -417,14 +486,20 @@ export default function JobDetailPage() {
           >
             ✕
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-bold font-pretendard">일자리 정보</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-bold font-pretendard">
+            일자리 정보
+          </h1>
         </div>
       </div>
       <div className="!px-4 !pt-4 !pb-28 !space-y-8">
         {/* Summary */}
         <section className="!space-y-2">
-          <p className="text-[14px] leading-[100%] text-[#729A73] font-pretendard font-normal">{job.category}</p>
-          <h2 className="text-[18px] font-extrabold leading-[100%] text-[#333] font-pretendard">{job.title}</h2>
+          <p className="text-[14px] leading-[100%] text-[#729A73] font-pretendard font-normal">
+            {job.category}
+          </p>
+          <h2 className="text-[18px] font-extrabold leading-[100%] text-[#333] font-pretendard">
+            {job.title}
+          </h2>
           <p className="text-[12px] leading-[100%] text-[#333] font-pretendard font-normal">
             {job.companyName ?? job.place}
           </p>
@@ -472,7 +547,8 @@ export default function JobDetailPage() {
 
           <div className="w-[335px] rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
             <p className="mb-3 font-bold text-[14px] text-[#333]">
-              <span className="text-[#729A73]">✨ 내 몸에 맞는 일,</span> 지금 추천해드릴게요.
+              <span className="text-[#729A73]">✨ 내 몸에 맞는 일,</span> 지금
+              추천해드릴게요.
             </p>
             <div className="flex flex-wrap gap-[10px]">
               {envTags.map((t, i) => (
@@ -501,7 +577,9 @@ export default function JobDetailPage() {
         {/* 상세요강 */}
         <Section title="상세요강">
           <div className="rounded-[12px] !p-4 border border-[#555]/85 ">
-            <p className="text-[14px] text-[#333] leading-6 whitespace-pre-wrap">{job.description}</p>
+            <p className="text-[14px] text-[#333] leading-6 whitespace-pre-wrap">
+              {job.description}
+            </p>
           </div>
         </Section>
       </div>
@@ -517,7 +595,11 @@ export default function JobDetailPage() {
               onClick={onToggleBookmark}
               disabled={bookmarking}
             >
-              <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-[45px] h-[45px]" />
+              <img
+                src={bookmarked ? bmFilled : bmEmpty}
+                alt=""
+                className="w-[45px] h-[45px]"
+              />
             </button>
             <button className="flex-1 min-w-0 h-12 rounded-[10px] border border-[#729A73] text-[#729A73] font-semibold">
               전화하기
