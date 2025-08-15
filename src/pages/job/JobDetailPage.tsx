@@ -156,6 +156,7 @@ export default function JobDetailPage() {
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarking, setBookmarking] = useState(false);
 
+  console.log(loading, error);
   useEffect(() => {
     const effectiveId = jobId ?? "36"; // 존재하는 ID로 테스트
     (async () => {

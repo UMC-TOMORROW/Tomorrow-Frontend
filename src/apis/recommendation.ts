@@ -15,7 +15,7 @@ export const getRecommendations = async (
     code: string;
     message: string;
     result: GetRecommendationListResponse;
-  }>("/api/v1/jobs/recommendations", { params });
+  }>("/api/v1/recommendations", { params });
 
   return response.data.result;
 };
