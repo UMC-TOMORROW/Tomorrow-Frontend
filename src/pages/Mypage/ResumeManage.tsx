@@ -22,6 +22,8 @@ import type { SaveResumeRequest } from "../../types/resume";
 import type { Certificate } from "../../types/license";
 import { axiosInstance } from "../../apis/axios";
 import { isAxiosError } from "axios";
+import type { MyInfo } from "../../types/member";
+import { getMyInfo } from "../../apis/employerMyPage";
 
 const labels = [
   "단기",
@@ -96,8 +98,21 @@ const ResumeManage = () => {
   const [pendingCertificates, setPendingCertificates] = useState<
     PendingCertificate[]
   >([]);
+  const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
 
   const rid = Number(resumeId);
+
+  useEffect(() => {
+    const fetchMyInfo = async () => {
+      try {
+        const data = await getMyInfo();
+        setMyInfo(data);
+      } catch (error) {
+        console.error("내 정보 불러오기 실패:", error);
+      }
+    };
+    fetchMyInfo();
+  }, []);
 
   useEffect(() => {
     if (!resumeId || Number.isNaN(rid)) {
@@ -475,9 +490,11 @@ const ResumeManage = () => {
             <img src={memberplus} />
             <div>
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
-                이내일
+                {myInfo?.name ?? "이름을 등록해주세요"}
               </p>
-              <p className="text-[14px]">010-1234-5678</p>
+              <p className="text-[14px]">
+                {myInfo?.phoneNumber ?? "전화번호를 등록해주세요"}
+              </p>
             </div>
           </div>
         </section>
