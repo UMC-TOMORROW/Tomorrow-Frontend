@@ -208,7 +208,11 @@ const HomePage = () => {
                   ? `${jobCard.review_count}건`
                   : ""
               }
-              image={jobCard.job_image_url ?? ""}
+              image={
+                (jobCard as any).job_image_url ??
+                (jobCard as any).jobImageUrl ??
+                ""
+              }
               isTime={Boolean(jobCard.isTimeNegotiable)}
               isPeriod={Boolean(jobCard.isPeriodNegotiable)}
               environment={

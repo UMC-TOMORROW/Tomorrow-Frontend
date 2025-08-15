@@ -11,6 +11,22 @@ const paymentUnitMap: Record<PaymentType, string> = {
   PER_TASK: "건당",
 };
 
+const normalizeS3Url = (url: string) => {
+  try {
+    const u = new URL(url);
+    // '+'는 공백 의도로 들어온 경우가 많으므로 우선 %20으로 치환
+    const cleaned = u.pathname.replace(/\+/g, "%20");
+    // 세그먼트 단위로 재인코딩 (슬래시는 유지)
+    const parts = cleaned
+      .split("/")
+      .map((seg) => encodeURIComponent(decodeURIComponent(seg)));
+    u.pathname = parts.join("/");
+    return u.toString();
+  } catch {
+    return url;
+  }
+};
+
 interface JobCardProps {
   jobId: number;
   company: string;
@@ -41,6 +57,15 @@ const JobCard = ({
   const [hovered, setHovered] = useState(false);
   const isActive = hovered;
 
+  // 🔽 여기서부터 내부에서 계산
+  const rawImage = image ?? "";
+  const normalizedImage = normalizeS3Url(rawImage);
+  const isValidImageUrl =
+    typeof normalizedImage === "string" &&
+    !!normalizedImage.trim() &&
+    normalizedImage.trim() !== "...";
+  const imageSrc = isValidImageUrl ? normalizedImage : defaultLogo;
+
   const environmentMap: Record<string, string> = {
     can_work_standing: "서서 근무 중심",
     can_work_sitting: "앉아서 근무 중심",
@@ -59,11 +84,7 @@ const JobCard = ({
       .filter(Boolean)
       .join(", ") || "";
 
-  const paymentUnit = paymentUnitMap[paymentType]; // ✅ 타입 안전
-
-  const isValidImageUrl =
-    typeof image === "string" && !!image.trim() && image.trim() !== "...";
-  const imageSrc = isValidImageUrl ? image : defaultLogo;
+  const paymentUnit = paymentUnitMap[paymentType];
 
   return (
     <div
@@ -71,7 +92,6 @@ const JobCard = ({
       style={{ fontFamily: "Pretendard" }}
     >
       <div className="px-[16px] pt-[10px] pb-[6px]">
-        {/* 텍스트 + 사진 */}
         <div className="flex justify-between items-start">
           <div className="flex-1 pr-[80px]">
             <p className="text-[12px] text-black">{company}</p>
@@ -96,14 +116,19 @@ const JobCard = ({
 
           {/* 사진 */}
           <div className="flex items-center !mt-[3px] justify-center h-full w-[60px]">
-            <img src={imageSrc} alt={title} className="!h-15 !w-15 rounded" />
+            <img
+              src={imageSrc}
+              alt={title}
+              onError={(e) => {
+                e.currentTarget.src = defaultLogo;
+              }}
+              className="!h-15 !w-15 rounded"
+            />
           </div>
         </div>
 
-        {/* 구분선 (카드 내 선) */}
         <div className="-mx-[0px] !mt-[10px] h-[1px] bg-[#BFBFBF8C]" />
 
-        {/* 하단 위치 + 버튼 */}
         <div className="flex justify-between items-center !mb-1 !mt-2">
           <p className="text-[13px] text-black">
             {location} &nbsp; {paymentUnit} {wage}
@@ -128,7 +153,6 @@ const JobCard = ({
         </div>
       </div>
 
-      {/* 바깥쪽 1px 회색 구분선 */}
       <div
         className="-mx-[16px]"
         style={{ height: "1px", backgroundColor: palette.gray.default }}
