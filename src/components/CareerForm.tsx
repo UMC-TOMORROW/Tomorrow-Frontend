@@ -51,7 +51,7 @@ const CareerForm = ({
         </p>
         <textarea
           className="w-full h-[44px] border border-[#555555D9] text-[14px] resize-none pl-[10px] py-[10px]"
-          placeholder="예. 2025년"
+          placeholder="예. 2025"
           style={{ borderRadius: "10px" }}
           value={workYear}
           onChange={(e) => setWorkYear(e.target.value)}
