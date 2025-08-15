@@ -4,8 +4,7 @@ import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
 // import { postApplication } from "../../apis/applications";
-import { createApplication } from "../../apis/applications";
-import { ensureAuth, redirectToLogin, AuthRequiredError } from "../../apis/httpCommon";
+import { createApplication, AuthRequiredError } from "../../apis/applications";
 import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
 import { getMe } from "../../apis/mypage"; // /api/v1/members/me
 import { authApi } from "../../apis/authApi";
@@ -154,11 +153,11 @@ function mapSwaggerJobDetail(api: any) {
   };
 }
 
-function isHtmlResponse(res: any): boolean {
-  const ct = String(res?.headers?.["content-type"] || "");
-  const url = String(res?.request?.responseURL || "");
-  return ct.includes("text/html") || url.includes("/login");
-}
+// function isHtmlResponse(res: any): boolean {
+//   const ct = String(res?.headers?.["content-type"] || "");
+//   const url = String(res?.request?.responseURL || "");
+//   return ct.includes("text/html") || url.includes("/login");
+// }
 
 export default function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
@@ -305,37 +304,45 @@ export default function JobDetailPage() {
 
   // 지원하기
   async function onSubmitApply() {
+    if (submitting || applied) return;
+    setSubmitting(true);
     try {
-      if (submitting || applied) return;
-      setSubmitting(true);
-
-      // 상세의 진짜 PK 우선, 없으면 URL 파라미터
-      const pid = Number(data?.jobId ?? jobId);
-      if (!Number.isFinite(pid)) {
+      const postId = Number(data?.jobId ?? jobId);
+      if (!Number.isFinite(postId)) {
         alert("공고 식별자가 올바르지 않습니다.");
         return;
       }
 
-      const payload = {
-        content: applyContent.trim(),
-        postId: pid, // ✅ 바디에도 postId 포함
-        ...(attachChecked && resumeId ? { resumeId } : {}),
-      };
+      const payload: any = { content: applyContent.trim() };
+      if (attachChecked && resumeId) payload.resumeId = resumeId;
 
-      // ✅ Bearer 안 씀. jobs.ts와 같은 쿠키+가드 방식
-      const saved = await createApplication(pid, payload);
+      await createApplication(postId, payload);
 
-      console.log("[Apply] saved ▶", saved);
       alert("지원이 완료되었습니다.");
       setApplied(true);
       setApplyOpen(false);
       setApplyContent("");
       setAttachChecked(false);
     } catch (e: any) {
-      // ensureAuth/redirectToLogin이 알아서 처리. 나머지는 메시지만 노출
-      const msg = e?.response?.data?.message ?? e?.message ?? "지원 중 오류가 발생했어요.";
+      const status = e?.response?.status;
+      const msg = e?.response?.data?.message;
+
+      if (e instanceof AuthRequiredError) {
+        alert("로그인이 필요합니다.");
+        window.location.href = `/auth?next=${encodeURIComponent(location.href)}`;
+        return;
+      }
+
+      // 🔴 서버 비즈니스 에러 (이미 불합격 등)
+      if (status === 400) {
+        alert(msg || "요청을 처리할 수 없습니다.");
+        // 필요하면 버튼을 비활성화하고 레이블을 바꿔도 됨:
+        // setApplied(true); // 또는 별도 상태로 '지원불가' 표기
+        return;
+      }
+
+      alert(msg || "지원 중 오류가 발생했어요.");
       console.error("[Apply] error ▶", e?.response ?? e);
-      alert(msg);
     } finally {
       setSubmitting(false);
     }
@@ -465,7 +472,7 @@ export default function JobDetailPage() {
           <KV k="모집인원" v={<span>{job.headcount}명</span>} />
           <KV k="우대사항" v={<span>{job.preference}</span>} />
 
-          <div className="w-[335px] h-[92px] rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
+          <div className="w-[335px] rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
             <p className="mb-3 font-bold text-[14px] text-[#333]">
               <span className="text-[#729A73]">✨ 내 몸에 맞는 일,</span> 지금 추천해드릴게요.
             </p>

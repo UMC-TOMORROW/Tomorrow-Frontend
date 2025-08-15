@@ -1,32 +1,51 @@
 // src/apis/applications.ts
-import { axiosInstance } from "./axios";
-import { ensureAuth, isHtmlResponse, pickResult, AuthRequiredError, redirectToLogin } from "./jobs";
+import { axiosInstance } from "../apis/axios";
+// import { authApi } from "../apis/authApi";
 
-export type PostApplicationBody = {
-  content: string;
-  postId: number; // ✅ 백엔드 요구: 바디에도 postId 포함
-  resumeId?: number; // 첨부 시만
+export class AuthRequiredError extends Error {
+  constructor(msg = "로그인이 필요합니다.") {
+    super(msg);
+    this.name = "AuthRequiredError";
+  }
+}
+
+const isHtmlResponse = (data: any, headers?: any) => {
+  const ct = String(headers?.["content-type"] || headers?.["Content-Type"] || "");
+  return ct.includes("text/html") || (typeof data === "string" && /<html[\s>]/i.test(data));
 };
+const guardHtml = (res: any) => {
+  const loc = String(res?.headers?.location || res?.headers?.Location || "");
+  if (loc.includes("/login") || isHtmlResponse(res?.data, res?.headers)) {
+    const err: any = new AuthRequiredError();
+    err.response = res;
+    throw err;
+  }
+};
+export type CreateApplicationBody = { content: string; resumeId?: number };
 
-/** 지원 생성: POST /api/v1/posts/{postId}/applications */
-export async function createApplication(postId: number, body: PostApplicationBody) {
-  // 쿠키 세션 기준으로 로그인 확인(미인증이면 /auth로 보냄)
-  await ensureAuth();
-
-  // 서버가 종종 text/html(로그인 화면)로 돌려보내는 케이스 가드
-  const res = await axiosInstance.post(`/api/v1/posts/${postId}/applications`, body, {
+/** 지원하기: POST /api/v1/jobs/{jobId}/applications */
+export async function createApplication(jobId: number, body: CreateApplicationBody) {
+  const res = await axiosInstance.post(`/api/v1/jobs/${jobId}/applications`, body, {
     withCredentials: true,
-    headers: { Accept: "application/json" },
-    // 여기서 3xx도 일단 받아서 아래에서 HTML 가드로 판별
-    validateStatus: (s) => s >= 200 && s < 400,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    validateStatus: () => true, // 400/302도 잡아서 직접 판단
   });
 
-  if (isHtmlResponse(res?.data, res?.headers)) {
-    // 세션 만료 등으로 로그인 화면이 온 경우
-    redirectToLogin();
-    throw new AuthRequiredError();
+  // 302 로그인 리다이렉트 / HTML 응답 → 인증 필요
+  guardHtml(res);
+
+  // 성공: 2xx + JSON
+  const status = res.status;
+  const ct = String(res.headers?.["content-type"] || "");
+  if (status < 200 || status >= 300 || !ct.includes("application/json")) {
+    const e: any = new Error(res?.data?.message || `지원 실패 (status=${status}, ct=${ct || "-"})`);
+    e.response = res;
+    throw e;
   }
 
-  // 공통 유틸: data.result || data.data || data
-  return pickResult<{ id?: number | string }>(res);
+  return res.data?.result ?? res.data?.data ?? res.data;
 }

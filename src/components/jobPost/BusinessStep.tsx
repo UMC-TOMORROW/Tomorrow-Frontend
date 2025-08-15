@@ -1,29 +1,29 @@
 // src/components/jobPost/BusinessStep.tsx
-import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Devider from "../common/Devider";
 import CommonButton from "../common/CommonButton";
 import { axiosInstance } from "../../apis/axios";
 
-const useStableJobId = () => {
-  const location = useLocation();
-  const qs = new URLSearchParams(location.search);
-  const fromState = (location.state as any)?.jobId;
-  const fromQuery = qs.get("jobId");
-  const stored = typeof window !== "undefined" ? sessionStorage.getItem("jobId") : null;
+// const useStableJobId = () => {
+//   const location = useLocation();
+//   const qs = new URLSearchParams(location.search);
+//   const fromState = (location.state as any)?.jobId;
+//   const fromQuery = qs.get("jobId");
+//   const stored = typeof window !== "undefined" ? sessionStorage.getItem("jobId") : null;
 
-  const jobId = useMemo(() => Number(fromState ?? fromQuery ?? stored ?? NaN), [fromState, fromQuery, stored]);
+//   const jobId = useMemo(() => Number(fromState ?? fromQuery ?? stored ?? NaN), [fromState, fromQuery, stored]);
 
-  useEffect(() => {
-    if (Number.isFinite(jobId)) sessionStorage.setItem("jobId", String(jobId));
-  }, [jobId]);
+//   useEffect(() => {
+//     if (Number.isFinite(jobId)) sessionStorage.setItem("jobId", String(jobId));
+//   }, [jobId]);
 
-  return Number.isFinite(jobId) ? jobId : null;
-};
+//   return Number.isFinite(jobId) ? jobId : null;
+// };
 
 export default function BusinessStep() {
   const navigate = useNavigate();
-  const jobId = useStableJobId();
+  // const jobId = useStableJobId();
 
   const [regNo, setRegNo] = useState("");
   const [corpName, setCorpName] = useState("");
