@@ -1,25 +1,58 @@
 import { SlArrowLeft } from "react-icons/sl";
 import star_empty from "../../assets/star_empty.png";
 import star_filled from "../../assets/star_filled.png";
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { axiosInstance } from "../../apis/axios";
 import type { ApiResponse } from "../../types/mypage";
 
+type JobDetail = { id: number; title: string };
+
 const ReviewWritting = () => {
   const navigate = useNavigate();
-  const { postId } = useParams<{ postId: string }>();
+  const { postId } = useParams<{ postId: string }>(); // 라우트는 그대로 사용
+  const location = useLocation();
+
+  const titleFromState =
+    (location.state as { title?: string; jobTitle?: string } | null)?.title ??
+    (location.state as { title?: string; jobTitle?: string } | null)
+      ?.jobTitle ??
+    "";
 
   const [rating, setRating] = useState(3);
   const [review, setReview] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleStarClick = (index: number) => {
-    setRating(index + 1);
-  };
+  const [jobTitle, setJobTitle] = useState<string>(titleFromState);
+  const [loadingTitle, setLoadingTitle] = useState<boolean>(!titleFromState);
+
+  useEffect(() => {
+    if (titleFromState) {
+      setLoadingTitle(false);
+      return;
+    }
+    const fetchTitle = async () => {
+      if (!postId) return;
+      try {
+        setLoadingTitle(true);
+        const res = await axiosInstance.get<ApiResponse<JobDetail>>(
+          `/api/v1/jobs/${encodeURIComponent(postId)}`
+        );
+        const t = res.data?.result?.title;
+        if (typeof t === "string") setJobTitle(t);
+      } catch (e) {
+        console.error("리뷰용 제목 조회 실패:", e);
+      } finally {
+        setLoadingTitle(false);
+      }
+    };
+    fetchTitle();
+  }, [postId, titleFromState]);
+
+  const handleStarClick = (index: number) => setRating(index + 1);
 
   const handleSubmit = async () => {
-    if (!postId) {
+    if (!postId || Number.isNaN(Number(postId))) {
       alert("공고 정보를 불러올 수 없습니다.");
       return;
     }
@@ -27,21 +60,18 @@ const ReviewWritting = () => {
       alert("후기를 작성해주세요.");
       return;
     }
-
     try {
       setIsSubmitting(true);
       const body = {
-        postId: Number(postId),
+        jobId: Number(postId),
         stars: rating,
         review: review.trim(),
       };
-
       const res = await axiosInstance.post<ApiResponse<{ reviewId: number }>>(
         "/api/v1/reviews",
         body
       );
       console.log("리뷰 등록 응답:", res.data);
-
       alert("후기가 등록되었습니다.");
       navigate(-1);
     } catch (err) {
@@ -55,6 +85,7 @@ const ReviewWritting = () => {
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <div className="bg-white min-h-screen">
+        {/* 헤더 */}
         <section className="relative flex justify-center items-center h-[52px] border-b-[1.5px] border-[#DEDEDE8C]">
           <SlArrowLeft
             className="absolute left-[15px] cursor-pointer"
@@ -65,15 +96,17 @@ const ReviewWritting = () => {
           </div>
         </section>
 
+        {/* 공고 제목 */}
         <section className="flex items-center h-[50px] border-b border-[#DEDEDE8C]">
           <p
             className="ml-[25px] text-[16px] text-[#729A73]"
             style={{ fontWeight: 700 }}
           >
-            텃밭 관리 도우미
+            {loadingTitle ? "불러오는 중..." : jobTitle || "(제목 없음)"}
           </p>
         </section>
 
+        {/* 별점 */}
         <section className="flex flex-col justify-center gap-[30px] items-center h-[145px] border-b border-[#DEDEDE8C]">
           <p className="text-[16px]" style={{ fontWeight: 600 }}>
             이번 일, 몸과 마음은 어떠셨나요?
@@ -91,6 +124,7 @@ const ReviewWritting = () => {
           </div>
         </section>
 
+        {/* 후기 입력 */}
         <section className="flex flex-col justify-center items-center gap-[30px] p-[20px] h-[334px]">
           <p className="text-[16px]">
             어떤 점이 좋았거나 아쉬웠는지 간단히 작성해 주세요.
@@ -101,9 +135,11 @@ const ReviewWritting = () => {
             maxLength={100}
             className="w-[295px] h-[220px] bg-[#D9D9D980] resize-none overflow-hidden overflow-y-scroll p-[10px]"
             style={{ borderRadius: "13px" }}
+            placeholder="내용을 입력하세요 (최대 100자)"
           />
         </section>
 
+        {/* 제출 버튼 */}
         <section className="flex justify-center items-center py-[30px]">
           <button
             onClick={handleSubmit}
