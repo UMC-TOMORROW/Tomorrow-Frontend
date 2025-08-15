@@ -5,6 +5,7 @@ import type {
   WorkPeriod,
 } from "../../types/recommendation";
 import palette from "../../styles/theme";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   job: Recommendation;
@@ -40,11 +41,17 @@ const formatTime = (time?: string | null): string => {
 
 const RecommendationCard = ({ job, variant = "default", userName }: Props) => {
   const [isApplied, setIsApplied] = useState(false);
+  const navigate = useNavigate();
 
   const backgroundColor =
-    variant === "dimmed" ? palette.primary.primary : "rgba(161, 196, 163, 0.75)";
+    variant === "dimmed"
+      ? palette.primary.primary
+      : "rgba(161, 196, 163, 0.75)";
 
-  const handleApplyClick = () => setIsApplied(true);
+  const handleApplyClick = () => {
+    if (!job?.id) return;
+    navigate(`/jobs/${job.id}`);
+  };
 
   // 시간 라벨 안전 조립
   const timeLabel = job.isTimeNegotiable
@@ -99,7 +106,10 @@ const RecommendationCard = ({ job, variant = "default", userName }: Props) => {
           className="text-[14px] font-[Pretendard]"
           style={{ color: palette.gray.dark }}
         >
-          {job.isPeriodNegotiable ? "기간 협의" : WORK_PERIOD_KOR[job.workPeriod]} · {timeLabel}
+          {job.isPeriodNegotiable
+            ? "기간 협의"
+            : WORK_PERIOD_KOR[job.workPeriod]}{" "}
+          · {timeLabel}
         </p>
 
         <p
@@ -121,7 +131,9 @@ const RecommendationCard = ({ job, variant = "default", userName }: Props) => {
         onClick={handleApplyClick}
         className="w-[180px] mt-[30px] mb-[10px] mx-auto block text-[15px] font-[Pretendard] px-[20px] py-[8px] rounded-[10px] font-semibold"
         style={{
-          backgroundColor: isApplied ? palette.primary.primary : palette.gray.light,
+          backgroundColor: isApplied
+            ? palette.primary.primary
+            : palette.gray.light,
           color: isApplied ? "#ffffff" : palette.primary.primary,
           border: isApplied ? "none" : `1px solid ${palette.primary.primary}`,
         }}
