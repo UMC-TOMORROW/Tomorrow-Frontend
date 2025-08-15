@@ -1,8 +1,10 @@
 import { useState } from "react";
 import palette from "../../styles/theme";
 import defaultLogo from "../../assets/logo/logo.png";
+import { Link } from "react-router-dom";
 
 interface JobCardProps {
+  jobId: number; // ✅ 추가: 라우팅에 필요
   company: string;
   title: string;
   review: string;
@@ -15,6 +17,7 @@ interface JobCardProps {
 }
 
 const JobCard = ({
+  jobId,
   company,
   title,
   review,
@@ -25,11 +28,8 @@ const JobCard = ({
   isPeriod,
   environment,
 }: JobCardProps) => {
-  const [clicked, setClicked] = useState(false);
   const [hovered, setHovered] = useState(false);
-
-  const isActive = clicked || hovered;
-
+  const isActive = hovered;
   const environmentMap: Record<string, string> = {
     can_work_standing: "서서 근무 중심",
     can_work_sitting: "앉아서 근무 중심",
@@ -56,7 +56,7 @@ const JobCard = ({
       <div className="px-[16px] pt-[10px] pb-[6px]">
         {/* 텍스트 + 사진 */}
         <div className="flex justify-between items-start">
-          <div className="flex-1 pr-3">
+          <div className="flex-1 pr-[80px]">
             <p className="text-[12px] text-black">{company}</p>
             <p className="text-[16px] font-bold">{title}</p>
             <p
@@ -78,7 +78,7 @@ const JobCard = ({
           </div>
 
           {/* 사진 */}
-          <div className="flex items-center !mt-3 justify-center h-full w-[60px]">
+          <div className="flex items-center !mt-[3px] justify-center h-full w-[60px]">
             <img
               src={image?.trim() ? image : defaultLogo}
               alt={title}
@@ -88,27 +88,30 @@ const JobCard = ({
         </div>
 
         {/* 구분선 (카드 내 선) */}
-        <div className="-mx-[0px] mt-[4px] h-[1px] bg-[#BFBFBF8C]" />
+        <div className="-mx-[0px] !mt-[10px] h-[1px] bg-[#BFBFBF8C]" />
 
         {/* 하단 위치 + 버튼 */}
         <div className="flex justify-between items-center !mb-1 !mt-2">
           <p className="text-[13px] text-black">
             {location} &nbsp; 시 {wage}
           </p>
-          <button
-            onClick={() => setClicked(!clicked)}
+
+          <Link
+            to={`/jobs/${jobId}`}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
-            className="w-[80px] h-[28px] text-[14px] mt-1 border rounded-[7px] transition-colors duration-200"
+            className={`w-[80px] h-[28px] text-[14px] mt-1 border rounded-[7px] transition-colors duration-200 flex items-center justify-center ${
+              isActive ? "!text-white" : "text-[#555555D9]"
+            }`}
             style={{
               fontFamily: "Pretendard",
               backgroundColor: isActive ? "#729A73" : "transparent",
-              color: isActive ? "#fff" : "#555555D9",
               borderColor: isActive ? "#729A73" : "#555555D9",
             }}
+            role="button"
           >
             지원하기
-          </button>
+          </Link>
         </div>
       </div>
 

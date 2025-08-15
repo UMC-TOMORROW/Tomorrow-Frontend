@@ -85,8 +85,7 @@ const DayModal = ({ isOpen, onClose, onSubmit }: DayModalProps) => {
         <div className="w-full !mb-6 flex justify-center">
           <button
             onClick={handleSubmit}
-            disabled={selectedDays.length === 0}
-            className="w-[316px] h-[50px] rounded-[12px] text-[18px] !font-bold !text-white disabled:opacity-50"
+            className="w-[316px] h-[50px] rounded-[12px] text-[18px] !font-bold !text-white"
             style={{ backgroundColor: palette.primary.primary }}
           >
             선택 완료

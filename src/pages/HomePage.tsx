@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BottomNavbar from "../components/BottomNavbar";
 import type { JobsView } from "../types/homepage";
@@ -7,12 +7,25 @@ import palette from "../styles/theme";
 import SearchBar from "../components/search/SearchBar";
 import JobCard from "../components/Homepage/JobCard";
 import HomepageTopBar from "../components/Homepage/HomepageTopBar";
-import { getJobsByDay, getJobsDefault } from "../apis/HomePage";
+import { getJobsDefault } from "../apis/HomePage";
 
 type JobLike = JobsView & {
   jobCategory?: string;
   workStart?: string;
   workEnd?: string;
+};
+
+const dayKey: Record<
+  string,
+  "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun"
+> = {
+  MON: "mon",
+  TUE: "tue",
+  WED: "wed",
+  THU: "thu",
+  FRI: "fri",
+  SAT: "sat",
+  SUN: "sun",
 };
 
 const HomePage = () => {
@@ -42,9 +55,16 @@ const HomePage = () => {
 
       // 1) 요일 필터
       if (selectedDays.length > 0) {
-        const byDay = await getJobsByDay(selectedDays);
-        const validIds = new Set(byDay.map((j: { jobId: number }) => j.jobId));
-        jobs = jobs.filter((j: JobLike) => validIds.has(j.jobId));
+        const want = selectedDays.map((d) => dayKey[d]);
+
+        jobs = jobs.filter((j: any) => {
+          const wd = j.workDays;
+          if (!wd) return false;
+
+          if (wd.isDayNegotiable === true) return true;
+
+          return want.every((k) => wd[k] === true);
+        });
       }
 
       // 2) 지역 필터
@@ -108,10 +128,12 @@ const HomePage = () => {
   ]);
 
   return (
-    <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px]">
+    <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px] bg-white min-h-screen">
       {/* 헤더 */}
-      <div className="flex-shrink-0 pt-[50px]">
-        <Header title="내일" />
+      <div className="flex-shrink-0 pt-[50px] bg-white">
+        <Link to={"/"}>
+          <Header title="내일" />
+        </Link>
 
         {/* 검색바 */}
         <div className="relative bg-white">
@@ -161,6 +183,7 @@ const HomePage = () => {
           jobList.map((jobCard) => (
             <JobCard
               key={jobCard.jobId}
+              jobId={jobCard.jobId}
               title={jobCard.title}
               company={jobCard.companyName}
               location={jobCard.location}
