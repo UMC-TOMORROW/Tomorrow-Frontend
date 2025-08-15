@@ -170,7 +170,7 @@ export const postReview = async (reviewData: reviews): Promise<number> => {
   return res.data.result.reviewId;
 };
 
-export const patchMyProfile = async (body: MemberUpdate): Promise<void> => {
+export const putMyProfile = async (body: MemberUpdate): Promise<void> => {
   const payload: Record<string, unknown> = {};
   Object.entries(body).forEach(([k, v]) => {
     if (v !== undefined && v !== null && String(v).trim() !== "")
