@@ -14,7 +14,7 @@ export default function PersonalStep() {
   const [phone, setPhone] = useState("");
   const [request, setRequest] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
+  console.log(setLatitude,setLongitude)
   // 필수: name, address, contact(phone), registrationPurpose
   const canSubmit = !!(name && address && phone && request);
 
