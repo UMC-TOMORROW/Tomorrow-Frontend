@@ -118,7 +118,7 @@ export default function BusinessStep() {
             headers: { Accept: "application/json" },
           }
         );
-        alert("사업자 인증 및 게시까지 완료됐습니다.");
+        alert("등록이 완료되었습니다.");
       } else {
         // 백엔드가 jobId를 안 주는 케이스: 인증만 성공(초안/대기 상태)
         alert("사업자 인증이 완료되었습니다. (게시 대기) 목록 반영까지 시간이 조금 걸릴 수 있습니다.");

@@ -8,11 +8,11 @@ export default function PersonalStep() {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
-  const [latitude, setLatitude] = useState<number>(); // ✅ swagger: latitude
-  const [longitude, setLongitude] = useState<number>(); // ✅ swagger: longitude
-  const [address, setAddress] = useState(""); // ✅ swagger: address
-  const [phone, setPhone] = useState(""); // ✅ swagger: contact
-  const [request, setRequest] = useState(""); // ✅ swagger: registrationPurpose
+  const [latitude, setLatitude] = useState<number>();
+  const [longitude, setLongitude] = useState<number>();
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [request, setRequest] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // 필수: name, address, contact(phone), registrationPurpose
@@ -47,6 +47,7 @@ export default function PersonalStep() {
         headers: { "Content-Type": "application/json", Accept: "application/json" },
       });
 
+      alert("등록이 완료되었습니다.");
       // 서버가 모든 절차 끝낸 뒤 자체적으로 jobId 부여. 응답 의존 X.
       navigate("/", { replace: true });
     } catch (e: any) {
