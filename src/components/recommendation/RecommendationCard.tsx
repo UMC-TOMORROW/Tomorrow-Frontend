@@ -26,8 +26,13 @@ const PAYMENT_TYPE_KOR: Record<PaymentType, string> = {
   PER_TASK: "건별",
 };
 
-const formatTime = (time: string): string => {
-  const [hourStr, minuteStr] = time.split(":");
+// null/빈값/형식 이상 모두 안전하게 처리
+const formatTime = (time?: string | null): string => {
+  if (!time) return "";
+  const parts = String(time).split(":");
+  const hourStr = parts[0] ?? "";
+  const minuteStr = parts[1] ?? "00";
+  if (!hourStr) return "";
   const hour = hourStr.padStart(2, "0");
   const minute = minuteStr.padStart(2, "0");
   return `${hour}:${minute}`;
@@ -35,14 +40,21 @@ const formatTime = (time: string): string => {
 
 const RecommendationCard = ({ job, variant = "default", userName }: Props) => {
   const [isApplied, setIsApplied] = useState(false);
-  const backgroundColor =
-    variant === "dimmed"
-      ? palette.primary.primary
-      : "rgba(161, 196, 163, 0.75)";
 
-  const handleApplyClick = () => {
-    setIsApplied(true);
-  };
+  const backgroundColor =
+    variant === "dimmed" ? palette.primary.primary : "rgba(161, 196, 163, 0.75)";
+
+  const handleApplyClick = () => setIsApplied(true);
+
+  // 시간 라벨 안전 조립
+  const timeLabel = job.isTimeNegotiable
+    ? "시간 협의"
+    : (() => {
+        const start = formatTime(job.workStart);
+        const end = formatTime(job.workEnd);
+        if (!start && !end) return "시간 미정";
+        return `${start}${start && end ? "~" : ""}${end}`;
+      })();
 
   return (
     <div
@@ -87,11 +99,7 @@ const RecommendationCard = ({ job, variant = "default", userName }: Props) => {
           className="text-[14px] font-[Pretendard]"
           style={{ color: palette.gray.dark }}
         >
-          {job.isPeriodNegotiable
-            ? "기간 협의"
-            : WORK_PERIOD_KOR[job.workPeriod]}{" "}
-          · {job.isTimeNegotiable ? "시간 협의" : formatTime(job.workStart)}~
-          {formatTime(job.workEnd)}
+          {job.isPeriodNegotiable ? "기간 협의" : WORK_PERIOD_KOR[job.workPeriod]} · {timeLabel}
         </p>
 
         <p
@@ -113,9 +121,7 @@ const RecommendationCard = ({ job, variant = "default", userName }: Props) => {
         onClick={handleApplyClick}
         className="w-[180px] mt-[30px] mb-[10px] mx-auto block text-[15px] font-[Pretendard] px-[20px] py-[8px] rounded-[10px] font-semibold"
         style={{
-          backgroundColor: isApplied
-            ? palette.primary.primary
-            : palette.gray.light,
+          backgroundColor: isApplied ? palette.primary.primary : palette.gray.light,
           color: isApplied ? "#ffffff" : palette.primary.primary,
           border: isApplied ? "none" : `1px solid ${palette.primary.primary}`,
         }}
