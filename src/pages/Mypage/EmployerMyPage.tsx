@@ -4,15 +4,20 @@ import { SlArrowRight } from "react-icons/sl";
 import resume from "../../assets/my/resume.png";
 import suitcase from "../../assets/my/suitcase.png";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import member from "../../assets/member.png";
 import type { MyInfo } from "../../types/member";
 import { getMyInfo } from "../../apis/employerMyPage";
+import { deactivateMember, getMe } from "../../apis/mypage"; 
 
 const EmployerMyPage = () => {
   const navigate = useNavigate();
+
   const [showUnregister, setShowUnregister] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false); 
+  const [isLoggingOut, setIsLoggingOut] = useState(false); 
   const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
+
   useEffect(() => {
     const fetchMyInfo = async () => {
       try {
@@ -24,6 +29,57 @@ const EmployerMyPage = () => {
     };
     fetchMyInfo();
   }, []);
+
+  const handleLogout = useCallback(async () => {
+    if (isLoggingOut) return;
+    try {
+      setIsLoggingOut(true);
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("memberId");
+      navigate("/auth", { replace: true });
+    } catch {
+      alert("로그아웃 중 문제가 발생했습니다.");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [isLoggingOut, navigate]);
+
+
+  const handleDeactivate = useCallback(async () => {
+    if (isDeactivating) return;
+
+    try {
+      setIsDeactivating(true);
+
+      const meId = await getMe();
+      if (!meId) {
+        alert("회원 정보를 찾을 수 없습니다. 다시 로그인 후 이용해 주세요.");
+        return;
+      }
+
+      const res = await deactivateMember(meId);
+      const recoverableUntil = res?.recoverableUntil
+        ? new Date(res.recoverableUntil).toLocaleString()
+        : "알 수 없음";
+
+      alert(`탈퇴가 접수되었습니다.\n복구 가능 기한: ${recoverableUntil}`);
+
+      // 토큰 제거 & 이동
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("memberId");
+      setShowUnregister(false);
+      navigate("/auth", { replace: true });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
+      alert(`탈퇴 처리에 실패했습니다.\n(이미 탈퇴된 계정일 수 있어요)\n${msg}`);
+      console.error(e);
+    } finally {
+      setIsDeactivating(false);
+    }
+  }, [isDeactivating, navigate]);
+
   return (
     <div className="bg-white" style={{ fontFamily: "Pretendard" }}>
       <Header title="마이페이지" />
@@ -45,6 +101,7 @@ const EmployerMyPage = () => {
             <SlArrowRight className="w-[15px] h-[15px]" />
           </button>
         </section>
+
         <section className="flex justify-around h-[100px] border-b border-[#DEDEDE] px-[20px] py-[15px] mb-[30px]">
           <div
             onClick={() => navigate("/MyPage/ManageMyJobs")}
@@ -61,6 +118,7 @@ const EmployerMyPage = () => {
             <img src={suitcase} />
           </div>
         </section>
+
         <section>
           <div
             className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#DEDEDE]"
@@ -75,6 +133,7 @@ const EmployerMyPage = () => {
             </li>
           </ul>
         </section>
+
         <section>
           <div
             className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#DEDEDE]"
@@ -91,7 +150,12 @@ const EmployerMyPage = () => {
               <span>자주 묻는 질문</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li onClick={() =>
+                window.open(
+                  "https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1",
+                  "_blank"
+                )
+              } className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b cursor-pointer border-[#DEDEDE]">
               <span>1:1 문의</span>
               <button>
                 <SlArrowRight className="w-[15px] h-[15px]" />
@@ -99,6 +163,7 @@ const EmployerMyPage = () => {
             </li>
           </ul>
         </section>
+
         <section>
           <div
             className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#DEDEDE]"
@@ -107,21 +172,38 @@ const EmployerMyPage = () => {
             약관 및 방침
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
-            onClick={() => window.open("https://lava-scion-9fd.notion.site/244cf0577e4180128dc9df50ee9b73e6?source=copy_link", "_blank")}>
+            <li
+              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
+              onClick={() =>
+                window.open(
+                  "https://lava-scion-9fd.notion.site/244cf0577e4180128dc9df50ee9b73e6?source=copy_link",
+                  "_blank"
+                )
+              }
+            >
               <span>이용약관</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
-            onClick={() => window.open("https://lava-scion-9fd.notion.site/244cf0577e4180658616e53b81ba4a5e?source=copy_link", "_blank")}>
+            <li
+              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
+              onClick={() =>
+                window.open(
+                  "https://lava-scion-9fd.notion.site/244cf0577e4180658616e53b81ba4a5e?source=copy_link",
+                  "_blank"
+                )
+              }
+            >
               <span>개인정보처리방침</span>
               <SlArrowRight />
             </li>
           </ul>
         </section>
+
         <section>
           <div className="flex justify-center items-center text-[14px] h-[16px] gap-5 my-[70px]">
-            <button>로그아웃</button>
+            <button onClick={handleLogout} disabled={isLoggingOut}>
+              {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
+            </button>
             <span>|</span>
             <button
               className="text-[#EE0606]"
@@ -163,11 +245,12 @@ const EmployerMyPage = () => {
                   취소
                 </button>
                 <button
-                  onClick={() => alert("회원 탈퇴")}
+                  onClick={handleDeactivate}
+                  disabled={isDeactivating}
                   className="w-[140px] h-[48px] border border-[#729A73] text-[#729A73] text-[16px]"
                   style={{ borderRadius: "10px" }}
                 >
-                  탈퇴
+                  {isDeactivating ? "처리 중..." : "탈퇴"}
                 </button>
               </div>
             </div>

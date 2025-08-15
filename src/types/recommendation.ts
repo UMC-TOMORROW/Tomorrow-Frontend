@@ -6,15 +6,15 @@ export type WorkPeriod =
   | "OVER_THREE_MONTH"
   | "OVER_ONE_YEAR";
 
-  export interface Recommendation {
+export interface Recommendation {
   id: number;
   companyName: string;
   title: string;
   location: string;
   workPeriod: WorkPeriod;
   isPeriodNegotiable: boolean;
-  workStart: string; // e.g., "10:00:00"
-  workEnd: string;   // e.g., "14:00:00"
+  workStart?: string | null; 
+  workEnd?: string | null;  
   isTimeNegotiable: boolean;
   salary: number;
   paymentType: PaymentType;

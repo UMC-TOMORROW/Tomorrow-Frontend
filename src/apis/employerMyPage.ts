@@ -1,16 +1,18 @@
 import { axiosInstance } from "./axios";
-import type {
-  GetUserTypeResponse,
-  MemberType,
-  MyInfo,
-} from "../types/member";
+import type { GetUserTypeResponse, MemberType, MyInfo } from "../types/member";
 import type {
   ApiEnvelope,
   ApiEnvelopeNoResult,
   MyPostItem,
   MyPostStatus,
 } from "../types/employer";
-import type { Applicant, ApplicantResume, ApplicantResumeRaw, ApplicationDecisionCode, UpdateApplicationStatusResult } from "../types/applicant";
+import type {
+  Applicant,
+  ApplicantResume,
+  ApplicantResumeRaw,
+  ApplicationDecisionCode,
+  UpdateApplicationStatusResult,
+} from "../types/applicant";
 import { parseApplicantContent } from "../utils/parseApplicantContent";
 
 // 내 정보
@@ -88,13 +90,15 @@ export const updateApplicationStatus = async (
   status: ApplicationDecisionCode
 ): Promise<UpdateApplicationStatusResult> => {
   if (!Number.isFinite(jobId) || !Number.isFinite(applicationId)) {
-    console.error("[API] updateApplicationStatus: invalid ids =", { jobId, applicationId });
+    console.error("[API] updateApplicationStatus: invalid ids =", {
+      jobId,
+      applicationId,
+    });
     throw new Error("Invalid id(s)");
   }
 
-  const res = await axiosInstance.patch<ApiEnvelope<UpdateApplicationStatusResult>>(
-    `/api/v1/jobs/${jobId}/applications/${applicationId}/status`,
-    { status }
-  );
+  const res = await axiosInstance.patch<
+    ApiEnvelope<UpdateApplicationStatusResult>
+  >(`/api/v1/jobs/${jobId}/applications/${applicationId}/status`, { status });
   return res.data.result;
 };
