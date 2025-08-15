@@ -369,6 +369,11 @@ export default function JobDetailPage() {
   //   }
   // }
 
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/"); // 필요하면 "/jobs" 등으로 변경
+  };
+
   return (
     <div className="max-w-[375px] mx-auto bg-white">
       <div className="sticky top-0 z-10 bg-white">
