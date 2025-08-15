@@ -33,13 +33,10 @@ const HomepageTopBar = ({
   );
   const closeModal = () => setModal(null);
 
-  // 라벨(적용 내용 표시)
   const [regionLabel, setRegionLabel] = useState<string | null>(null);
   const [typeLabel, setTypeLabel] = useState<string | null>(null);
   const [dayLabel, setDayLabel] = useState<string | null>(null);
   const [timeLabel, setTimeLabel] = useState<string | null>(null);
-
-  // ✅ overflow 감지해서 정렬 바꾸기
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const recomputeOverflow = () => {
@@ -47,15 +44,13 @@ const HomepageTopBar = ({
     if (!el) return;
     const over = el.scrollWidth > el.clientWidth + 1;
     setIsOverflowing(over);
-    if (over) el.scrollLeft = 0; // 넘치면 항상 왼쪽에서 시작
+    if (over) el.scrollLeft = 0;
   };
   useEffect(() => {
-    // 라벨/모달 상태가 바뀌면 다시 계산
     const id = setTimeout(recomputeOverflow, 0);
     return () => clearTimeout(id);
   }, [regionLabel, typeLabel, dayLabel, timeLabel, modal]);
   useEffect(() => {
-    // 리사이즈 대응
     const onResize = () => recomputeOverflow();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
@@ -63,15 +58,15 @@ const HomepageTopBar = ({
 
   const typeKorean: Record<string, string> = {
     SERVING: "서빙",
-    KITCHEN_ASSIST: "주방보조/설거지",
-    CAFE: "카페/베이커리",
-    ODD_JOBS: "심부름/소일거리",
+    KITCHEN_HELP: "주방보조/설거지",
+    CAFE_BAKERY: "카페/베이커리",
+    ERRAND: "심부름/소일거리",
     PROMOTION: "전단지/홍보",
-    ELDERLY_CARE: "어르신 돌봄",
+    SENIOR_CARE: "어르신 돌봄",
     CHILD_CARE: "아이 돌봄",
     BEAUTY: "미용/뷰티",
     TUTORING: "과외/학원",
-    OFFICE_WORK: "사무보조",
+    OFFICE_HELP: "사무보조",
   };
   const dayKorean: Record<string, string> = {
     MON: "월",

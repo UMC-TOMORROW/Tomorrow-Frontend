@@ -154,6 +154,7 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
   const [bookmarked, setBookmarked] = useState(false);
+  console.log(loading, error);
   const [bookmarking, setBookmarking] = useState(false);
 
   useEffect(() => {

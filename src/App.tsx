@@ -1,5 +1,5 @@
 import "./App.css";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, redirect } from "react-router-dom";
 import NotFoundPage from "./pages/NotFoundPage";
 import HomeLayout from "./layouts/HomeLayout";
 import HomePage from "./pages/HomePage";
@@ -30,37 +30,84 @@ import WorkPreference from "./pages/Mypage/WorkPreference";
 import JobDetailPage from "./pages/job/JobDetailPage";
 import ChatPage from "./pages/careerTalk/ChatPage";
 import JobReviewPage from "./pages/job/JobReviewPage";
+import { getMyInfo } from "./apis/employerMyPage";
+
+// --- 로그인 여부 헬퍼 (getMyInfo 성공 = 로그인 상태) ---
+const checkAuth = async () => {
+  try {
+    const me = await getMyInfo(); // axios 인스턴스가 쿠키 포함 설정되어 있다고 가정
+    return Boolean(me?.id);
+  } catch {
+    return false;
+  }
+};
+
+const requireAuthLoader = async () => {
+  const authed = await checkAuth();
+  if (!authed) throw redirect("/auth");
+  return null;
+};
+
+const requireAnonLoader = async () => {
+  const authed = await checkAuth();
+  if (authed) throw redirect("/");
+  return null;
+};
 
 const router = createBrowserRouter([
-  { path: "/splash", element: <SplashScreenPage /> }, // 1) 스플래시
-  { path: "/auth", element: <AuthScreen /> }, // 2) 로그인
-  { path: "/auth/user-info", element: <UserInfoForm /> }, // 3) 회원정보 입력
+  // 1) 스플래시/로그인: 로그인 상태면 접근 금지(홈으로)
+  { path: "/splash", element: <SplashScreenPage />, loader: requireAnonLoader },
+  { path: "/auth", element: <AuthScreen />, loader: requireAnonLoader },
+  { path: "/auth/user-info", element: <UserInfoForm />, loader: requireAnonLoader },
+
+  // 2) 메인 섹션
   {
     path: "/",
     element: <HomeLayout />,
     errorElement: <NotFoundPage />,
     children: [
-      { index: true, element: <HomePage /> },
+      {
+        index: true,
+        // 비로그인 → /splash , 로그인 → 홈 유지
+        loader: async () => {
+          const authed = await checkAuth();
+          if (!authed) throw redirect("/splash");
+          return null;
+        },
+        element: <HomePage />,
+      },
+
+      // 온보딩 접근 정책은 선택(로그인만 허용하려면 loader: requireAuthLoader 추가)
       { path: "onboarding", element: <OnboardingScreen /> },
+
       { path: "search", element: <SearchPage /> },
       { path: "career-talk", element: <CareerTalkListPage /> },
-      { path: "career-talk/write", element: <CareerTalkWritePage /> },
+
+      // 작성/채팅 등 보호 라우트
+      { path: "career-talk/write", element: <CareerTalkWritePage />, loader: requireAuthLoader },
       { path: "career-talk/:id", element: <CareerTalkDetailPage /> },
-      { path: "career-talk/edit/:id", element: <CareerTalkWritePage /> },
-      { path: "career-talk/chat", element: <ChatPage /> },
-      { path: "MyPage", element: <MyPage /> },
-      { path: "recommendation", element: <RecommendationPage /> },
-      { path: "post", element: <JobPostForm /> },
-      { path: "/post/business", element: <BusinessStep /> },
-      { path: "/post/personal", element: <PersonalStep /> },
-      { path: "jobs/:jobId", element: <JobDetailPage /> }, // 글 상세 페이지
+      { path: "career-talk/edit/:id", element: <CareerTalkWritePage />, loader: requireAuthLoader },
+      { path: "career-talk/chat", element: <ChatPage />, loader: requireAuthLoader },
+
+      { path: "MyPage", element: <MyPage />, loader: requireAuthLoader },
+      { path: "recommendation", element: <RecommendationPage />, loader: requireAuthLoader },
+
+      // 글 등록 플로우 보호
+      { path: "post", element: <JobPostForm />, loader: requireAuthLoader },
+      { path: "/post/business", element: <BusinessStep />, loader: requireAuthLoader },
+      { path: "/post/personal", element: <PersonalStep />, loader: requireAuthLoader },
+
+      { path: "jobs/:jobId", element: <JobDetailPage /> },
       { path: "jobs/:jobId/reviews", element: <JobReviewPage /> },
     ],
   },
+
+  // 3) 마이페이지 섹션(전부 보호)
   {
     path: "/MyPage",
     element: <HomeLayout />,
     errorElement: <NotFoundPage />,
+    loader: requireAuthLoader, // 부모에서 한 번에 보호
     children: [
       { index: true, element: <MyPage /> },
       { path: "EmployerMyPage", element: <EmployerMyPage /> },
