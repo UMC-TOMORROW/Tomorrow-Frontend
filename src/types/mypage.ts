@@ -15,7 +15,7 @@ export interface ApiResponse<T> {
 }
 
 export interface savedJobs {
-  postId: number;
+  jobId: number;
   title: string;
   company: string;
   location: string;
@@ -24,6 +24,20 @@ export interface savedJobs {
   rating: number;
   isWished: boolean;
 }
+
+export type BookmarkItem = {
+  id: number;
+  jobId: number;
+  jobTitle: string;
+  companyName: string;
+  bookmarkedAt: string;
+};
+
+export type BookmarksPayload = {
+  bookmarks: BookmarkItem[];
+  hasNext: boolean;
+  lastCursor: number | null;
+};
 
 export interface deleteMember {
   status: string;

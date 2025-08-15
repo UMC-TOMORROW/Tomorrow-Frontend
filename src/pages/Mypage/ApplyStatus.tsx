@@ -4,6 +4,7 @@ import type { ApplicationFilter, applyStatus } from "../../types/mypage";
 import { getApplications } from "../../apis/mypage";
 
 type UIJob = {
+  postId?: number;
   date: string;
   company: string;
   title: string;
@@ -29,16 +30,22 @@ const ApplyStatus = () => {
     return d;
   };
 
-  const mapToUIJob = useCallback(
-    (it: applyStatus): UIJob => ({
+  const mapToUIJob = useCallback((it: applyStatus): UIJob => {
+    const anyIt = it as unknown as Record<string, unknown>;
+    const rawId =
+      (anyIt.postId as number | undefined) ??
+      (anyIt.jobId as number | undefined) ??
+      (anyIt.id as number | undefined);
+
+    return {
+      postId: rawId,
       date: formatDateDot(it.date),
       company: it.company,
       title: it.postTitle,
       tags: [],
-      status: it.status === "합격" ? "합격" : "",
-    }),
-    []
-  );
+      status: it.status === "ACCEPTED" ? "합격" : "",
+    };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,6 +66,18 @@ const ApplyStatus = () => {
 
   const filteredJobs = useMemo(() => jobs, [jobs]);
 
+  const goWriteReview = (job: UIJob) => {
+    if (!job.postId) {
+      alert(
+        "후기 작성에 필요한 공고 ID가 없습니다. 백엔드 응답에 postId 포함이 필요해요."
+      );
+      return;
+    }
+    navigate(`/MyPage/ReviewWritting/${job.postId}`, {
+      state: { title: job.title },
+    });
+  };
+
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <div className="bg-white min-h-screen">
@@ -76,7 +95,7 @@ const ApplyStatus = () => {
             style={{ fontWeight: 500 }}
             onClick={() => setActiveTab("")}
             className={`w-full text-[16px] ${
-              activeTab === "" ? "border-b-3 border-[#729A73]" : ""
+              activeTab === "" ? "border-b-4 border-[#729A73]" : ""
             }`}
           >
             전체
@@ -85,7 +104,7 @@ const ApplyStatus = () => {
             style={{ fontWeight: 500 }}
             onClick={() => setActiveTab("합격")}
             className={`w-full text-[16px] ${
-              activeTab === "합격" ? "border-b-3 border-[#729A73]" : ""
+              activeTab === "합격" ? "border-b-4 border-[#729A73]" : ""
             }`}
           >
             합격
@@ -120,7 +139,7 @@ const ApplyStatus = () => {
                 <div>
                   <button
                     className="w-full px-[15px]"
-                    onClick={() => navigate("/MyPage/ReviewWritting")}
+                    onClick={() => goWriteReview(job)} // ✅ 여기서 postId 포함 이동
                   >
                     <div className="h-[13px] w-full bg-white border-t border-[#729A73]"></div>
                     <div

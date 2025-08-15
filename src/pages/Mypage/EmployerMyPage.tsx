@@ -8,14 +8,14 @@ import { useCallback, useEffect, useState } from "react";
 import member from "../../assets/member.png";
 import type { MyInfo } from "../../types/member";
 import { getMyInfo } from "../../apis/employerMyPage";
-import { deactivateMember, getMe } from "../../apis/mypage"; 
+import { deactivateMember, getMe } from "../../apis/mypage";
 
 const EmployerMyPage = () => {
   const navigate = useNavigate();
 
   const [showUnregister, setShowUnregister] = useState(false);
-  const [isDeactivating, setIsDeactivating] = useState(false); 
-  const [isLoggingOut, setIsLoggingOut] = useState(false); 
+  const [isDeactivating, setIsDeactivating] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
 
   useEffect(() => {
@@ -45,7 +45,6 @@ const EmployerMyPage = () => {
     }
   }, [isLoggingOut, navigate]);
 
-
   const handleDeactivate = useCallback(async () => {
     if (isDeactivating) return;
 
@@ -72,8 +71,11 @@ const EmployerMyPage = () => {
       setShowUnregister(false);
       navigate("/auth", { replace: true });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
-      alert(`탈퇴 처리에 실패했습니다.\n(이미 탈퇴된 계정일 수 있어요)\n${msg}`);
+      const msg =
+        e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
+      alert(
+        `탈퇴 처리에 실패했습니다.\n(이미 탈퇴된 계정일 수 있어요)\n${msg}`
+      );
       console.error(e);
     } finally {
       setIsDeactivating(false);
@@ -129,7 +131,7 @@ const EmployerMyPage = () => {
           <ul>
             <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>사업자 정보 등록</span>
-              <SlArrowRight />
+              <SlArrowRight className="cursor-pointer" onClick={() => navigate("/post/business")} />
             </li>
           </ul>
         </section>
@@ -150,15 +152,18 @@ const EmployerMyPage = () => {
               <span>자주 묻는 질문</span>
               <SlArrowRight />
             </li>
-            <li onClick={() =>
-                window.open(
-                  "https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1",
-                  "_blank"
-                )
-              } className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b cursor-pointer border-[#DEDEDE]">
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>1:1 문의</span>
               <button>
-                <SlArrowRight className="w-[15px] h-[15px]" />
+                <SlArrowRight
+                  className="w-[15px] h-[15px] cursor-pointer"
+                  onClick={() =>
+                    window.open(
+                      "https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1",
+                      "_blank"
+                    )
+                  }
+                />
               </button>
             </li>
           </ul>
@@ -172,29 +177,29 @@ const EmployerMyPage = () => {
             약관 및 방침
           </div>
           <ul>
-            <li
-              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
-              onClick={() =>
-                window.open(
-                  "https://lava-scion-9fd.notion.site/244cf0577e4180128dc9df50ee9b73e6?source=copy_link",
-                  "_blank"
-                )
-              }
-            >
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>이용약관</span>
-              <SlArrowRight />
+              <SlArrowRight
+                className="cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    "https://lava-scion-9fd.notion.site/244cf0577e4180128dc9df50ee9b73e6?source=copy_link",
+                    "_blank"
+                  )
+                }
+              />
             </li>
-            <li
-              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
-              onClick={() =>
-                window.open(
-                  "https://lava-scion-9fd.notion.site/244cf0577e4180658616e53b81ba4a5e?source=copy_link",
-                  "_blank"
-                )
-              }
-            >
+            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>개인정보처리방침</span>
-              <SlArrowRight />
+              <SlArrowRight
+                className="cursor-pointer"
+                onClick={() =>
+                  window.open(
+                    "https://lava-scion-9fd.notion.site/244cf0577e4180658616e53b81ba4a5e?source=copy_link",
+                    "_blank"
+                  )
+                }
+              />
             </li>
           </ul>
         </section>

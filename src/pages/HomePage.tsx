@@ -8,6 +8,7 @@ import SearchBar from "../components/search/SearchBar";
 import JobCard from "../components/Homepage/JobCard";
 import HomepageTopBar from "../components/Homepage/HomepageTopBar";
 import { getJobsDefault } from "../apis/HomePage";
+import type { PaymentType } from "../types/recommendation";
 
 type JobLike = JobsView & {
   jobCategory?: string;
@@ -127,6 +128,19 @@ const HomePage = () => {
     selectedTime,
   ]);
 
+  const asPaymentType = (v: string): PaymentType => {
+    switch (v) {
+      case "HOURLY":
+      case "DAILY":
+      case "MONTHLY":
+      case "PER_TASK":
+        return v;
+      default:
+        console.warn("[payment_type] unexpected:", v);
+        return "HOURLY";
+    }
+  };
+
   return (
     <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px] bg-white min-h-screen">
       {/* 헤더 */}
@@ -194,7 +208,11 @@ const HomePage = () => {
                   ? `${jobCard.review_count}건`
                   : ""
               }
-              image={jobCard.job_image_url ?? ""}
+              image={
+                (jobCard as any).job_image_url ??
+                (jobCard as any).jobImageUrl ??
+                ""
+              }
               isTime={Boolean(jobCard.isTimeNegotiable)}
               isPeriod={Boolean(jobCard.isPeriodNegotiable)}
               environment={
@@ -202,6 +220,11 @@ const HomePage = () => {
                   ? jobCard.work_environment
                   : []
               }
+              paymentType={asPaymentType(
+                (jobCard as any).payment_type ??
+                  (jobCard as any).paymentType ??
+                  ""
+              )}
             />
           ))
         ) : (
