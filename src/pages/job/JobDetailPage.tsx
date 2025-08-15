@@ -3,7 +3,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
-import { postApplication } from "../../apis/applications";
+// import { postApplication } from "../../apis/applications";
+import { createApplication, AuthRequiredError } from "../../apis/applications";
+import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
+import { getMe } from "../../apis/mypage"; // /api/v1/members/me
+import { authApi } from "../../apis/authApi";
 
 import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
@@ -72,6 +76,8 @@ const periodLabel = (p?: string) =>
     ? "1개월 이상"
     : p === "OVER_THREE_MONTH"
     ? "3개월 이상"
+    : p === "OVER_SIX_MONTH"
+    ? "6개월 이상"
     : p === "OVER_ONE_YEAR"
     ? "1년 이상"
     : p ?? "-";
@@ -88,7 +94,7 @@ const JOB_CATEGORY_KO: Record<string, string> = {
   ELDER_CARE: "어르신 돌봄",
   CHILD_CARE: "아이 돌봄",
   BEAUTY: "미용/뷰티",
-  OFFICE_ASSIST: "사무보조",
+  OFFICE_HELP: "사무보조",
   ETC: "기타",
 };
 
@@ -147,6 +153,12 @@ function mapSwaggerJobDetail(api: any) {
   };
 }
 
+// function isHtmlResponse(res: any): boolean {
+//   const ct = String(res?.headers?.["content-type"] || "");
+//   const url = String(res?.request?.responseURL || "");
+//   return ct.includes("text/html") || url.includes("/login");
+// }
+
 export default function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [data, setData] = useState<any>(null);
@@ -170,6 +182,24 @@ export default function JobDetailPage() {
         setLoading(false);
       }
     })();
+  }, [jobId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const id = Number(jobId ?? data?.jobId);
+        if (!Number.isFinite(id)) return;
+
+        const ids = await fetchBookmarkedJobIds();
+        if (!cancelled) setBookmarked(ids.includes(id));
+      } catch (e: any) {
+        console.warn("[Bookmark] init failed ▶", e?.response ?? e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [jobId]);
 
   // 화면 바인딩용 기본값 (값이 비어도 레이아웃 유지)
@@ -236,31 +266,81 @@ export default function JobDetailPage() {
       alert(e?.response?.data?.message ?? "이력서 확인 중 오류가 발생했어요.");
     }
   }
+  useEffect(() => {
+    if (data) {
+      console.log(
+        "[Detail IDs] route jobId:",
+        jobId,
+        "api.jobId:",
+        data?.jobId,
+        "api.id:",
+        data?.id,
+        "api.postId:",
+        data?.postId
+      );
+    }
+  }, [data, jobId]);
 
-  // 제출: 체크박스 필수, resumeId 필수
+  // 파일 안에 유틸 추가
+  async function ensureLoggedIn(): Promise<boolean> {
+    // 1) 바로 me 확인 (쿠키가 붙어야 200)
+    const me1 = await getMe();
+    if (me1) return true;
+
+    // 2) 세션 갱신 한 번 더 시도(쿠키 기반)
+    const ok = await authApi.refresh();
+    if (!ok) return false;
+
+    const me2 = await getMe();
+    return !!me2;
+  }
+
+  function gotoLogin() {
+    // 서버 로그인 페이지로 이동(탑레벨 네비게이션 → 쿠키 1st-party로 심김)
+    window.location.href = `https://umctomorrow.shop/login?redirect=${encodeURIComponent(window.location.href)}`;
+  }
+
+  // 지원하기
   async function onSubmitApply() {
-    if (!attachChecked || !resumeId) {
-      console.warn("[Apply] blocked submit: attachChecked/resumeId not ready", { attachChecked, resumeId });
-      return;
-    } // 방어
+    if (submitting || applied) return;
+    setSubmitting(true);
     try {
-      setSubmitting(true);
-      const payload = {
-        content: applyContent.trim(),
-        jobId: Number(jobId),
-        resumeId,
-      };
-      console.log("[Apply] POST /applications payload ▶", payload);
+      const postId = Number(data?.jobId ?? jobId);
+      if (!Number.isFinite(postId)) {
+        alert("공고 식별자가 올바르지 않습니다.");
+        return;
+      }
 
-      await postApplication(payload);
+      const payload: any = { content: applyContent.trim() };
+      if (attachChecked && resumeId) payload.resumeId = resumeId;
+
+      await createApplication(postId, payload);
+
       alert("지원이 완료되었습니다.");
       setApplied(true);
       setApplyOpen(false);
       setApplyContent("");
-      setAttachChecked(false); // 초기화
+      setAttachChecked(false);
     } catch (e: any) {
-      console.error("[Apply] application error ▶", e?.response ?? e);
-      alert(e?.response?.data?.message ?? "지원 중 오류가 발생했어요.");
+      const status = e?.response?.status;
+      const msg = e?.response?.data?.message;
+
+      if (e instanceof AuthRequiredError) {
+        alert("로그인이 필요합니다.");
+        window.location.href = `/auth?next=${encodeURIComponent(location.href)}`;
+        return;
+      }
+
+      // 🔴 서버 비즈니스 에러 (이미 불합격 등)
+      if (status === 400) {
+        alert(msg || "요청을 처리할 수 없습니다.");
+        // 필요하면 버튼을 비활성화하고 레이블을 바꿔도 됨:
+        // setApplied(true); // 또는 별도 상태로 '지원불가' 표기
+        return;
+      }
+
+      alert(msg || "지원 중 오류가 발생했어요.");
+      console.error("[Apply] error ▶", e?.response ?? e);
     } finally {
       setSubmitting(false);
     }
@@ -270,6 +350,60 @@ export default function JobDetailPage() {
     if (window.history.length > 1) navigate(-1);
     else navigate("/"); // 필요하면 "/jobs" 등으로 변경
   };
+  async function onToggleBookmark() {
+    const authed = await ensureLoggedIn();
+    if (!authed) {
+      alert("로그인이 필요합니다.");
+      gotoLogin();
+      return;
+    }
+    const id = Number(jobId ?? data?.jobId);
+    if (!Number.isFinite(id) || bookmarking) return;
+
+    try {
+      setBookmarking(true);
+
+      if (!bookmarked) {
+        // ▷ 찜 추가 시도
+        try {
+          await addJobBookmark(id);
+          setBookmarked(true);
+        } catch (e: any) {
+          const status = e?.response?.status;
+          const code = e?.response?.data?.code;
+          if (status === 409 || code === "BOOKMARK4002") {
+            // 이미 찜됨 → 성공으로 간주하고 UI만 채움
+            setBookmarked(true);
+          } else if (status === 401) {
+            alert("로그인이 필요합니다.");
+          } else {
+            alert(e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요.");
+            console.error("[Bookmark] add error ▶", e?.response ?? e);
+          }
+        }
+      } else {
+        // ▷ 찜 취소 시도
+        try {
+          await deleteJobBookmark(id);
+          setBookmarked(false);
+        } catch (e: any) {
+          const status = e?.response?.status;
+          const code = e?.response?.data?.code;
+          if (status === 404 || code === "BOOKMARK4001") {
+            // 서버엔 없지만 우리 UI는 찜 상태였던 케이스 → 성공으로 간주하고 비움
+            setBookmarked(false);
+          } else if (status === 401) {
+            alert("로그인이 필요합니다.");
+          } else {
+            alert(e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요.");
+            console.error("[Bookmark] delete error ▶", e?.response ?? e);
+          }
+        }
+      }
+    } finally {
+      setBookmarking(false);
+    }
+  }
 
   return (
     <div className="max-w-[375px] mx-auto bg-white">
@@ -336,7 +470,7 @@ export default function JobDetailPage() {
           <KV k="모집인원" v={<span>{job.headcount}명</span>} />
           <KV k="우대사항" v={<span>{job.preference}</span>} />
 
-          <div className="w-[335px] h-[92px] rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
+          <div className="w-[335px] rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
             <p className="mb-3 font-bold text-[14px] text-[#333]">
               <span className="text-[#729A73]">✨ 내 몸에 맞는 일,</span> 지금 추천해드릴게요.
             </p>
@@ -376,9 +510,12 @@ export default function JobDetailPage() {
         <div className="px-4 !pt-4 !pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-3">
             <button
-              aria-label="찜하기"
-              className="w-12 h-12 shrink-0 rounded-[10px] bg-[#729A73] flex items-center justify-center"
-              onClick={() => setBookmarked((v) => !v)}
+              aria-label={bookmarked ? "찜 취소" : "찜하기"}
+              className={`w-12 h-12 shrink-0 rounded-[10px] ${
+                bookmarking ? "opacity-70" : ""
+              } bg-[#729A73] flex items-center justify-center`}
+              onClick={onToggleBookmark}
+              disabled={bookmarking}
             >
               <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-[45px] h-[45px]" />
             </button>
@@ -403,7 +540,7 @@ export default function JobDetailPage() {
         setContent={setApplyContent}
         attachChecked={attachChecked}
         onToggleAttach={handleToggleAttach}
-        canSubmit={attachChecked && !submitting} // ✅ 체크됐을 때만 활성화(요구사항)
+        canSubmit={!submitting && applyContent.trim().length > 0}
         submitting={submitting}
         onClose={() => setApplyOpen(false)}
         onSubmit={onSubmitApply}

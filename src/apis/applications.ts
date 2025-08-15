@@ -1,30 +1,51 @@
-// /apis/applications.ts
-import { axiosInstance } from "./axios";
-import type { RawAxiosRequestHeaders } from "axios";
+// src/apis/applications.ts
+import { axiosInstance } from "../apis/axios";
+// import { authApi } from "../apis/authApi";
 
-// 간단 쿠키 리더 (js-cookie 없이 동작)
-function getCookie(name: string): string | null {
-  const hit = document.cookie.split("; ").find((row) => row.startsWith(name + "="));
-  return hit ? decodeURIComponent(hit.split("=")[1]) : null;
+export class AuthRequiredError extends Error {
+  constructor(msg = "로그인이 필요합니다.") {
+    super(msg);
+    this.name = "AuthRequiredError";
+  }
 }
 
-export interface PostApplicationBody {
-  content: string;
-  jobId: number;
-  resumeId?: number; // 저장된 이력서가 있을 때만
-}
+const isHtmlResponse = (data: any, headers?: any) => {
+  const ct = String(headers?.["content-type"] || headers?.["Content-Type"] || "");
+  return ct.includes("text/html") || (typeof data === "string" && /<html[\s>]/i.test(data));
+};
+const guardHtml = (res: any) => {
+  const loc = String(res?.headers?.location || res?.headers?.Location || "");
+  if (loc.includes("/login") || isHtmlResponse(res?.data, res?.headers)) {
+    const err: any = new AuthRequiredError();
+    err.response = res;
+    throw err;
+  }
+};
+export type CreateApplicationBody = { content: string; resumeId?: number };
 
-/**
- * 지원 생성
- * - 성공 시 서버의 result.id(number)를 반환
- * - 전역 axios 설정은 건드리지 않고, 이 요청에만 Authorization 헤더를 추가
- */
-export async function postApplication(body: PostApplicationBody): Promise<number> {
-  const token = getCookie("accessToken"); // 팀에서 쓰는 쿠키 키명에 맞춰 수정 가능
-  const headers: RawAxiosRequestHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+/** 지원하기: POST /api/v1/jobs/{jobId}/applications */
+export async function createApplication(jobId: number, body: CreateApplicationBody) {
+  const res = await axiosInstance.post(`/api/v1/jobs/${jobId}/applications`, body, {
+    withCredentials: true,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    validateStatus: () => true, // 400/302도 잡아서 직접 판단
+  });
 
-  const { data } = await axiosInstance.post("/api/v1/applications", body, { headers });
-  // 응답 스키마 예: { code:"COMMON201", result: { id: "1" } }
-  const id = data?.result?.id;
-  return typeof id === "string" ? Number(id) : (id as number);
+  // 302 로그인 리다이렉트 / HTML 응답 → 인증 필요
+  guardHtml(res);
+
+  // 성공: 2xx + JSON
+  const status = res.status;
+  const ct = String(res.headers?.["content-type"] || "");
+  if (status < 200 || status >= 300 || !ct.includes("application/json")) {
+    const e: any = new Error(res?.data?.message || `지원 실패 (status=${status}, ct=${ct || "-"})`);
+    e.response = res;
+    throw e;
+  }
+
+  return res.data?.result ?? res.data?.data ?? res.data;
 }
