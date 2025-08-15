@@ -4,7 +4,6 @@ import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
 import { postApplication } from "../../apis/applications";
-// import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
 
 import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
@@ -154,45 +153,24 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
   const [bookmarked, setBookmarked] = useState(false);
-  const [bookmarking, setBookmarking] = useState(false);
   console.log(loading, error);
-
-  console.log(loading, error);
-  // useEffect(() => {
-  //   const effectiveId = jobId ?? "36"; // 존재하는 ID로 테스트
-  //   (async () => {
-  //     try {
-  //       setLoading(true);
-  //       console.log("[JobDetail] GET /api/v1/jobs/", effectiveId);
-  //       const res = await getJobDetail(effectiveId); // 본문 타입으로 반환됨
-  //       console.log("[JobDetail] OK ▶", res);
-  //       setData(mapSwaggerJobDetail(res));
-  //     } catch (e: any) {
-  //       console.error("[JobDetail] error ▶", e);
-  //       setError(e);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   })();
-  // }, [jobId]);
-
-  // useEffect(() => {
-  //   let cancelled = false;
-  //   (async () => {
-  //     try {
-  //       const id = Number(jobId ?? data?.jobId);
-  //       if (!Number.isFinite(id)) return;
-
-  //       // const ids = await fetchBookmarkedJobIds();
-  //       if (!cancelled) setBookmarked(ids.includes(id));
-  //     } catch (e: any) {
-  //       console.warn("[Bookmark] init failed ▶", e?.response ?? e);
-  //     }
-  //   })();
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [jobId]);
+  useEffect(() => {
+    const effectiveId = jobId ?? "36"; // 존재하는 ID로 테스트
+    (async () => {
+      try {
+        setLoading(true);
+        console.log("[JobDetail] GET /api/v1/jobs/", effectiveId);
+        const res = await getJobDetail(effectiveId); // 본문 타입으로 반환됨
+        console.log("[JobDetail] OK ▶", res);
+        setData(mapSwaggerJobDetail(res));
+      } catch (e: any) {
+        console.error("[JobDetail] error ▶", e);
+        setError(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [jobId]);
 
   // 화면 바인딩용 기본값 (값이 비어도 레이아웃 유지)
   const job = data ?? {
@@ -258,116 +236,35 @@ export default function JobDetailPage() {
       alert(e?.response?.data?.message ?? "이력서 확인 중 오류가 발생했어요.");
     }
   }
-  useEffect(() => {
-    if (data) {
-      console.log(
-        "[Detail IDs] route jobId:",
-        jobId,
-        "api.jobId:",
-        data?.jobId,
-        "api.id:",
-        data?.id,
-        "api.postId:",
-        data?.postId
-      );
+
+  // 제출: 체크박스 필수, resumeId 필수
+  async function onSubmitApply() {
+    if (!attachChecked || !resumeId) {
+      console.warn("[Apply] blocked submit: attachChecked/resumeId not ready", { attachChecked, resumeId });
+      return;
+    } // 방어
+    try {
+      setSubmitting(true);
+      const payload = {
+        content: applyContent.trim(),
+        jobId: Number(jobId),
+        resumeId,
+      };
+      console.log("[Apply] POST /applications payload ▶", payload);
+
+      await postApplication(payload);
+      alert("지원이 완료되었습니다.");
+      setApplied(true);
+      setApplyOpen(false);
+      setApplyContent("");
+      setAttachChecked(false); // 초기화
+    } catch (e: any) {
+      console.error("[Apply] application error ▶", e?.response ?? e);
+      alert(e?.response?.data?.message ?? "지원 중 오류가 발생했어요.");
+    } finally {
+      setSubmitting(false);
     }
-  }, [data, jobId]);
-
-  // 지원하기
-  // async function onSubmitApply() {
-  //   try {
-  //     if (submitting || applied) return;
-  //     setSubmitting(true);
-
-  //     const postId = Number(data?.jobId ?? jobId); // 상세에서 받은 진짜 PK 우선
-  //     if (!Number.isFinite(postId)) {
-  //       alert("공고 식별자가 올바르지 않습니다.");
-  //       return;
-  //     }
-
-  //     const base = { content: applyContent.trim(), jobId: postId };
-  //     const body = attachChecked && resumeId ? { ...base, resumeId } : base;
-
-  //     const res = await postApplication(postId, body);
-
-  //     // ✅ 응답 검증 (201/200 + JSON)
-  //     const status = res.status;
-  //     const ct = String(res.headers?.["content-type"] || "");
-  //     if (!(status === 201 || status === 200) || !ct.includes("application/json")) {
-  //       throw new Error(`정상 저장 아님 (status=${status}, ct=${ct})`);
-  //     }
-
-  //     console.log("[Apply] success ▶", { postId, usedResume: !!(attachChecked && resumeId), status });
-  //     alert("지원이 완료되었습니다.");
-  //     setApplied(true);
-  //     setApplyOpen(false);
-  //     setApplyContent("");
-  //     setAttachChecked(false);
-  //   } catch (e: any) {
-  //     if (e?.isHtml || `${e?.response?.headers?.["content-type"]}`.includes("text/html")) {
-  //       alert("로그인이 필요합니다. 다시 로그인해 주세요.");
-  //       console.error("[Apply] HTML/Redirect ▶", e?.response ?? e);
-  //     } else {
-  //       console.error("[Apply] error ▶", e?.response ?? e);
-  //       alert(e?.response?.data?.message ?? e?.message ?? "지원 중 오류가 발생했어요.");
-  //     }
-  //   } finally {
-  //     setSubmitting(false);
-  //   }
-  // }
-
-  const handleBack = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate("/"); // 필요하면 "/jobs" 등으로 변경
-  };
-  // async function onToggleBookmark() {
-  //   const id = Number(jobId ?? data?.jobId);
-  //   if (!Number.isFinite(id) || bookmarking) return;
-
-  //   try {
-  //     setBookmarking(true);
-
-  //     if (!bookmarked) {
-  //       // ▷ 찜 추가 시도
-  //       try {
-  //         await addJobBookmark(id);
-  //         setBookmarked(true);
-  //       } catch (e: any) {
-  //         const status = e?.response?.status;
-  //         const code = e?.response?.data?.code;
-  //         if (status === 409 || code === "BOOKMARK4002") {
-  //           // 이미 찜됨 → 성공으로 간주하고 UI만 채움
-  //           setBookmarked(true);
-  //         } else if (status === 401) {
-  //           alert("로그인이 필요합니다.");
-  //         } else {
-  //           alert(e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요.");
-  //           console.error("[Bookmark] add error ▶", e?.response ?? e);
-  //         }
-  //       }
-  //     } else {
-  //       // ▷ 찜 취소 시도
-  //       try {
-  //         await deleteJobBookmark(id);
-  //         setBookmarked(false);
-  //       } catch (e: any) {
-  //         const status = e?.response?.status;
-  //         const code = e?.response?.data?.code;
-  //         if (status === 404 || code === "BOOKMARK4001") {
-  //           // 서버엔 없지만 우리 UI는 찜 상태였던 케이스 → 성공으로 간주하고 비움
-  //           setBookmarked(false);
-  //         } else if (status === 401) {
-  //           alert("로그인이 필요합니다.");
-  //         } else {
-  //           alert(e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요.");
-  //           console.error("[Bookmark] delete error ▶", e?.response ?? e);
-  //         }
-  //       }
-  //     }
-  //   } finally {
-  //     setBookmarking(false);
-  //   }
-  // }
+  }
 
   const handleBack = () => {
     if (window.history.length > 1) navigate(-1);
@@ -479,12 +376,9 @@ export default function JobDetailPage() {
         <div className="px-4 !pt-4 !pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-3">
             <button
-              aria-label={bookmarked ? "찜 취소" : "찜하기"}
-              className={`w-12 h-12 shrink-0 rounded-[10px] ${
-                bookmarking ? "opacity-70" : ""
-              } bg-[#729A73] flex items-center justify-center`}
-              // onClick={onToggleBookmark}
-              disabled={bookmarking}
+              aria-label="찜하기"
+              className="w-12 h-12 shrink-0 rounded-[10px] bg-[#729A73] flex items-center justify-center"
+              onClick={() => setBookmarked((v) => !v)}
             >
               <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-[45px] h-[45px]" />
             </button>
@@ -503,17 +397,17 @@ export default function JobDetailPage() {
           </div>
         </div>
       </div>
-      {/* <ApplySheet
+      <ApplySheet
         open={applyOpen}
         content={applyContent}
         setContent={setApplyContent}
         attachChecked={attachChecked}
         onToggleAttach={handleToggleAttach}
-        canSubmit={!submitting && applyContent.trim().length > 0}
+        canSubmit={attachChecked && !submitting} // ✅ 체크됐을 때만 활성화(요구사항)
         submitting={submitting}
         onClose={() => setApplyOpen(false)}
         onSubmit={onSubmitApply}
-      /> */}
+      />
       ;
     </div>
   );
