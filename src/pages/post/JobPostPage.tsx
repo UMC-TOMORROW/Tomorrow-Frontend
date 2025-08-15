@@ -42,13 +42,12 @@ function to24h(t: string) {
 }
 
 // --- 로컬 enum 매핑(디자인/구성 변경 X) ---
-const envMap: Record<string, "SIT" | "STAND" | "LIGHT_LIFTING" | "HEAVY_LIFTING" | "ACTIVE" | "CUSTOMER_SERVICE"> = {
+const envMap: Record<string, "SIT" | "STAND" | "DELIVERY" | "PHYSICAL" | "HUMAN"> = {
   "앉아서 근무 중심": "SIT",
   "서서 근무 중심": "STAND",
-  "가벼운 물건 운반": "LIGHT_LIFTING",
-  "무거운 물건 운반": "HEAVY_LIFTING",
-  "신체 활동 중심": "ACTIVE",
-  "사람 응대 중심": "CUSTOMER_SERVICE",
+  "물건 운반": "DELIVERY",
+  "신체 활동 중심": "PHYSICAL",
+  "사람 응대 중심": "HUMAN",
 };
 
 const categoryMap: Record<string, string> = {
@@ -113,9 +112,9 @@ const buildEnvSnakeList = (envKoList: string[]) => {
   const list: string[] = [];
   if (mapped.has("STAND")) list.push("can_work_standing");
   if (mapped.has("SIT")) list.push("can_work_sitting");
-  if (mapped.has("ACTIVE")) list.push("can_move_actively");
-  if (mapped.has("CUSTOMER_SERVICE")) list.push("can_communicate");
-  if (mapped.has("LIGHT_LIFTING") || mapped.has("HEAVY_LIFTING")) list.push("can_carry_objects");
+  if (mapped.has("PHYSICAL")) list.push("can_move_actively");
+  if (mapped.has("HUMAN")) list.push("can_communicate");
+  if (mapped.has("DELIVERY")) list.push("can_carry_objects");
   return list;
 };
 

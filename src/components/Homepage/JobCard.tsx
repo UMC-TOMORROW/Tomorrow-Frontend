@@ -1,10 +1,45 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import palette from "../../styles/theme";
 import defaultLogo from "../../assets/logo/logo.png";
 import { Link } from "react-router-dom";
+import type { PaymentType } from "../../types/recommendation";
+
+const paymentUnitMap: Record<PaymentType, string> = {
+  HOURLY: "시",
+  DAILY: "일",
+  MONTHLY: "월",
+  PER_TASK: "건당",
+};
+
+const buildS3Candidates = (url?: string) => {
+  const raw = (url ?? "").trim();
+  if (!raw || raw === "...") return [];
+  const out = new Set<string>([raw]);
+  try {
+    const u = new URL(raw);
+    const p = u.pathname;
+
+    if (p.includes("+")) {
+      const u20 = new URL(raw);
+      u20.pathname = p.replace(/\+/g, "%20");
+      out.add(u20.toString());
+
+      const u2b = new URL(raw);
+      u2b.pathname = p.replace(/\+/g, "%2B");
+      out.add(u2b.toString());
+    } else if (p.includes("%20")) {
+      const up = new URL(raw);
+      up.pathname = p.replace(/%20/g, "+");
+      out.add(up.toString());
+    }
+  } catch {
+    // 그냥 원본만 사용
+  }
+  return Array.from(out);
+};
 
 interface JobCardProps {
-  jobId: number; // ✅ 추가: 라우팅에 필요
+  jobId: number;
   company: string;
   title: string;
   review: string;
@@ -14,6 +49,7 @@ interface JobCardProps {
   isTime: boolean;
   isPeriod: boolean;
   environment?: string[];
+  paymentType: PaymentType;
 }
 
 const JobCard = ({
@@ -27,9 +63,23 @@ const JobCard = ({
   isTime,
   isPeriod,
   environment,
+  paymentType,
 }: JobCardProps) => {
   const [hovered, setHovered] = useState(false);
   const isActive = hovered;
+
+  const candidates = useMemo(() => buildS3Candidates(image), [image]);
+  const [srcIdx, setSrcIdx] = useState(0);
+  const currentSrc = candidates[srcIdx] ?? "";
+
+  const onImgError: React.ReactEventHandler<HTMLImageElement> = (e) => {
+    if (srcIdx < candidates.length - 1) {
+      setSrcIdx((i) => i + 1);
+    } else {
+      e.currentTarget.src = defaultLogo;
+    }
+  };
+
   const environmentMap: Record<string, string> = {
     can_work_standing: "서서 근무 중심",
     can_work_sitting: "앉아서 근무 중심",
@@ -48,13 +98,14 @@ const JobCard = ({
       .filter(Boolean)
       .join(", ") || "";
 
+  const paymentUnit = paymentUnitMap[paymentType];
+
   return (
     <div
       className="bg-white w-[393px] mx-auto overflow-x-hidden"
       style={{ fontFamily: "Pretendard" }}
     >
       <div className="px-[16px] pt-[10px] pb-[6px]">
-        {/* 텍스트 + 사진 */}
         <div className="flex justify-between items-start">
           <div className="flex-1 pr-[80px]">
             <p className="text-[12px] text-black">{company}</p>
@@ -80,20 +131,19 @@ const JobCard = ({
           {/* 사진 */}
           <div className="flex items-center !mt-[3px] justify-center h-full w-[60px]">
             <img
-              src={image?.trim() ? image : defaultLogo}
+              src={currentSrc || defaultLogo}
               alt={title}
-              className="!h-15 !w-15 rounded"
+              onError={onImgError}
+              className="!h-15 !w-15"
             />
           </div>
         </div>
 
-        {/* 구분선 (카드 내 선) */}
         <div className="-mx-[0px] !mt-[10px] h-[1px] bg-[#BFBFBF8C]" />
 
-        {/* 하단 위치 + 버튼 */}
         <div className="flex justify-between items-center !mb-1 !mt-2">
           <p className="text-[13px] text-black">
-            {location} &nbsp; 시 {wage}
+            {location} &nbsp; {paymentUnit} {wage}
           </p>
 
           <Link
@@ -115,7 +165,6 @@ const JobCard = ({
         </div>
       </div>
 
-      {/* 바깥쪽 1px 회색 구분선 */}
       <div
         className="-mx-[16px]"
         style={{ height: "1px", backgroundColor: palette.gray.default }}

@@ -2,14 +2,7 @@
 import React from "react";
 import imagePlus from "../../assets/jobRegister/image_plus.png";
 
-const jobTypes = [
-  "앉아서 근무 중심",
-  "서서 근무 중심",
-  "가벼운 물건 운반",
-  "무거운 물건 운반",
-  "신체 활동 중심",
-  "사람 응대 중심",
-];
+const jobTypes = ["앉아서 근무 중심", "서서 근무 중심", "물건 운반", "신체 활동 중심", "사람 응대 중심"];
 
 type Props = {
   // 설명 본문
