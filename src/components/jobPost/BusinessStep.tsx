@@ -1,29 +1,11 @@
-// src/components/jobPost/BusinessStep.tsx
-import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Devider from "../common/Devider";
 import CommonButton from "../common/CommonButton";
 import { axiosInstance } from "../../apis/axios";
 
-const useStableJobId = () => {
-  const location = useLocation();
-  const qs = new URLSearchParams(location.search);
-  const fromState = (location.state as any)?.jobId;
-  const fromQuery = qs.get("jobId");
-  const stored = typeof window !== "undefined" ? sessionStorage.getItem("jobId") : null;
-
-  const jobId = useMemo(() => Number(fromState ?? fromQuery ?? stored ?? NaN), [fromState, fromQuery, stored]);
-
-  useEffect(() => {
-    if (Number.isFinite(jobId)) sessionStorage.setItem("jobId", String(jobId));
-  }, [jobId]);
-
-  return Number.isFinite(jobId) ? jobId : null;
-};
-
 export default function BusinessStep() {
   const navigate = useNavigate();
-  const jobId = useStableJobId();
 
   const [regNo, setRegNo] = useState("");
   const [corpName, setCorpName] = useState("");
@@ -49,9 +31,9 @@ export default function BusinessStep() {
     try {
       setSubmitting(true);
 
-      console.log("[BusinessStep] POST /api/v1/business-verifications", payload);
+      console.log("[BusinessStep] POST /api/v1/jobs/business-verifications/register", payload);
 
-      const { data: regRes } = await axiosInstance.post("/api/v1/jobs/business-verifications/register", payload, {
+      await axiosInstance.post("/api/v1/jobs/business-verifications/register", payload, {
         withCredentials: true,
         headers: {
           "Content-Type": "application/json",
@@ -59,22 +41,22 @@ export default function BusinessStep() {
         },
       });
 
-      // 서버 스펙: "세션에 job이 있으면 일자리 등록까지 진행"
-      // 필요 시 응답에서 jobId 추출해 세션/상태에 저장
-      const jobId = regRes?.result?.jobId ?? regRes?.jobId ?? regRes?.result?.id ?? regRes?.id ?? null;
-      if (jobId) sessionStorage.setItem("jobId", String(jobId));
-      navigate("/", { state: { jobId } });
+      // ✅ 스펙: jobId는 최종 완료 시에만 발급됨.
+      // 여기서는 추가 호출 없이 성공 처리만 하고 홈/완료 페이지로 이동.
+      alert("사업자 인증이 완료되었습니다. 등록이 마무리되면 목록에 반영됩니다.");
+      navigate("/", { replace: true });
     } catch (e: any) {
       const status = e?.response?.status;
       const data = e?.response?.data;
+
       console.group("[BusinessStep] 제출 실패");
       console.log("status:", status);
       console.log("data:", data);
       console.groupEnd();
 
-      // ❗ 세션에 job이 없을 때 나올 수 있는 케이스 처리
+      // 세션에 1차 폼이 없으면 서버가 400/409 등을 낼 수 있음
       if (status === 400 || status === 409) {
-        alert("이전 단계(일자리 등록 폼)가 세션에 없습니다. 처음부터 다시 진행해주세요.");
+        alert("이전 단계(일자리 등록 1차 폼)가 세션에 없습니다. 처음부터 다시 진행해주세요.");
         return;
       }
 
@@ -118,7 +100,6 @@ export default function BusinessStep() {
       <Devider />
 
       <div className="flex flex-col gap-6">
-        {/* 사업자 등록 번호 */}
         <div>
           <label className="block text-[14px] font-semibold text-[#333] !mb-2">사업자 등록 번호</label>
           <input
@@ -129,8 +110,6 @@ export default function BusinessStep() {
             onChange={(e) => setRegNo(e.target.value.replace(/\D+/g, "").slice(0, 10))}
           />
         </div>
-
-        {/* 상호 */}
         <div>
           <label className="block text-[14px] font-semibold text-[#333] !mb-2">상호 (법인/단체명)</label>
           <input
@@ -141,8 +120,6 @@ export default function BusinessStep() {
             onChange={(e) => setCorpName(e.target.value)}
           />
         </div>
-
-        {/* 성명 */}
         <div>
           <label className="block text-[14px] font-semibold text-[#333] !mb-2">성명 (대표자)</label>
           <input
@@ -153,8 +130,6 @@ export default function BusinessStep() {
             onChange={(e) => setOwner(e.target.value)}
           />
         </div>
-
-        {/* 개업연월일 */}
         <div className="!mb-6">
           <label className="block text-[14px] font-semibold text-[#333] !mb-2">개업연월일</label>
           <input
