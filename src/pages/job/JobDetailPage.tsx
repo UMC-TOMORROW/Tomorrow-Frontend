@@ -5,6 +5,8 @@ import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
 import { postApplication } from "../../apis/applications";
 import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
+import { getMe } from "../../apis/mypage"; // /api/v1/members/me
+import { authApi } from "../../apis/authApi";
 
 import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
@@ -91,7 +93,7 @@ const JOB_CATEGORY_KO: Record<string, string> = {
   ELDER_CARE: "어르신 돌봄",
   CHILD_CARE: "아이 돌봄",
   BEAUTY: "미용/뷰티",
-  OFFICE_ASSIST: "사무보조",
+  OFFICE_HELP: "사무보조",
   ETC: "기타",
 };
 
@@ -274,11 +276,37 @@ export default function JobDetailPage() {
     }
   }, [data, jobId]);
 
+  // 파일 안에 유틸 추가
+  async function ensureLoggedIn(): Promise<boolean> {
+    // 1) 바로 me 확인 (쿠키가 붙어야 200)
+    const me1 = await getMe();
+    if (me1) return true;
+
+    // 2) 세션 갱신 한 번 더 시도(쿠키 기반)
+    const ok = await authApi.refresh();
+    if (!ok) return false;
+
+    const me2 = await getMe();
+    return !!me2;
+  }
+
+  function gotoLogin() {
+    // 서버 로그인 페이지로 이동(탑레벨 네비게이션 → 쿠키 1st-party로 심김)
+    window.location.href = `/auth?redirect=${encodeURIComponent(location.href)}`;
+  }
+
   // 지원하기
   async function onSubmitApply() {
     try {
       if (submitting || applied) return;
       setSubmitting(true);
+
+      const authed = await ensureLoggedIn();
+      if (!authed) {
+        alert("로그인이 필요합니다.");
+        gotoLogin();
+        return;
+      }
 
       const postId = Number(data?.jobId ?? jobId); // 상세에서 받은 진짜 PK 우선
       if (!Number.isFinite(postId)) {
