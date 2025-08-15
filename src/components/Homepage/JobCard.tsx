@@ -4,7 +4,7 @@ import defaultLogo from "../../assets/logo/logo.png";
 import { Link } from "react-router-dom";
 
 interface JobCardProps {
-  jobId: number; // ✅ 추가: 라우팅에 필요
+  jobId: number;
   company: string;
   title: string;
   review: string;
@@ -14,6 +14,7 @@ interface JobCardProps {
   isTime: boolean;
   isPeriod: boolean;
   environment?: string[];
+  paymentType: "HOURLY" | "MONTHLY";
 }
 
 const JobCard = ({
@@ -27,6 +28,7 @@ const JobCard = ({
   isTime,
   isPeriod,
   environment,
+  paymentType,
 }: JobCardProps) => {
   const [hovered, setHovered] = useState(false);
   const isActive = hovered;
@@ -47,6 +49,8 @@ const JobCard = ({
       ?.map((e) => environmentMap[e])
       .filter(Boolean)
       .join(", ") || "";
+
+  const paymentUnit = paymentType === "HOURLY" ? "시" : "월";
 
   return (
     <div
@@ -93,7 +97,7 @@ const JobCard = ({
         {/* 하단 위치 + 버튼 */}
         <div className="flex justify-between items-center !mb-1 !mt-2">
           <p className="text-[13px] text-black">
-            {location} &nbsp; 시 {wage}
+            {location} &nbsp; {paymentUnit} {wage}
           </p>
 
           <Link

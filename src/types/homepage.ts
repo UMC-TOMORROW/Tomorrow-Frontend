@@ -6,7 +6,7 @@ export interface JobsView {
   salary: number;
   review_count: number;
   job_image_url: string;
-  payment_type: string;
+  payment_type: "HOURLY" | "MONTHLY";
   isTimeNegotiable: boolean;
   isPeriodNegotiable: boolean;
   work_environment: string[];

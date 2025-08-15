@@ -202,6 +202,7 @@ const HomePage = () => {
                   ? jobCard.work_environment
                   : []
               }
+              paymentType={jobCard.payment_type}
             />
           ))
         ) : (
