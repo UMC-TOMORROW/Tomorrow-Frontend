@@ -2,6 +2,14 @@ import { useState } from "react";
 import palette from "../../styles/theme";
 import defaultLogo from "../../assets/logo/logo.png";
 import { Link } from "react-router-dom";
+import type { PaymentType } from "../../types/recommendation";
+
+const paymentUnitMap: Record<PaymentType, string> = {
+  HOURLY: "시",
+  DAILY: "일",
+  MONTHLY: "월",
+  PER_TASK: "건당",
+};
 
 interface JobCardProps {
   jobId: number;
@@ -14,7 +22,7 @@ interface JobCardProps {
   isTime: boolean;
   isPeriod: boolean;
   environment?: string[];
-  paymentType: "HOURLY" | "MONTHLY";
+  paymentType: PaymentType;
 }
 
 const JobCard = ({
@@ -32,6 +40,7 @@ const JobCard = ({
 }: JobCardProps) => {
   const [hovered, setHovered] = useState(false);
   const isActive = hovered;
+
   const environmentMap: Record<string, string> = {
     can_work_standing: "서서 근무 중심",
     can_work_sitting: "앉아서 근무 중심",
@@ -50,7 +59,11 @@ const JobCard = ({
       .filter(Boolean)
       .join(", ") || "";
 
-  const paymentUnit = paymentType === "HOURLY" ? "시" : "월";
+  const paymentUnit = paymentUnitMap[paymentType]; // ✅ 타입 안전
+
+  const isValidImageUrl =
+    typeof image === "string" && !!image.trim() && image.trim() !== "...";
+  const imageSrc = isValidImageUrl ? image : defaultLogo;
 
   return (
     <div
@@ -83,11 +96,7 @@ const JobCard = ({
 
           {/* 사진 */}
           <div className="flex items-center !mt-[3px] justify-center h-full w-[60px]">
-            <img
-              src={image?.trim() ? image : defaultLogo}
-              alt={title}
-              className="!h-15 !w-15 rounded"
-            />
+            <img src={imageSrc} alt={title} className="!h-15 !w-15 rounded" />
           </div>
         </div>
 
