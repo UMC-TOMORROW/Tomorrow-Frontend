@@ -26,8 +26,8 @@ export default function PersonalStep() {
   const jobId = useStableJobId();
 
   const [name, setName] = useState("");
-  const [district, setDistrict] = useState(""); // payload.location
-  const [phone, setPhone] = useState(""); // payload.contact
+  const [district, setDistrict] = useState("");
+  const [phone, setPhone] = useState("");
   const [request, setRequest] = useState(""); // payload.registrationPurpose
   const [latitude, _setLatitude] = useState<number | undefined>(undefined);
   const [longitude, _setLongitude] = useState<number | undefined>(undefined);
