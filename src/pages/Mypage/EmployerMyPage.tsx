@@ -150,7 +150,12 @@ const EmployerMyPage = () => {
               <span>자주 묻는 질문</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li onClick={() =>
+                window.open(
+                  "https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1",
+                  "_blank"
+                )
+              } className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b cursor-pointer border-[#DEDEDE]">
               <span>1:1 문의</span>
               <button>
                 <SlArrowRight className="w-[15px] h-[15px]" />

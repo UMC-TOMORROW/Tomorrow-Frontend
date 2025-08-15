@@ -178,9 +178,13 @@ const MyPage = () => {
             </li>
             <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
               <span>1:1 문의</span>
-              <button>
-                <SlArrowRight className="w-[15px] h-[15px]" />
-              </button>
+              <Link
+                to={
+                  "https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1"
+                }
+              >
+                <SlArrowRight className="w-[15px] h-[15px]"/>
+              </Link>
             </li>
           </ul>
         </section>
