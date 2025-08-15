@@ -29,6 +29,7 @@ import PersonalStep from "./components/jobPost/PerSonalStep";
 import WorkPreference from "./pages/Mypage/WorkPreference";
 import JobDetailPage from "./pages/job/JobDetailPage";
 import ChatPage from "./pages/careerTalk/ChatPage";
+import JobReviewPage from "./pages/job/JobReviewPage";
 import { getMyInfo } from "./apis/employerMyPage";
 
 // --- 로그인 여부 헬퍼 (getMyInfo 성공 = 로그인 상태) ---
@@ -97,6 +98,7 @@ const router = createBrowserRouter([
       { path: "/post/personal", element: <PersonalStep />, loader: requireAuthLoader },
 
       { path: "jobs/:jobId", element: <JobDetailPage /> },
+      { path: "jobs/:jobId/reviews", element: <JobReviewPage /> },
     ],
   },
 

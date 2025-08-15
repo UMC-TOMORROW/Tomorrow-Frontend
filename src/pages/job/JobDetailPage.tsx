@@ -266,11 +266,21 @@ console.log(loading, error)
     }
   }
 
+  const handleBack = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/"); // 필요하면 "/jobs" 등으로 변경
+  };
+
   return (
     <div className="max-w-[375px] mx-auto bg-white">
       <div className="sticky top-0 z-10 bg-white">
         <div className="-mx-4 px-4 w-full flex items-center justify-between h-14 border-b border-[#DEDEDE] relative">
-          <button className="text-[20px] w-12 h-12 flex items-center justify-center" aria-label="뒤로가기">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="text-[20px] w-12 h-12 flex items-center justify-center"
+            aria-label="뒤로가기"
+          >
             ✕
           </button>
           <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-bold font-pretendard">일자리 정보</h1>
@@ -286,9 +296,16 @@ console.log(loading, error)
           </p>
           <div className="flex items-center gap-2 text-[12px] text-[#777]">
             <StarsImg value={job.rating} />
-            <span className="inline-flex items-center !px-2 !py-0.5 rounded-full border border-[#BFD6C0] text-[#557E59]">
-              후기 {job.reviewCount}건
-            </span>
+            <button
+              type="button"
+              onClick={() => navigate(`/jobs/${job.jobId ?? jobId}/reviews`)}
+              className="inline-flex items-center gap-2 focus:outline-none"
+              aria-label={`후기 ${job.reviewCount}건 보기`}
+            >
+              <span className="inline-flex items-center !px-2 !py-0.5 rounded-full border border-[#BFD6C0] text-[#557E59]">
+                후기 {job.reviewCount}건
+              </span>
+            </button>
           </div>
         </section>
 
