@@ -1,30 +1,35 @@
-// /apis/applications.ts
 import { axiosInstance } from "./axios";
-import type { RawAxiosRequestHeaders } from "axios";
 
-// 간단 쿠키 리더 (js-cookie 없이 동작)
-function getCookie(name: string): string | null {
-  const hit = document.cookie.split("; ").find((row) => row.startsWith(name + "="));
-  return hit ? decodeURIComponent(hit.split("=")[1]) : null;
-}
-
-export interface PostApplicationBody {
+export type PostApplicationBody = {
   content: string;
-  jobId: number;
-  resumeId?: number; // 저장된 이력서가 있을 때만
+  jobId?: number;
+  resumeId?: number;
+};
+
+// 스웨거: POST /api/v1/posts/{postId}/applications
+export const postApplication = (postId: number, body: PostApplicationBody) =>
+  axiosInstance.post(`/api/v1/posts/${postId}/applications`, body, {
+    withCredentials: true,
+    headers: {
+      Accept: "application/json",
+      ...getAuthHeader(),
+    },
+  });
+
+function readCookie(name: string): string | null {
+  const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+  return m ? decodeURIComponent(m[1]) : null;
 }
-
-/**
- * 지원 생성
- * - 성공 시 서버의 result.id(number)를 반환
- * - 전역 axios 설정은 건드리지 않고, 이 요청에만 Authorization 헤더를 추가
- */
-export async function postApplication(body: PostApplicationBody): Promise<number> {
-  const token = getCookie("accessToken"); // 팀에서 쓰는 쿠키 키명에 맞춰 수정 가능
-  const headers: RawAxiosRequestHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-
-  const { data } = await axiosInstance.post("/api/v1/applications", body, { headers });
-  // 응답 스키마 예: { code:"COMMON201", result: { id: "1" } }
-  const id = data?.result?.id;
-  return typeof id === "string" ? Number(id) : (id as number);
+function sanitizeToken(raw: string): string {
+  return raw
+    .replace(/^Bearer\s+/i, "")
+    .replace(/^"|"$/g, "")
+    .trim();
+}
+export function getAuthHeader(): Record<string, string> {
+  const rawCookie = readCookie("Authorization") ?? readCookie("accessToken") ?? readCookie("ACCESS_TOKEN") ?? "";
+  const rawLS = localStorage.getItem("Authorization") ?? localStorage.getItem("accessToken") ?? "";
+  const rawSS = sessionStorage.getItem("Authorization") ?? sessionStorage.getItem("accessToken") ?? "";
+  const token = sanitizeToken(rawCookie || rawLS || rawSS);
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }

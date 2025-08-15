@@ -256,31 +256,59 @@ export default function JobDetailPage() {
       alert(e?.response?.data?.message ?? "이력서 확인 중 오류가 발생했어요.");
     }
   }
+  useEffect(() => {
+    if (data) {
+      console.log(
+        "[Detail IDs] route jobId:",
+        jobId,
+        "api.jobId:",
+        data?.jobId,
+        "api.id:",
+        data?.id,
+        "api.postId:",
+        data?.postId
+      );
+    }
+  }, [data, jobId]);
 
-  // 제출: 체크박스 필수, resumeId 필수
+  // 지원하기
   async function onSubmitApply() {
-    if (!attachChecked || !resumeId) {
-      console.warn("[Apply] blocked submit: attachChecked/resumeId not ready", { attachChecked, resumeId });
-      return;
-    } // 방어
     try {
+      if (submitting || applied) return;
       setSubmitting(true);
-      const payload = {
-        content: applyContent.trim(),
-        jobId: Number(jobId),
-        resumeId,
-      };
-      console.log("[Apply] POST /applications payload ▶", payload);
 
-      await postApplication(payload);
+      const postId = Number(data?.jobId ?? jobId); // 상세에서 받은 진짜 PK 우선
+      if (!Number.isFinite(postId)) {
+        alert("공고 식별자가 올바르지 않습니다.");
+        return;
+      }
+
+      const base = { content: applyContent.trim(), jobId: postId };
+      const body = attachChecked && resumeId ? { ...base, resumeId } : base;
+
+      const res = await postApplication(postId, body);
+
+      // ✅ 응답 검증 (201/200 + JSON)
+      const status = res.status;
+      const ct = String(res.headers?.["content-type"] || "");
+      if (!(status === 201 || status === 200) || !ct.includes("application/json")) {
+        throw new Error(`정상 저장 아님 (status=${status}, ct=${ct})`);
+      }
+
+      console.log("[Apply] success ▶", { postId, usedResume: !!(attachChecked && resumeId), status });
       alert("지원이 완료되었습니다.");
       setApplied(true);
       setApplyOpen(false);
       setApplyContent("");
-      setAttachChecked(false); // 초기화
+      setAttachChecked(false);
     } catch (e: any) {
-      console.error("[Apply] application error ▶", e?.response ?? e);
-      alert(e?.response?.data?.message ?? "지원 중 오류가 발생했어요.");
+      if (e?.isHtml || `${e?.response?.headers?.["content-type"]}`.includes("text/html")) {
+        alert("로그인이 필요합니다. 다시 로그인해 주세요.");
+        console.error("[Apply] HTML/Redirect ▶", e?.response ?? e);
+      } else {
+        console.error("[Apply] error ▶", e?.response ?? e);
+        alert(e?.response?.data?.message ?? e?.message ?? "지원 중 오류가 발생했어요.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -474,7 +502,7 @@ export default function JobDetailPage() {
         setContent={setApplyContent}
         attachChecked={attachChecked}
         onToggleAttach={handleToggleAttach}
-        canSubmit={attachChecked && !submitting} // ✅ 체크됐을 때만 활성화(요구사항)
+        canSubmit={!submitting && applyContent.trim().length > 0}
         submitting={submitting}
         onClose={() => setApplyOpen(false)}
         onSubmit={onSubmitApply}
