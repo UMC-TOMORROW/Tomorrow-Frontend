@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import palette from "../../styles/theme";
 import defaultLogo from "../../assets/logo/logo.png";
 import { Link } from "react-router-dom";
@@ -11,20 +11,31 @@ const paymentUnitMap: Record<PaymentType, string> = {
   PER_TASK: "건당",
 };
 
-const normalizeS3Url = (url: string) => {
+const buildS3Candidates = (url?: string) => {
+  const raw = (url ?? "").trim();
+  if (!raw || raw === "...") return [];
+  const out = new Set<string>([raw]);
   try {
-    const u = new URL(url);
-    // '+'는 공백 의도로 들어온 경우가 많으므로 우선 %20으로 치환
-    const cleaned = u.pathname.replace(/\+/g, "%20");
-    // 세그먼트 단위로 재인코딩 (슬래시는 유지)
-    const parts = cleaned
-      .split("/")
-      .map((seg) => encodeURIComponent(decodeURIComponent(seg)));
-    u.pathname = parts.join("/");
-    return u.toString();
+    const u = new URL(raw);
+    const p = u.pathname;
+
+    if (p.includes("+")) {
+      const u20 = new URL(raw);
+      u20.pathname = p.replace(/\+/g, "%20");
+      out.add(u20.toString());
+
+      const u2b = new URL(raw);
+      u2b.pathname = p.replace(/\+/g, "%2B");
+      out.add(u2b.toString());
+    } else if (p.includes("%20")) {
+      const up = new URL(raw);
+      up.pathname = p.replace(/%20/g, "+");
+      out.add(up.toString());
+    }
   } catch {
-    return url;
+    // 그냥 원본만 사용
   }
+  return Array.from(out);
 };
 
 interface JobCardProps {
@@ -57,14 +68,17 @@ const JobCard = ({
   const [hovered, setHovered] = useState(false);
   const isActive = hovered;
 
-  // 🔽 여기서부터 내부에서 계산
-  const rawImage = image ?? "";
-  const normalizedImage = normalizeS3Url(rawImage);
-  const isValidImageUrl =
-    typeof normalizedImage === "string" &&
-    !!normalizedImage.trim() &&
-    normalizedImage.trim() !== "...";
-  const imageSrc = isValidImageUrl ? normalizedImage : defaultLogo;
+  const candidates = useMemo(() => buildS3Candidates(image), [image]);
+  const [srcIdx, setSrcIdx] = useState(0);
+  const currentSrc = candidates[srcIdx] ?? "";
+
+  const onImgError: React.ReactEventHandler<HTMLImageElement> = (e) => {
+    if (srcIdx < candidates.length - 1) {
+      setSrcIdx((i) => i + 1);
+    } else {
+      e.currentTarget.src = defaultLogo;
+    }
+  };
 
   const environmentMap: Record<string, string> = {
     can_work_standing: "서서 근무 중심",
@@ -117,12 +131,10 @@ const JobCard = ({
           {/* 사진 */}
           <div className="flex items-center !mt-[3px] justify-center h-full w-[60px]">
             <img
-              src={imageSrc}
+              src={currentSrc || defaultLogo}
               alt={title}
-              onError={(e) => {
-                e.currentTarget.src = defaultLogo;
-              }}
-              className="!h-15 !w-15 rounded"
+              onError={onImgError}
+              className="!h-15 !w-15"
             />
           </div>
         </div>
