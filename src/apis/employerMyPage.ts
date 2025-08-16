@@ -102,3 +102,4 @@ export const updateApplicationStatus = async (
   >(`/api/v1/jobs/${jobId}/applications/${applicationId}/status`, { status });
   return res.data.result;
 };
+

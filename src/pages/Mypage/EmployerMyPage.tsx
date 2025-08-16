@@ -107,13 +107,13 @@ const EmployerMyPage = () => {
         <section className="flex justify-around h-[100px] border-b border-[#DEDEDE] px-[20px] py-[15px] mb-[30px]">
           <div
             onClick={() => navigate("/MyPage/ManageMyJobs")}
-            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
+            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl cursor-pointer"
           >
             <p>공고 관리</p>
             <img src={resume} />
           </div>
           <div
-            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
+            className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl cursor-pointer"
             onClick={() => navigate("/post")}
           >
             <p>일자리 등록</p>
@@ -129,9 +129,12 @@ const EmployerMyPage = () => {
             사업자 정보
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li
+              onClick={() => navigate("/post/business")}
+              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
+            >
               <span>사업자 정보 등록</span>
-              <SlArrowRight className="cursor-pointer" onClick={() => navigate("/post/business")} />
+              <SlArrowRight />
             </li>
           </ul>
         </section>
@@ -152,18 +155,18 @@ const EmployerMyPage = () => {
               <span>자주 묻는 질문</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li
+              onClick={() =>
+                window.open(
+                  "https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1",
+                  "_blank"
+                )
+              }
+              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
+            >
               <span>1:1 문의</span>
               <button>
-                <SlArrowRight
-                  className="w-[15px] h-[15px] cursor-pointer"
-                  onClick={() =>
-                    window.open(
-                      "https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1",
-                      "_blank"
-                    )
-                  }
-                />
+                <SlArrowRight className="w-[15px] h-[15px]" />
               </button>
             </li>
           </ul>
@@ -177,41 +180,45 @@ const EmployerMyPage = () => {
             약관 및 방침
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li
+              onClick={() =>
+                window.open(
+                  "https://lava-scion-9fd.notion.site/244cf0577e4180128dc9df50ee9b73e6?source=copy_link",
+                  "_blank"
+                )
+              }
+              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
+            >
               <span>이용약관</span>
-              <SlArrowRight
-                className="cursor-pointer"
-                onClick={() =>
-                  window.open(
-                    "https://lava-scion-9fd.notion.site/244cf0577e4180128dc9df50ee9b73e6?source=copy_link",
-                    "_blank"
-                  )
-                }
-              />
+              <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li
+              onClick={() =>
+                window.open(
+                  "https://lava-scion-9fd.notion.site/244cf0577e4180658616e53b81ba4a5e?source=copy_link",
+                  "_blank"
+                )
+              }
+              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE] cursor-pointer"
+            >
               <span>개인정보처리방침</span>
-              <SlArrowRight
-                className="cursor-pointer"
-                onClick={() =>
-                  window.open(
-                    "https://lava-scion-9fd.notion.site/244cf0577e4180658616e53b81ba4a5e?source=copy_link",
-                    "_blank"
-                  )
-                }
-              />
+              <SlArrowRight />
             </li>
           </ul>
         </section>
 
         <section>
           <div className="flex justify-center items-center text-[14px] h-[16px] gap-5 my-[70px]">
-            <button onClick={handleLogout} disabled={isLoggingOut}>
+            <button
+              className="cursor-pointer"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
               {isLoggingOut ? "로그아웃 중..." : "로그아웃"}
             </button>
             <span>|</span>
             <button
-              className="text-[#EE0606]"
+              className="text-[#EE0606] cursor-pointer"
               onClick={() => setShowUnregister(true)}
             >
               회원 탈퇴
