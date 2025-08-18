@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import palette from "../styles/theme";
 import Header from "../components/Header";
@@ -61,7 +61,9 @@ const SearchPage = () => {
 
   return (
     <div className="pt-[50px] bg-white min-h-screen font-[Pretendard]">
-      <Header title="내일" />
+      <Link to={"/"}>
+        <Header title="내일" />
+      </Link>
 
       {/* 헤더 하단 선 가리기 + 검색바 */}
       <div className="relative mt-4">
