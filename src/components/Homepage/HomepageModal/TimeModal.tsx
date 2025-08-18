@@ -5,6 +5,7 @@ interface TimeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (time: { start?: string; end?: string }) => void;
+  selected?: { start?: string; end?: string };
 }
 
 export default function TimeModal({

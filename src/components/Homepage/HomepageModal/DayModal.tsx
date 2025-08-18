@@ -4,7 +4,8 @@ import palette from "../../../styles/theme";
 interface DayModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (days: string[]) => void; // 예: ["MON","WED","FRI"]
+  onSubmit: (days: string[]) => void;
+  selected?: string[];
 }
 
 const days = ["월", "화", "수", "목", "금", "토", "일"] as const;

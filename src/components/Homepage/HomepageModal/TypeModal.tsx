@@ -5,6 +5,7 @@ interface TypeModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (types: string[]) => void;
+  selected?: string[];
 }
 
 const jobCategoryMap = {
