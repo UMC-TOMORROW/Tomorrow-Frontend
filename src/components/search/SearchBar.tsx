@@ -14,9 +14,17 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
     }
   };
 
+  const handleSearchClick = () => {
+    if (keyword.trim()) {
+      onSearch(keyword.trim());
+    }
+  };
+
   return (
     <div className="flex items-center w-[306px] border-[1.5px] border-[#729A73] rounded-[10px] px-[10px] py-[7px] gap-[7px]">
-      <img src={searchIcon} alt="search" className="w-4 h-4 mr-2" />
+      <button type="button" onClick={handleSearchClick}>
+        <img src={searchIcon} alt="search" className="w-4 h-4 mr-2" />
+      </button>
       <input
         type="text"
         placeholder="궁금한 내용을 찾아보세요"
