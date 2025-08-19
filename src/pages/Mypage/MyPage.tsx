@@ -172,13 +172,12 @@ const MyPage = () => {
               <span>자주 묻는 질문</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
-              <span>1:1 문의</span>
+            <li className="border-b border-[#DEDEDE]">
               <Link
-                to={
-                  "https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1"
-                }
+                to="https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1"
+                className="flex h-[50px] px-[25px] text-[15px] items-center justify-between"
               >
+                <span>1:1 문의</span>
                 <SlArrowRight className="w-[15px] h-[15px]" />
               </Link>
             </li>
@@ -193,23 +192,22 @@ const MyPage = () => {
             약관 및 방침
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
-              <span>이용약관</span>
+            <li className="border-b border-[#DEDEDE]">
               <Link
-                to={
-                  "https://lava-scion-9fd.notion.site/244cf0577e4180ee95abf93b26139a51?source=copy_link"
-                }
+                to="https://lava-scion-9fd.notion.site/244cf0577e4180ee95abf93b26139a51?source=copy_link"
+                className="flex h-[50px] px-[25px] text-[15px] items-center justify-between"
               >
+                <span>이용약관</span>
                 <SlArrowRight />
               </Link>
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
-              <span>개인정보처리방침</span>
+
+            <li className="border-b border-[#DEDEDE]">
               <Link
-                to={
-                  "https://lava-scion-9fd.notion.site/244cf0577e41803eae07ee61ed293c45?source=copy_link"
-                }
+                to="https://lava-scion-9fd.notion.site/244cf0577e41803eae07ee61ed293c45?source=copy_link"
+                className="flex h-[50px] px-[25px] text-[15px] items-center justify-between"
               >
+                <span>개인정보처리방침</span>
                 <SlArrowRight />
               </Link>
             </li>
