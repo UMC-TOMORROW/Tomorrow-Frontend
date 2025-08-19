@@ -1,25 +1,23 @@
 // 글 등록 시의 사업자 등록, 그냥 사업자 등록에 관한 api 헬퍼
 import { axiosInstance } from "../apis/axios";
 
-export async function registerJobWithSavedBusiness() {
+const getJobIdFromHeaders = (headers: any) => {
+  const loc = headers?.location || headers?.Location;
+  if (!loc) return null;
+  const last = String(loc).split("/").filter(Boolean).pop();
+  return last && /^\d+$/.test(last) ? Number(last) : last ?? null;
+};
+
+export async function registerJobWithSavedBusiness(): Promise<{ step?: string; jobId: number | string | null }> {
   const res = await axiosInstance.post(
     "/api/v1/jobs/business-verifications/register",
-    {},
+    {}, // ← 입력 안 받으므로 빈 바디
     { withCredentials: true, headers: { Accept: "application/json" } }
   );
 
-  const data = res?.data?.result ?? res?.data ?? {};
-  return { step: data?.step };
-}
+  const body = res?.data?.result ?? res?.data ?? {};
+  let jobId: any = body?.jobId ?? body?.id ?? null;
+  if (!jobId) jobId = getJobIdFromHeaders(res?.headers);
 
-export async function registerBusinessOnly(payload: {
-  bizNumber: string;
-  companyName: string;
-  ownerName: string;
-  openingDate: string;
-}) {
-  return axiosInstance.post("/api/v1/jobs/business-verifications/only", payload, {
-    withCredentials: true,
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-  });
+  return { step: body?.step, jobId: jobId ?? null };
 }
