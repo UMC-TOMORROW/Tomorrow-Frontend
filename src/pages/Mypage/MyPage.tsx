@@ -53,32 +53,28 @@ const MyPage = () => {
       setIsDeactivating(true);
 
       const meId = await getMe();
-      if (!meId) {
-        alert("회원 정보를 찾을 수 없습니다. 다시 로그인 후 이용해 주세요.");
-        return;
-      }
+      if (!meId)
+        throw new Error(
+          "회원 정보를 찾을 수 없습니다. 다시 로그인 후 이용해 주세요."
+        );
 
       const res = await deactivateMember(meId);
-
       const recoverableUntil = res?.recoverableUntil
         ? new Date(res.recoverableUntil).toLocaleString()
         : "알 수 없음";
       alert(`탈퇴가 접수되었습니다.\n복구 가능 기한: ${recoverableUntil}`);
-
+    } catch (e: unknown) {
+      const msg =
+        e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
+      alert(`탈퇴 처리에 실패했을 수 있습니다.\n${msg}`);
+      console.error(e);
+    } finally {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("memberId");
       setShowUnregister(false);
-      navigate("/auth", { replace: true });
-    } catch (e: unknown) {
-      const msg =
-        e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
-      alert(
-        `탈퇴 처리에 실패했습니다.\n(이미 탈퇴된 계정일 수 있어요)\n${msg}`
-      );
-      console.error(e);
-    } finally {
       setIsDeactivating(false);
+      navigate("/auth", { replace: true });
     }
   }, [isDeactivating, navigate]);
 
@@ -183,7 +179,7 @@ const MyPage = () => {
                   "https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1"
                 }
               >
-                <SlArrowRight className="w-[15px] h-[15px]"/>
+                <SlArrowRight className="w-[15px] h-[15px]" />
               </Link>
             </li>
           </ul>
