@@ -62,8 +62,21 @@ export const getJobsDefault = async (): Promise<JobsView[]> => {
 export const getJobsByKeyword = async (
   keyword: string
 ): Promise<JobsView[]> => {
-  const res = await axiosInstance.get("/api/v1/jobs/search", {
-    params: { keyword },
-  });
-  return asList<JobsView>(res.data);
+  const kw = (keyword ?? "").trim();
+  if (!kw) return [];
+
+  try {
+    const r1 = await axiosInstance.post("/api/v1/jobs/search", { keyword: kw });
+    return asList<JobsView>(r1.data);
+  } catch {
+    try {
+      const r2 = await axiosInstance.post("/api/v1/jobs/search", {
+        search: kw,
+      });
+      return asList<JobsView>(r2.data);
+    } catch {
+      const r3 = await axiosInstance.post("/api/v1/jobs/search", { q: kw });
+      return asList<JobsView>(r3.data);
+    }
+  }
 };
