@@ -1,24 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Devider from "../common/Devider";
 import CommonButton from "../common/CommonButton";
 import { axiosInstance } from "../../apis/axios";
-
-// const useStableJobId = () => {
-//   const location = useLocation();
-//   const qs = new URLSearchParams(location.search);
-//   const fromState = (location.state as any)?.jobId;
-//   const fromQuery = qs.get("jobId");
-//   const stored = typeof window !== "undefined" ? sessionStorage.getItem("jobId") : null;
-
-//   const jobId = useMemo(() => Number(fromState ?? fromQuery ?? stored ?? NaN), [fromState, fromQuery, stored]);
-
-//   useEffect(() => {
-//     if (Number.isFinite(jobId)) sessionStorage.setItem("jobId", String(jobId));
-//   }, [jobId]);
-
-//   return Number.isFinite(jobId) ? jobId : null;
-// };
 
 export default function BusinessStep() {
   const navigate = useNavigate();
@@ -30,6 +14,44 @@ export default function BusinessStep() {
   const [openDate, setOpenDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // 날짜 형식 변환 유틸리티
+  // YYYY-MM-DD 형식으로 변환
+  const toYMD = (v: any) => {
+    const s = String(v ?? "");
+    if (!s) return "";
+    const m = s.match(/^\d{4}-\d{2}-\d{2}/);
+    if (m) return m[0];
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return "";
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  };
+
+  // ✅ 페이지 진입 시 기존 사업자 DB가 있으면 입력 칸을 채운다
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await axiosInstance.get("/api/v1/jobs/business-verifications/me", {
+          withCredentials: true,
+          headers: { Accept: "application/json" },
+        });
+
+        // 서버 필드명 매핑에 맞춰 채움
+        setRegNo(
+          String(data?.bizNumber ?? "")
+            .replace(/\D+/g, "")
+            .slice(0, 10)
+        );
+        setCorpName(String(data?.companyName ?? ""));
+        setOwner(String(data?.ownerName ?? ""));
+        setOpenDate(toYMD(data?.openingDate));
+      } catch {
+        // 등록 이력 없으면 그대로 빈칸 유지
+      }
+    })();
+  }, []);
+
   const canSubmit = regNo && corpName && owner && openDate;
   // 응답/헤더에서 jobId 추출 유틸
   const getJobIdFromHeaders = (headers: any) => {
@@ -38,65 +60,7 @@ export default function BusinessStep() {
     const last = String(loc).split("/").filter(Boolean).pop();
     return last && /^\d+$/.test(last) ? Number(last) : last ?? null;
   };
-  // const onSubmit = async () => {
-  //   if (!canSubmit) {
-  //     alert("모든 항목을 입력해주세요.");
-  //     return;
-  //   }
 
-  //   const payload = {
-  //     bizNumber: regNo.replace(/\D+/g, "").slice(0, 10),
-  //     companyName: corpName.trim(),
-  //     ownerName: owner.trim(),
-  //     openingDate: openDate.slice(0, 10), // YYYY-MM-DD
-  //   };
-
-  //   try {
-  //     setSubmitting(true);
-
-  //     console.log("[BusinessStep] POST /api/v1/jobs/business-verifications/register", payload);
-
-  //     await axiosInstance.post("/api/v1/jobs/business-verifications/register", payload, {
-  //       withCredentials: true,
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Accept: "application/json",
-  //       },
-  //     });
-
-  //     // ✅ 스펙: jobId는 최종 완료 시에만 발급됨.
-  //     // 여기서는 추가 호출 없이 성공 처리만 하고 홈/완료 페이지로 이동.
-  //     alert("사업자 인증이 완료되었습니다. 등록이 마무리되면 목록에 반영됩니다.");
-  //     navigate("/", { replace: true });
-  //   } catch (e: any) {
-  //     const status = e?.response?.status;
-  //     const data = e?.response?.data;
-
-  //     console.group("[BusinessStep] 제출 실패");
-  //     console.log("status:", status);
-  //     console.log("data:", data);
-  //     console.groupEnd();
-
-  //     // 세션에 1차 폼이 없으면 서버가 400/409 등을 낼 수 있음
-  //     if (status === 400 || status === 409) {
-  //       alert("이전 단계(일자리 등록 1차 폼)가 세션에 없습니다. 처음부터 다시 진행해주세요.");
-  //       return;
-  //     }
-
-  //     const msg =
-  //       data?.message ||
-  //       data?.result?.message ||
-  //       (data?.result && typeof data.result === "object"
-  //         ? Object.entries(data.result)
-  //             .map(([k, v]) => `${k}: ${v}`)
-  //             .join("\n")
-  //         : null);
-
-  //     alert(msg ?? "등록에 실패했습니다. 입력값을 다시 확인해주세요.");
-  //   } finally {
-  //     setSubmitting(false);
-  //   }
-  // };
   const onSubmit = async () => {
     if (!canSubmit || submitting) return;
 
@@ -110,61 +74,75 @@ export default function BusinessStep() {
     try {
       setSubmitting(true);
 
-      console.log("[BusinessStep] POST /api/v1/jobs/business-verifications/register", payload);
-
-      // 1) 사업자 인증
-      const res = await axiosInstance.post("/api/v1/jobs/business-verifications/register", payload, {
-        withCredentials: true,
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-      });
-
-      // 2) jobId 추출 (result, data, Location 헤더 등 여러 경로 지원)
-      const body = res?.data?.result ?? res?.data ?? {};
-      let jobId: any = body?.jobId ?? body?.id ?? getJobIdFromHeaders(res?.headers) ?? null;
-
-      console.log("[BusinessStep] verify ok. jobId:", jobId);
-
-      // 3) jobId 있으면 즉시 게시
-      if (jobId != null) {
-        console.log("[BusinessStep] POST /api/v1/jobs/%s/publish", jobId);
-        await axiosInstance.post(
-          `/api/v1/jobs/${jobId}/publish`,
-          {},
-          {
+      // 1) 사업자 정보 저장 (업서트: POST 실패 시 PUT으로 재시도)
+      try {
+        await axiosInstance.post("/api/v1/jobs/business-verifications/only", payload, {
+          withCredentials: true,
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+        });
+      } catch (err: any) {
+        const s = err?.response?.status;
+        if (s === 405 || s === 409) {
+          await axiosInstance.put("/api/v1/jobs/business-verifications/only", payload, {
             withCredentials: true,
-            headers: { Accept: "application/json" },
-          }
-        );
-        alert("등록이 완료되었습니다.");
-      } else {
-        // 백엔드가 jobId를 안 주는 케이스: 인증만 성공(초안/대기 상태)
-        alert("사업자 인증이 완료되었습니다. (게시 대기) 목록 반영까지 시간이 조금 걸릴 수 있습니다.");
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+          });
+        } else {
+          throw err;
+        }
       }
 
-      navigate("/", { replace: true });
+      // 2) 최종화/상태확인 (빈 바디! Content-Type 넣지 마세요)
+      // const res = await axiosInstance.post(
+      //   "/api/v1/jobs/business-verifications/register",
+      //   undefined, // 또는 {}도 가능하지만, 이 경우 Content-Type은 아예 빼는 게 안전
+      //   { withCredentials: true, headers: { Accept: "application/json" } }
+      // );
+
+      // 3) jobId 있으면 완료
+      // const body = res?.data?.result ?? res?.data ?? {};
+      // let jobId: number | null =
+      //   (typeof body?.jobId === "number" ? body.jobId : null) ??
+      //   (() => {
+      //     const loc = res?.headers?.location || res?.headers?.Location;
+      //     if (!loc) return null;
+      //     const last = String(loc).split("/").filter(Boolean).pop();
+      //     return last && /^\d+$/.test(last) ? Number(last) : null;
+      //   })();
+
+      // if (jobId != null) {
+      //   alert("등록이 완료되었습니다.");
+      //   navigate("/", { replace: true });
+      //   return;
+      // }
+
+      alert("사업자 정보가 저장되었습니다.");
+      navigate("/mypage", { replace: true });
     } catch (e: any) {
-      const status = e?.response?.status;
-      const data = e?.response?.data;
+      const s = e?.response?.status;
+      const d = e?.response?.data;
 
       console.group("[BusinessStep] 제출 실패");
-      console.log("status:", status);
-      console.log("data:", data);
+      console.log("status:", s);
+      console.log("data:", d);
       console.groupEnd();
 
-      if (status === 400 || status === 409) {
-        alert("이전 단계(일자리 등록 1차 폼)가 세션에 없습니다. 처음부터 다시 진행해주세요.");
+      // 검증에러(COMMON402) 등 필드 메시지 우선 노출
+      if (s === 400 && (d?.code === "COMMON402" || /Validation/i.test(String(d?.message ?? "")))) {
+        const errs = d?.result && typeof d.result === "object" ? d.result : {};
+        const merged = Object.values(errs).filter(Boolean).join("\n") || "입력값을 확인해주세요.";
+        alert(merged);
         return;
       }
 
       const msg =
-        data?.message ||
-        data?.result?.message ||
-        (data?.result && typeof data.result === "object"
-          ? Object.entries(data.result)
+        d?.message ||
+        d?.result?.message ||
+        (d?.result && typeof d.result === "object"
+          ? Object.entries(d.result)
               .map(([k, v]) => `${k}: ${v}`)
               .join("\n")
           : null);
-
       alert(msg ?? "등록에 실패했습니다. 입력값을 다시 확인해주세요.");
     } finally {
       setSubmitting(false);
