@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import locationIcon from "/src/assets/filter/location.png";
 import typeIcon from "/src/assets/filter/type.png";
 import calendarIcon from "/src/assets/filter/calender.png";
@@ -15,11 +15,39 @@ import TypeModal from "./HomepageModal/TypeModal";
 import DayModal from "./HomepageModal/DayModal";
 import TimeModal from "./HomepageModal/TimeModal";
 
+const TYPE_KOREAN: Record<string, string> = {
+  SERVING: "서빙",
+  KITCHEN_HELP: "주방보조/설거지",
+  CAFE_BAKERY: "카페/베이커리",
+  ERRAND: "심부름/소일거리",
+  PROMOTION: "전단지/홍보",
+  SENIOR_CARE: "어르신 돌봄",
+  CHILD_CARE: "아이 돌봄",
+  BEAUTY: "미용/뷰티",
+  TUTORING: "과외/학원",
+  OFFICE_HELP: "사무보조",
+};
+
+const DAY_KOREAN: Record<string, string> = {
+  MON: "월",
+  TUE: "화",
+  WED: "수",
+  THU: "목",
+  FRI: "금",
+  SAT: "토",
+  SUN: "일",
+};
+
 interface Props {
   onRegionSelect: (regions: string[]) => void;
   onTypeSelect: (types: string[]) => void;
   onDaySelect: (days: string[]) => void;
   onTimeSelect: (time: { start?: string; end?: string }) => void;
+
+  selectedRegion?: string[];
+  selectedType?: string[];
+  selectedDays?: string[];
+  selectedTime?: { start?: string; end?: string };
 }
 
 const HomepageTopBar = ({
@@ -27,16 +55,16 @@ const HomepageTopBar = ({
   onTypeSelect,
   onDaySelect,
   onTimeSelect,
+  selectedRegion = [],
+  selectedType = [],
+  selectedDays = [],
+  selectedTime = {},
 }: Props) => {
   const [modal, setModal] = useState<"region" | "type" | "day" | "time" | null>(
     null
   );
   const closeModal = () => setModal(null);
 
-  const [regionLabel, setRegionLabel] = useState<string | null>(null);
-  const [typeLabel, setTypeLabel] = useState<string | null>(null);
-  const [dayLabel, setDayLabel] = useState<string | null>(null);
-  const [timeLabel, setTimeLabel] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const recomputeOverflow = () => {
@@ -46,81 +74,69 @@ const HomepageTopBar = ({
     setIsOverflowing(over);
     if (over) el.scrollLeft = 0;
   };
-  useEffect(() => {
-    const id = setTimeout(recomputeOverflow, 0);
-    return () => clearTimeout(id);
-  }, [regionLabel, typeLabel, dayLabel, timeLabel, modal]);
-  useEffect(() => {
-    const onResize = () => recomputeOverflow();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
 
-  const typeKorean: Record<string, string> = {
-    SERVING: "서빙",
-    KITCHEN_HELP: "주방보조/설거지",
-    CAFE_BAKERY: "카페/베이커리",
-    ERRAND: "심부름/소일거리",
-    PROMOTION: "전단지/홍보",
-    SENIOR_CARE: "어르신 돌봄",
-    CHILD_CARE: "아이 돌봄",
-    BEAUTY: "미용/뷰티",
-    TUTORING: "과외/학원",
-    OFFICE_HELP: "사무보조",
-  };
-  const dayKorean: Record<string, string> = {
-    MON: "월",
-    TUE: "화",
-    WED: "수",
-    THU: "목",
-    FRI: "금",
-    SAT: "토",
-    SUN: "일",
-  };
+  const regionLabel = useMemo(
+    () => (selectedRegion.length > 0 ? selectedRegion[0] : null),
+    [selectedRegion]
+  );
 
-  const handleRegionSubmit = (regions: string[]) => {
-    setRegionLabel(regions.length > 0 ? regions[0] : null);
-    onRegionSelect(regions);
-    closeModal();
-  };
-  const handleTypeSubmit = (types: string[]) => {
-    const label =
-      types.length > 0 ? types.map((t) => typeKorean[t] ?? t).join("·") : null;
-    setTypeLabel(label);
-    onTypeSelect(types);
-    closeModal();
-  };
-  const handleDaySubmit = (days: string[]) => {
+  const typeLabel = useMemo(() => {
+    if (selectedType.length === 0) return null;
+    return selectedType.map((t) => TYPE_KOREAN[t] ?? t).join("·");
+  }, [selectedType]);
+
+  const dayLabel = useMemo(() => {
+    if (selectedDays.length === 0) return null;
     const order = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-    const label =
-      days.length > 0
-        ? [...days]
-            .sort((a, b) => order.indexOf(a) - order.indexOf(b))
-            .map((d) => dayKorean[d] ?? d)
-            .join(", ")
-        : null;
-    setDayLabel(label);
-    onDaySelect(days);
-    closeModal();
-  };
-  const handleTimeSubmit = (time: { start?: string; end?: string }) => {
+    return [...selectedDays]
+      .sort((a, b) => order.indexOf(a) - order.indexOf(b))
+      .map((d) => DAY_KOREAN[d] ?? d)
+      .join(", ");
+  }, [selectedDays]);
+
+  const timeLabel = useMemo(() => {
     const trim = (t?: string) => (t ? t.slice(0, 5) : "");
-    const s = trim(time.start);
-    const e = trim(time.end);
-    const label = s || e ? `${s || "00:00"}~${e || "23:59"}` : null;
-    setTimeLabel(label);
-    onTimeSelect(time);
-    closeModal();
-  };
+    const s = trim(selectedTime.start);
+    const e = trim(selectedTime.end);
+    if (!s && !e) return null;
+    return `${s || "00:00"}~${e || "23:59"}`;
+  }, [selectedTime]);
 
   const isRegionApplied = !!regionLabel;
   const isTypeApplied = !!typeLabel;
   const isDayApplied = !!dayLabel;
   const isTimeApplied = !!timeLabel;
 
+  useEffect(() => {
+    const id = setTimeout(recomputeOverflow, 0);
+    return () => clearTimeout(id);
+  }, [regionLabel, typeLabel, dayLabel, timeLabel, modal]);
+
+  useEffect(() => {
+    const onResize = () => recomputeOverflow();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const handleRegionSubmit = (regions: string[]) => {
+    onRegionSelect(regions);
+    closeModal();
+  };
+  const handleTypeSubmit = (types: string[]) => {
+    onTypeSelect(types);
+    closeModal();
+  };
+  const handleDaySubmit = (days: string[]) => {
+    onDaySelect(days);
+    closeModal();
+  };
+  const handleTimeSubmit = (time: { start?: string; end?: string }) => {
+    onTimeSelect(time);
+    closeModal();
+  };
+
   return (
     <>
-      {/* 기본은 가운데, 넘치면 왼쪽 정렬 + 가로 스크롤 */}
       <div
         ref={containerRef}
         className={`flex items-center gap-[8px] px-4 pb-[3px] pt-[3px]
@@ -167,26 +183,29 @@ const HomepageTopBar = ({
         />
       </div>
 
-      {/* 모달들 */}
       <RegionModal
         isOpen={modal === "region"}
         onClose={closeModal}
         onSubmit={handleRegionSubmit}
+        selected={selectedRegion}
       />
       <TypeModal
         isOpen={modal === "type"}
         onClose={closeModal}
         onSubmit={handleTypeSubmit}
+        selected={selectedType}
       />
       <DayModal
         isOpen={modal === "day"}
         onClose={closeModal}
         onSubmit={handleDaySubmit}
+        selected={selectedDays}
       />
       <TimeModal
         isOpen={modal === "time"}
         onClose={closeModal}
         onSubmit={handleTimeSubmit}
+        selected={selectedTime}
       />
     </>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BottomNavbar from "../components/BottomNavbar";
 import type { JobsView } from "../types/homepage";
@@ -141,18 +141,30 @@ const HomePage = () => {
     }
   };
 
+  const handleHeaderClick = () => {
+    setSelectedRegion([]);
+    setSelectedType([]);
+    setSelectedDays([]);
+    setSelectedTime({});
+    navigate("/", { replace: true, state: undefined });
+  };
+
   return (
     <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px] bg-white min-h-screen">
       {/* 헤더 */}
-      <div className="flex-shrink-0 pt-[50px] bg-white">
-        <Link to={"/"}>
+      <div className="flex-shrink-0 pt-[30px] bg-white">
+        <button
+          type="button"
+          onClick={handleHeaderClick}
+          className="w-full text-left relative"
+        >
           <Header title="내일" />
-        </Link>
+          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-white" />
+        </button>
+        <div className="fixed left-0 right-0 mx-auto max-w-[393px] top-[49px] h-[2px] bg-white z-[60] pointer-events-none" />
 
         {/* 검색바 */}
         <div className="relative bg-white">
-          <div className="absolute left-0 right-0 -top-px h-[1px] bg-white z-[100] pointer-events-none" />
-
           <div
             onClick={() => navigate("/search")}
             className="flex justify-center py-4 cursor-pointer"
@@ -165,11 +177,16 @@ const HomePage = () => {
 
         {/* 모달 */}
         <HomepageTopBar
+          selectedRegion={selectedRegion}
+          selectedType={selectedType}
+          selectedDays={selectedDays}
+          selectedTime={selectedTime}
           onRegionSelect={setSelectedRegion}
           onTypeSelect={setSelectedType}
           onDaySelect={setSelectedDays}
           onTimeSelect={setSelectedTime}
         />
+
         <div
           className="w-full h-[1px]"
           style={{ backgroundColor: palette.gray.default }}
