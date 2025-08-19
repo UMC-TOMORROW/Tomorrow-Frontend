@@ -79,6 +79,14 @@ const ApplyStatus = () => {
     });
   };
 
+  const goDetail = (id?: number) => {
+    if (!id) {
+      alert("공고 ID가 없습니다.");
+      return;
+    }
+    navigate(`/jobs/${id}`);
+  };
+
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <div className="bg-white min-h-screen">
@@ -128,7 +136,18 @@ const ApplyStatus = () => {
             <div key={index}>
               <li>
                 <div className="px-[15px] h-[18px] w-full bg-white"></div>
-                <div className="flex items-center justify-between h-[104px] px-[20px]">
+                <div
+                  className="flex items-center justify-between h-[104px] px-[20px] cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => goDetail(job.postId)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      goDetail(job.postId);
+                    }
+                  }}
+                >
                   <div>
                     <p className="flex items-end text-[14px]">{job.date}</p>
                     <p className="text-[14px]">{job.company}</p>
