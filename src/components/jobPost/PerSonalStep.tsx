@@ -4,6 +4,23 @@ import Devider from "../common/Devider";
 import CommonButton from "../common/CommonButton";
 import { axiosInstance } from "../../apis/axios";
 
+// 전화번호 형식: 010-1234-5678
+const MOBILE_RE = /^01[016789]-(\d{3}|\d{4})-\d{4}$/;
+// 입력값을 숫자만 받아 3-3/4-4로 자동 포맷
+const formatMobile = (v: string) => {
+  const d = v.replace(/\D/g, "");
+  if (d.length <= 3) return d;
+  const a = d.slice(0, 3);
+  const rest = d.slice(3);
+
+  // 전체 자릿수에 따라 3 또는 4자리로 나눔 (10자리=3, 11자리=4)
+  const secondLen = d.length <= 10 ? 3 : 4;
+
+  const b = rest.slice(0, secondLen);
+  const c = rest.slice(secondLen, secondLen + 4);
+  return [a, b && `-${b}`, c && `-${c}`].filter(Boolean).join("");
+};
+
 export default function PersonalStep() {
   const navigate = useNavigate();
 
@@ -14,8 +31,10 @@ export default function PersonalStep() {
   const [phone, setPhone] = useState("");
   const [request, setRequest] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  console.log(setLatitude,setLongitude)
+  console.log(setLatitude, setLongitude);
   // 필수: name, address, contact(phone), registrationPurpose
+
+  const phoneValid = MOBILE_RE.test(phone);
   const canSubmit = !!(name && address && phone && request);
 
   const onSubmit = async () => {
@@ -59,13 +78,30 @@ export default function PersonalStep() {
       console.log("data:", e?.response?.data);
       console.groupEnd();
 
-      // 세션에 드래프트 job이 없을 때 나올 수 있음 (1차 폼 단계 누락)
-      if (status === 400 || status === 409) {
+      // 1) 진짜 '드래프트 없음'일 때만 안내 (명시적인 코드/문구가 있을 때만)
+      if (data?.code === "JOB_DRAFT_REQUIRED" || /드래프트|세션.*없/i.test(String(data?.message ?? ""))) {
         alert("이전 단계(일자리 등록 1차 폼)를 먼저 제출해주세요.");
         return;
       }
+      // 2) 검증 에러(common 400) → 필드별 메시지 우선 노출
+      if (status === 400 && (data?.code === "COMMON402" || /Validation/i.test(String(data?.message ?? "")))) {
+        const errs = data?.result && typeof data.result === "object" ? data.result : {};
 
-      const msg =
+        // 휴대폰(contact) 메시지 최우선
+        const contactMsg = errs.contact || errs.phone || errs["contact "] || null;
+        if (contactMsg) {
+          alert(String(contactMsg));
+          return;
+        }
+
+        // 다른 필드 에러들 합쳐서 표시
+        const merged = Object.values(errs).filter(Boolean).join("\n") || "입력값을 확인해주세요.";
+        alert(merged);
+        return;
+      }
+
+      // 3) 그 외 일반 에러
+      const fallback =
         data?.message ||
         data?.result?.message ||
         (data?.result && typeof data.result === "object"
@@ -74,7 +110,7 @@ export default function PersonalStep() {
               .join("\n")
           : null);
 
-      alert(msg ?? "등록에 실패했습니다. 입력값을 다시 확인해주세요.");
+      alert(fallback ?? "등록에 실패했습니다. 입력값을 다시 확인해주세요.");
     } finally {
       setSubmitting(false);
     }
@@ -135,11 +171,19 @@ export default function PersonalStep() {
           <label className="block text-[14px] font-semibold text-[#333] !mb-2">연락처</label>
           <input
             type="tel"
-            placeholder="010-****-****"
-            className="w-[336px] h-[52px] px-[10px] rounded-[10px] border border-[#729A73] !text-[14px]"
+            inputMode="numeric"
+            maxLength={13} // 010-1234-5678
+            pattern="01[016789]-\d{3,4}-\d{4}"
+            placeholder="010-1234-5678"
+            className={`w-[336px] h-[52px] px-[10px] rounded-[10px] border !text-[14px] ${
+              phone && !phoneValid ? "border-red-500" : "border-[#729A73]"
+            }`}
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => setPhone(formatMobile(e.target.value))}
           />
+          <p className={`mt-1 text-[12px] ${phone && !phoneValid ? "text-red-500" : "text-[#666]"}`}>
+            예: 010-1234-5678
+          </p>
         </div>
 
         {/* 요청 내용 → registrationPurpose */}

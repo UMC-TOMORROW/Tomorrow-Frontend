@@ -36,36 +36,68 @@ import ChatPage from "./pages/careerTalk/ChatPage";
 import JobReviewPage from "./pages/job/JobReviewPage";
 import { getMyInfo } from "./apis/employerMyPage";
 
-// --- 로그인 여부 헬퍼 (getMyInfo 성공 = 로그인 상태) ---
-const checkAuth = async () => {
+/* ───────────────── 헬퍼 ───────────────── */
+type MeShape = {
+  id?: number | null;
+  isOnboarded?: boolean | null;
+  inOnboarded?: boolean | null;
+  [k: string]: any;
+};
+
+const getMeOrNull = async (): Promise<MeShape | null> => {
   try {
-    const me = await getMyInfo(); // axios 인스턴스가 쿠키 포함 설정되어 있다고 가정
-    return Boolean(me?.id);
+    const me = await getMyInfo();
+    return me ?? null;
   } catch {
-    return false;
+    return null;
   }
 };
 
+// 온보딩 완료 여부를 일관되게 계산
+const isOnboardedBool = (me?: MeShape | null) =>
+  Boolean(me && (me.isOnboarded ?? me.inOnboarded ?? false));
+
+/* ───────────────── 라우트 보호 로더 ───────────────── */
+
+// 인증 필요
 const requireAuthLoader = async () => {
-  const authed = await checkAuth();
-  if (!authed) throw redirect("/auth");
+  const me = await getMeOrNull();
+  if (!me?.id) throw redirect("/auth");
   return null;
 };
 
+// 로그인/스플래시: 로그인 상태면 홈 또는 user-info로
 const requireAnonLoader = async () => {
-  const authed = await checkAuth();
-  if (authed) throw redirect("/");
+  const me = await getMeOrNull();
+  if (!me) return null; // 비로그인 그대로 접근
+  if (!isOnboardedBool(me)) throw redirect("/auth/user-info");
+  throw redirect("/");
+};
+
+// 회원정보 입력(온보딩 전)만 접근 허용
+const requireUserInfoLoader = async () => {
+  const me = await getMeOrNull();
+  if (!me) throw redirect("/auth");
+  if (isOnboardedBool(me)) throw redirect("/");
+  return null;
+};
+
+// 온보딩 화면: 로그인 必, 온보딩 전만 접근 허용
+const requireNeedsOnboardingLoader = async () => {
+  const me = await getMeOrNull();
+  if (!me) throw redirect("/auth");
+  if (isOnboardedBool(me)) throw redirect("/");
   return null;
 };
 
 const router = createBrowserRouter([
-  // 1) 스플래시/로그인: 로그인 상태면 접근 금지(홈으로)
+  // 1) 스플래시/로그인
   { path: "/splash", element: <SplashScreenPage />, loader: requireAnonLoader },
   { path: "/auth", element: <AuthScreen />, loader: requireAnonLoader },
   {
     path: "/auth/user-info",
     element: <UserInfoForm />,
-    loader: requireAnonLoader,
+    loader: requireUserInfoLoader, // ← 회원정보 입력(온보딩 전)
   },
 
   // 2) 메인 섹션
@@ -76,17 +108,21 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        // 비로그인 → /splash , 로그인 → 홈 유지
         loader: async () => {
-          const authed = await checkAuth();
-          if (!authed) throw redirect("/splash");
+          const me = await getMeOrNull();
+          if (!me) throw redirect("/splash");
+          if (!isOnboardedBool(me)) throw redirect("/auth/user-info");
           return null;
         },
         element: <HomePage />,
       },
 
-      // 온보딩 접근 정책은 선택(로그인만 허용하려면 loader: requireAuthLoader 추가)
-      { path: "onboarding", element: <OnboardingScreen /> },
+      // 온보딩: 로그인 + 온보딩 전 상태만
+      {
+        path: "onboarding",
+        element: <OnboardingScreen />,
+        loader: requireNeedsOnboardingLoader,
+      },
 
       { path: "search", element: <SearchPage /> },
       { path: "career-talk", element: <CareerTalkListPage /> },

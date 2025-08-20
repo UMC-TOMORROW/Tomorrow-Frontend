@@ -1,19 +1,18 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import BottomNavbar from "../components/BottomNavbar";
-import type { JobsView } from "../types/homepage";
+import type { JobsView, PaymentType } from "../types/homepage";
 import palette from "../styles/theme";
 import SearchBar from "../components/search/SearchBar";
 import JobCard from "../components/Homepage/JobCard";
 import HomepageTopBar from "../components/Homepage/HomepageTopBar";
 import { getJobsDefault } from "../apis/HomePage";
-import type { PaymentType } from "../types/recommendation";
 
 type JobLike = JobsView & {
   jobCategory?: string;
-  workStart?: string;
-  workEnd?: string;
+  workStart?: string | null;
+  workEnd?: string | null;
 };
 
 const dayKey: Record<
@@ -33,7 +32,9 @@ const HomePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [jobList, setJobList] = useState<JobsView[]>(
-    Array.isArray(location.state?.jobList) ? location.state.jobList : []
+    Array.isArray((location.state as any)?.jobList)
+      ? (location.state as any).jobList
+      : []
   );
 
   const [selectedRegion, setSelectedRegion] = useState<string[]>([]);
@@ -45,10 +46,31 @@ const HomePage = () => {
   }>({});
 
   useEffect(() => {
-    const toMin = (t?: string) => {
+    const toMin = (t?: string | null) => {
       if (!t) return undefined;
-      const [hh, mm] = t.split(":");
-      return Number(hh) * 60 + Number(mm);
+      const [hh, mm] = String(t).split(":");
+      const h = Number(hh),
+        m = Number(mm);
+      if (Number.isNaN(h) || Number.isNaN(m)) return undefined;
+      return h * 60 + m;
+    };
+
+    const hasAllWantedDays = (wd: JobsView["workDays"], wantKeys: string[]) => {
+      if (!wd) return false;
+
+      if (typeof wd === "string") return wantKeys.includes(wd.toLowerCase());
+
+      if (Array.isArray(wd)) {
+        const lower = wd.map((s) => String(s).toLowerCase());
+        return wantKeys.every((k) => lower.includes(k));
+      }
+
+      if (typeof wd === "object") {
+        if ((wd as any).isDayNegotiable === true) return true;
+        return wantKeys.every((k) => (wd as any)[k] === true);
+      }
+
+      return false;
     };
 
     const applyAllFilters = async (baseJobs: JobsView[]) => {
@@ -56,21 +78,13 @@ const HomePage = () => {
 
       // 1) 요일 필터
       if (selectedDays.length > 0) {
-        const want = selectedDays.map((d) => dayKey[d]);
-
-        jobs = jobs.filter((j: any) => {
-          const wd = j.workDays;
-          if (!wd) return false;
-
-          if (wd.isDayNegotiable === true) return true;
-
-          return want.every((k) => wd[k] === true);
-        });
+        const want = selectedDays.map((d) => dayKey[d]).filter(Boolean);
+        jobs = jobs.filter((j) => hasAllWantedDays(j.workDays, want));
       }
 
       // 2) 지역 필터
       if (selectedRegion.length > 0) {
-        jobs = jobs.filter((j: JobLike) =>
+        jobs = jobs.filter((j) =>
           selectedRegion.every((kw) => (j.location ?? "").includes(kw))
         );
       }
@@ -78,23 +92,19 @@ const HomePage = () => {
       // 3) 유형 필터
       if (selectedType.length > 0) {
         jobs = jobs.filter((j: JobLike) => {
-          type CatShape = {
-            job_category?: string | string[];
-            jobCategory?: string | string[];
-          };
-          const s = (j as CatShape).job_category ?? (j as CatShape).jobCategory;
-          const cat: string = Array.isArray(s) ? s[0] ?? "" : s ?? "";
+          const raw = (j as any).job_category ?? j.jobCategory;
+          const cat: string = Array.isArray(raw) ? raw[0] ?? "" : raw ?? "";
           return selectedType.includes(cat);
         });
       }
 
       // 4) 시간 필터
       if (selectedTime.start || selectedTime.end) {
-        const startMin = toMin(selectedTime.start || "00:00")!;
-        const endMin = toMin(selectedTime.end || "23:59")!;
+        const startMin = toMin(selectedTime.start ?? "00:00")!;
+        const endMin = toMin(selectedTime.end ?? "23:59")!;
         jobs = jobs.filter((j: JobLike) => {
-          const sStr = (j.work_start ?? j.workStart ?? "").slice(0, 5);
-          const eStr = (j.work_end ?? j.workEnd ?? "").slice(0, 5);
+          const sStr = (j.workStart ?? "").slice(0, 5);
+          const eStr = (j.workEnd ?? "").slice(0, 5);
           const s = toMin(sStr);
           const e = toMin(eStr);
           if (s == null || e == null) return false;
@@ -107,8 +117,8 @@ const HomePage = () => {
 
     const fetchJobs = async () => {
       try {
-        const base: JobsView[] = Array.isArray(location.state?.jobList)
-          ? location.state.jobList
+        const base: JobsView[] = Array.isArray((location.state as any)?.jobList)
+          ? (location.state as any).jobList
           : await getJobsDefault();
 
         const filtered = await applyAllFilters(base);
@@ -129,30 +139,36 @@ const HomePage = () => {
   ]);
 
   const asPaymentType = (v: string): PaymentType => {
-    switch (v) {
-      case "HOURLY":
-      case "DAILY":
-      case "MONTHLY":
-      case "PER_TASK":
-        return v;
-      default:
-        console.warn("[payment_type] unexpected:", v);
-        return "HOURLY";
-    }
+    if (v === "HOURLY" || v === "DAILY" || v === "MONTHLY" || v === "PER_TASK")
+      return v;
+    console.warn("[payment_type] unexpected:", v);
+    return "HOURLY";
+  };
+
+  const handleHeaderClick = () => {
+    setSelectedRegion([]);
+    setSelectedType([]);
+    setSelectedDays([]);
+    setSelectedTime({});
+    navigate("/", { replace: true, state: undefined });
   };
 
   return (
     <div className="flex flex-col font-[Pretendard] mx-auto max-w-[393px] bg-white min-h-screen">
       {/* 헤더 */}
-      <div className="flex-shrink-0 pt-[50px] bg-white">
-        <Link to={"/"}>
+      <div className="flex-shrink-0 pt-[30px] bg-white">
+        <button
+          type="button"
+          onClick={handleHeaderClick}
+          className="w-full text-left relative"
+        >
           <Header title="내일" />
-        </Link>
+          <div className="absolute bottom-0 left-0 w-full h-[1px] bg-white" />
+        </button>
+        <div className="fixed left-0 right-0 mx-auto max-w-[393px] top-[49px] h-[2px] bg-white z-[60] pointer-events-none" />
 
         {/* 검색바 */}
         <div className="relative bg-white">
-          <div className="absolute left-0 right-0 -top-px h-[1px] bg-white z-[100] pointer-events-none" />
-
           <div
             onClick={() => navigate("/search")}
             className="flex justify-center py-4 cursor-pointer"
@@ -165,11 +181,16 @@ const HomePage = () => {
 
         {/* 모달 */}
         <HomepageTopBar
+          selectedRegion={selectedRegion}
+          selectedType={selectedType}
+          selectedDays={selectedDays}
+          selectedTime={selectedTime}
           onRegionSelect={setSelectedRegion}
           onTypeSelect={setSelectedType}
           onDaySelect={setSelectedDays}
           onTimeSelect={setSelectedTime}
         />
+
         <div
           className="w-full h-[1px]"
           style={{ backgroundColor: palette.gray.default }}
@@ -201,7 +222,7 @@ const HomePage = () => {
               title={jobCard.title}
               company={jobCard.companyName}
               location={jobCard.location}
-              wage={`${jobCard.salary?.toLocaleString() || "0"}원`}
+              wage={`${(jobCard.salary ?? 0).toLocaleString()}원`}
               review={
                 typeof jobCard.review_count === "number" &&
                 jobCard.review_count > 0
@@ -209,15 +230,15 @@ const HomePage = () => {
                   : ""
               }
               image={
-                (jobCard as any).job_image_url ??
-                (jobCard as any).jobImageUrl ??
-                ""
+                (jobCard as any).job_image_url ?? jobCard.jobImageUrl ?? ""
               }
               isTime={Boolean(jobCard.isTimeNegotiable)}
               isPeriod={Boolean(jobCard.isPeriodNegotiable)}
               environment={
-                Array.isArray(jobCard.work_environment)
-                  ? jobCard.work_environment
+                Array.isArray(jobCard.workEnvironment)
+                  ? jobCard.workEnvironment
+                  : jobCard.workEnvironment
+                  ? [String(jobCard.workEnvironment)]
                   : []
               }
               paymentType={asPaymentType(

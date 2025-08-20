@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { SlArrowLeft } from "react-icons/sl";
-import { putMyProfile } from "../../apis/mypage";
+import { putMyProfile, type MemberUpdatePayload } from "../../apis/mypage";
 import { useNavigate } from "react-router-dom";
 import RegionModal from "../../components/Homepage/HomepageModal/RegionModal";
 import type { MyInfo } from "../../types/member";
@@ -26,11 +26,8 @@ const MemberInfo = () => {
   ): "남자" | "여자" | undefined =>
     g === "MALE" ? "남자" : g === "FEMALE" ? "여자" : undefined;
 
-  const mapGender = (g?: "남자" | "여자"): "MALE" | "FEMALE" | undefined => {
-    if (g === "남자") return "MALE";
-    if (g === "여자") return "FEMALE";
-    return undefined;
-  };
+  const mapGender = (g?: "남자" | "여자"): "MALE" | "FEMALE" | undefined =>
+    g === "남자" ? "MALE" : g === "여자" ? "FEMALE" : undefined;
 
   const getProviderLabel = (p?: string | null) => {
     if (!p) return null;
@@ -46,7 +43,6 @@ const MemberInfo = () => {
   const handleSave = async () => {
     if (saving) return;
 
-    // 📌 필수값 검사 추
     if (!email.trim()) {
       alert("이메일은 필수 입력 항목입니다.");
       return;
@@ -61,14 +57,14 @@ const MemberInfo = () => {
       const me = myInfo ?? (await getMyInfo());
 
       const overrides = {
-        email: email || undefined,
-        name: name || undefined,
-        gender: mapGender(gender) ?? undefined,
-        phoneNumber: phoneNumber || undefined,
-        address: address || undefined,
+        email,
+        name,
+        gender: mapGender(gender),
+        phoneNumber,
+        address,
       };
-
       const fullBody = buildFullBody(me, overrides);
+      await putMyProfile(fullBody);
 
       await putMyProfile(fullBody);
       alert("회원 정보가 수정되었습니다.");
@@ -127,40 +123,26 @@ const MemberInfo = () => {
     })();
   }, []);
 
-  const buildFullBody = (me: any, overrides?: Partial<any>) => {
-    const rawProviderUserId =
-      overrides?.providerUserId ?? me.providerUserId ?? me.providerUseId ?? "";
-    const providerUserId = String(rawProviderUserId).slice(0, 10);
-
+  const buildFullBody = (
+    me: MyInfo,
+    overrides?: Partial<MemberUpdatePayload>
+  ): MemberUpdatePayload => {
     const isOnboarded =
       typeof overrides?.isOnboarded === "boolean"
-        ? overrides!.isOnboarded
-        : typeof me.isOnboarded === "boolean"
-        ? me.isOnboarded
-        : typeof me.inOnboarded === "boolean"
-        ? me.inOnboarded
-        : false;
-
-    const status = overrides?.status ?? me.status ?? "ACTIVE";
+        ? overrides.isOnboarded
+        : me.isOnboarded ?? false;
 
     return {
-      id: me.id,
-      username: me.username,
-
-      status,
+      email: overrides?.email ?? me.email ?? undefined,
+      name: overrides?.name ?? me.name ?? undefined,
+      gender:
+        overrides?.gender ??
+        (me.gender as "MALE" | "FEMALE" | null) ??
+        undefined,
+      phoneNumber: overrides?.phoneNumber ?? me.phoneNumber ?? undefined,
+      address: overrides?.address ?? me.address ?? undefined,
       isOnboarded,
-      provider: me.provider,
-      providerUserId,
-      resumeId: me.resumeId,
-
-      email: overrides?.email ?? me.email,
-      name: overrides?.name ?? me.name,
-      gender: overrides?.gender ?? me.gender,
-      phoneNumber: overrides?.phoneNumber ?? me.phoneNumber,
-      address: overrides?.address ?? me.address,
-
-      createdAt: me.createdAt,
-      updatedAt: me.updatedAt,
+      resumeId: overrides?.resumeId ?? me.resumeId ?? null,
     };
   };
 

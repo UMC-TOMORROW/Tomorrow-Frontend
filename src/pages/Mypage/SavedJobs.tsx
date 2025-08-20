@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getSavedJobs } from "../../apis/mypage";
 import type { BookmarkItem } from "../../types/mypage";
+import { SlArrowLeft } from "react-icons/sl";
 
 const SavedJobs = () => {
   const navigate = useNavigate();
@@ -29,7 +30,14 @@ const SavedJobs = () => {
     <div style={{ fontFamily: "Pretendard" }}>
       <div className="bg-white min-h-screen">
         {/* 헤더 */}
-        <section>
+        <section className="relative flex justify-center items-center h-[52px] border-b border-[#DEDEDE]">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="absolute left-[15px]"
+          >
+            <SlArrowLeft />
+          </button>
           <div
             className="flex justify-center items-center text-[20px] h-[52px] border-b-[1.5px] border-[#DEDEDE]"
             style={{ fontWeight: 700 }}

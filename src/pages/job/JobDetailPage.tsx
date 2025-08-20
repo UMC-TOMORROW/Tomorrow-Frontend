@@ -132,12 +132,12 @@ const paymentLabel = (t?: string) =>
 
 const JOB_CATEGORY_KO: Record<string, string> = {
   SERVING: "서빙",
-  KITCHEN_ASSIST: "주방보조/설거지",
+  KITCHEN_HELP: "주방보조/설거지",
   CAFE_BAKERY: "카페/베이커리",
   TUTORING: "과외/학원",
   ERRAND: "심부름/소일거리",
   PROMOTION: "전단지/홍보",
-  ELDER_CARE: "어르신 돌봄",
+  SENIOR_CARE: "어르신 돌봄",
   CHILD_CARE: "아이 돌봄",
   BEAUTY: "미용/뷰티",
   OFFICE_HELP: "사무보조",
