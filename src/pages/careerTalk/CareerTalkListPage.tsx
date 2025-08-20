@@ -250,6 +250,7 @@ function CareerTalkListPage() {
         </div>
 
         {hasMore && <div ref={observerRef} className="h-6" />}
+        <div className="h-[120px]" />
       </main>
 
       <button
