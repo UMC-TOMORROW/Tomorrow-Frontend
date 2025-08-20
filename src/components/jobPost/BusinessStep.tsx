@@ -14,13 +14,13 @@ export default function BusinessStep() {
   const [submitting, setSubmitting] = useState(false);
 
   // 프리필 상태/초기값 저장 (사업자 등록을 한 이력이 있는 경우)
-  const [hasExisting, setHasExisting] = useState(false);
-  const [initial, setInitial] = useState<{
-    regNo: string;
-    corpName: string;
-    owner: string;
-    openDate: string;
-  } | null>(null);
+  // const [hasExisting, setHasExisting] = useState(false);
+  // const [initial, setInitial] = useState<{
+  //   regNo: string;
+  //   corpName: string;
+  //   owner: string;
+  //   openDate: string;
+  // } | null>(null);
 
   // YYYY-MM-DD 형식으로 변환
   const toYMD = (v: any) => {
@@ -61,12 +61,12 @@ export default function BusinessStep() {
 
   const canSubmit = regNo && corpName && owner && openDate;
   // 응답/헤더에서 jobId 추출 유틸
-  const getJobIdFromHeaders = (headers: any) => {
-    const loc = headers?.location || headers?.Location;
-    if (!loc) return null;
-    const last = String(loc).split("/").filter(Boolean).pop();
-    return last && /^\d+$/.test(last) ? Number(last) : last ?? null;
-  };
+  // const getJobIdFromHeaders = (headers: any) => {
+  //   const loc = headers?.location || headers?.Location;
+  //   if (!loc) return null;
+  //   const last = String(loc).split("/").filter(Boolean).pop();
+  //   return last && /^\d+$/.test(last) ? Number(last) : last ?? null;
+  // };
 
   const onSubmit = async () => {
     if (!canSubmit || submitting) return;

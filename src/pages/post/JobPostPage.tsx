@@ -15,7 +15,6 @@ import CommonButton from "../../components/common/CommonButton";
 
 import type { RegistrantType, JobDraftPayload } from "../../types/jobs";
 import { createJobDraft } from "../../apis/jobs";
-import { registerJobWithSavedBusiness } from "../../apis/jobs-extra";
 import { axiosInstance } from "../../apis/axios";
 
 // 요일 KO → EN 코드
