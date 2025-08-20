@@ -53,32 +53,28 @@ const MyPage = () => {
       setIsDeactivating(true);
 
       const meId = await getMe();
-      if (!meId) {
-        alert("회원 정보를 찾을 수 없습니다. 다시 로그인 후 이용해 주세요.");
-        return;
-      }
+      if (!meId)
+        throw new Error(
+          "회원 정보를 찾을 수 없습니다. 다시 로그인 후 이용해 주세요."
+        );
 
       const res = await deactivateMember(meId);
-
       const recoverableUntil = res?.recoverableUntil
         ? new Date(res.recoverableUntil).toLocaleString()
         : "알 수 없음";
       alert(`탈퇴가 접수되었습니다.\n복구 가능 기한: ${recoverableUntil}`);
-
+    } catch (e: unknown) {
+      const msg =
+        e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
+      alert(`탈퇴 처리에 실패했을 수 있습니다.\n${msg}`);
+      console.error(e);
+    } finally {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("memberId");
       setShowUnregister(false);
-      navigate("/auth", { replace: true });
-    } catch (e: unknown) {
-      const msg =
-        e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
-      alert(
-        `탈퇴 처리에 실패했습니다.\n(이미 탈퇴된 계정일 수 있어요)\n${msg}`
-      );
-      console.error(e);
-    } finally {
       setIsDeactivating(false);
+      navigate("/auth", { replace: true });
     }
   }, [isDeactivating, navigate]);
 
@@ -168,22 +164,29 @@ const MyPage = () => {
             고객센터
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
-              <span>공지사항</span>
-              <SlArrowRight />
-            </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
-              <span>자주 묻는 질문</span>
-              <SlArrowRight />
-            </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
-              <span>1:1 문의</span>
+            <li className="border-b border-[#DEDEDE]">
               <Link
-                to={
-                  "https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1"
-                }
+                to="https://lava-scion-9fd.notion.site/254cf0577e4180e7bfd2c2b8422769e0?source=copy_link"
+                className="flex h-[50px] px-[25px] text-[15px] items-center justify-between"
               >
-                <SlArrowRight className="w-[15px] h-[15px]"/>
+                <span>공지사항</span>
+                <SlArrowRight className="w-[15px] h-[15px]" />
+              </Link>
+            </li>
+            <Link
+              to="https://lava-scion-9fd.notion.site/254cf0577e4180daab91d614d3e5bddd?source=copy_link"
+              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between"
+            >
+              <span>자주 묻는 질문</span>
+              <SlArrowRight className="w-[15px] h-[15px]" />
+            </Link>
+            <li className="border-b border-[#DEDEDE]">
+              <Link
+                to="https://docs.google.com/forms/d/e/1FAIpQLSd5XMkA34kdag2Vk161Uej2baPBgLrDBEHj96ZHtolI3oVqvA/viewform?pli=1"
+                className="flex h-[50px] px-[25px] text-[15px] items-center justify-between"
+              >
+                <span>1:1 문의</span>
+                <SlArrowRight className="w-[15px] h-[15px]" />
               </Link>
             </li>
           </ul>
@@ -197,23 +200,22 @@ const MyPage = () => {
             약관 및 방침
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
-              <span>이용약관</span>
+            <li className="border-b border-[#DEDEDE]">
               <Link
-                to={
-                  "https://lava-scion-9fd.notion.site/244cf0577e4180ee95abf93b26139a51?source=copy_link"
-                }
+                to="https://lava-scion-9fd.notion.site/244cf0577e4180ee95abf93b26139a51?source=copy_link"
+                className="flex h-[50px] px-[25px] text-[15px] items-center justify-between"
               >
+                <span>이용약관</span>
                 <SlArrowRight />
               </Link>
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
-              <span>개인정보처리방침</span>
+
+            <li className="border-b border-[#DEDEDE]">
               <Link
-                to={
-                  "https://lava-scion-9fd.notion.site/244cf0577e41803eae07ee61ed293c45?source=copy_link"
-                }
+                to="https://lava-scion-9fd.notion.site/244cf0577e41803eae07ee61ed293c45?source=copy_link"
+                className="flex h-[50px] px-[25px] text-[15px] items-center justify-between"
               >
+                <span>개인정보처리방침</span>
                 <SlArrowRight />
               </Link>
             </li>

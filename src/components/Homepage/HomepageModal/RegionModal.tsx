@@ -5,6 +5,7 @@ interface RegionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (regions: string[]) => void;
+  selected?: string[];
 }
 
 const RegionModal = ({ isOpen, onClose, onSubmit }: RegionModalProps) => {

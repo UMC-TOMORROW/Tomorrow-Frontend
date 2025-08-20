@@ -15,6 +15,7 @@ import CommonButton from "../../components/common/CommonButton";
 
 import type { RegistrantType, JobDraftPayload } from "../../types/jobs";
 import { createJobDraft } from "../../apis/jobs";
+import { axiosInstance } from "../../apis/axios";
 
 // 요일 KO → EN 코드
 const DAY_KO_TO_EN: Record<string, "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun"> = {
@@ -248,47 +249,70 @@ const JobPostForm = () => {
     console.log("[JobPostForm] 제출 시작");
     if (!validateForm()) return;
 
-    const body = buildPayloadV2();
-    console.log("[JobPostForm] 최종 payload(v2):", body);
+    const body = buildPayloadV2(); // 네가 쓰는 빌더 그대로
 
     try {
       setSubmitting(true);
+      await createJobDraft(body);
 
-      // ✅ createJobDraft는 이제 인자 1개만 받음
-      const { jobId, registrantType: who, step, raw } = await createJobDraft(body);
+      const who = body.recruitment_type; // "PERSONAL" | "BUSINESS"
 
-      console.log("[JobPostForm] 전송 성공:", raw);
-      console.log("[JobPostForm] 획득 jobId:", jobId, "step:", step, "who:", who);
-
-      // 보관 + 이동
-      const resolvedWho = who || registrantType;
-      const next = resolvedWho === "BUSINESS" ? "/post/business" : "/post/personal";
-      if (jobId != null) sessionStorage.setItem("jobId", String(jobId));
-
-      // step/코드 여부와 무관하게 이동 (UX 보장)
-      navigate(`${next}${jobId != null ? `?jobId=${jobId}` : ""}`, {
-        state: { jobId },
-      });
-    } catch (e: any) {
-      const status = e?.response?.status;
-      const data = e?.response?.data;
-
-      console.group("[JobPostForm] 전송 실패");
-      console.log("status:", status);
-      console.log("headers:", e?.response?.headers);
-      console.log("data(raw):", data);
-      try {
-        console.log("data(string):", typeof data === "string" ? data : JSON.stringify(data, null, 2));
-      } catch {}
-      console.groupEnd();
-
-      if (status === 401 || status === 403) {
-        // 로그인 필요 → 로그인 후 다시 돌아오도록 next 세팅
-        const nextUrl = window.location.pathname + window.location.search;
-        navigate(`/auth?next=${encodeURIComponent(nextUrl)}`);
+      if (who === "PERSONAL") {
+        navigate("/post/personal", { replace: true });
         return;
       }
-      alert(data?.message ?? e?.message ?? "등록 실패");
+
+      if (who === "BUSINESS") {
+        const res: any = await axiosInstance.post("/api/v1/jobs/business-verifications/register", undefined, {
+          withCredentials: true,
+          headers: { Accept: "application/json" },
+        });
+
+        let jid: number | null = null;
+        const b = res?.data?.result ?? res?.data ?? {};
+        if (typeof b?.jobId === "number" && b.jobId > 0) jid = b.jobId;
+        if (jid == null) {
+          const loc = res?.headers?.location || res?.headers?.Location;
+          if (loc) {
+            const last = String(loc).split("/").filter(Boolean).pop();
+            if (last && /^\d+$/.test(last)) jid = Number(last);
+          }
+        }
+
+        if (jid != null) {
+          alert("등록이 완료되었습니다.");
+          navigate("/", { replace: true });
+          return;
+        }
+
+        // 여기까지 왔는데 jobId가 없으면 → 사업자 DB가 없거나 미완료 상태
+        alert("사업자 정보가 필요합니다. 사업자 등록 페이지로 이동합니다.");
+        navigate("/post/business", { replace: true });
+        return;
+      }
+
+      // alert("등록이 완료되었습니다. 홈으로 이동합니다.");
+      // navigate("/", { replace: true });
+    } catch (e: any) {
+      const s = e?.response?.status;
+      const d = e?.response?.data;
+      console.group("[JobPostForm] 전송 실패");
+      console.log("status:", e?.response?.status);
+      console.log("data:", e?.response?.data);
+      console.groupEnd();
+      // 서버가 '사업자 정보 필요'를 코드로 내려줄 수 있는 경우를 케어
+      if (
+        s === 428 ||
+        d?.code === "BUSINESS_INFO_REQUIRED" ||
+        d?.code === "JOB405" || // 일자리 등록 데이터 없음 (드래프트/사업자 미연결)
+        /사업자.*필요|등록 데이터가 존재하지/i.test(String(d?.message ?? ""))
+      ) {
+        alert("사업자 정보가 필요합니다. 사업자 등록 페이지로 이동합니다.");
+        navigate("/post/business", { replace: true });
+        return;
+      }
+
+      alert(d?.message ?? "등록 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
