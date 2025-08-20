@@ -96,12 +96,22 @@ const CareerTalkWritePage = () => {
     <div className="relative min-h-screen pb-[110px] px-4 font-[Pretendard]">
       <Header title="내일" />
 
-      {/* X 버튼 */}
-      <div className="absolute top-[18px] left-4 mt-[40px]">
-        <button className="cursor-pointer" onClick={() => navigate(-1)}>
-          <X size={24} />
-        </button>
-      </div>
+
+      <div className="absolute top-[18px] left-4 right-0 mt-[40px] flex items-center justify-between px-4">
+
+  <button className="cursor-pointer" onClick={() => navigate(-1)}>
+    <X size={24} />
+  </button>
+
+  <strong
+    className="absolute left-1/2 transform -translate-x-1/2 text-[20px] font-bold leading-none"
+    style={{ color: palette.gray.dark }}
+  >
+    커리어톡 작성
+  </strong>
+
+</div>
+
 
       <div className="border-b" style={{ borderColor: palette.gray.default, marginTop: "90px" }} />
 
