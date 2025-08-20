@@ -261,7 +261,7 @@ const ChatPage: React.FC = () => {
     };
   }, []);
 
-  // ✅ URL 파라미터: roomId + 작성자 여부 + ownerId + (제목 title / postId 둘 중 하나)
+  // URL 파라미터: roomId + 작성자 여부 + ownerId + (제목 title / postId 둘 중 하나)
   useEffect(() => {
     const r = searchParams.get("roomId");
     if (r && r !== roomId) setRoomId(r);
@@ -456,11 +456,11 @@ const ChatPage: React.FC = () => {
           <div key={dateLabel} className="mb-4 mt-[10px]">
             <div className="my-6 px-1">
               <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-[#555555]" />
+                <div className="h-px ml-[20px] flex-1 bg-[#555555]" />
                 <span className="text-[14px] leading-none text-[#555555] whitespace-nowrap tracking-[0.02em]">
                   {dateLabel}
                 </span>
-                <div className="h-px flex-1 bg-[#555555]" />
+                <div className="h-px mr-[20px] flex-1 bg-[#555555]" />
               </div>
             </div>
 
@@ -478,7 +478,7 @@ const ChatPage: React.FC = () => {
                     key={`${m.messageId ?? `${m.sentAt}-${Math.random()}`}`}
                     className={`flex ${mine ? "justify-end" : "justify-start"}`}
                   >
-                    <div className="max-w-[82%] flex flex-col gap-1">
+                    <div className="max-w-[82%] flex flex-col gap-1 ml-[25px] mr-[25px] mb-[10px]">
                       {/* 상단 라벨 */}
                       <div className={`${mine ? "text-right" : "text-left"}`}>
                         <span className="font-[Pretendard] text-[16px] font-medium text-[#1C1C1E]">
@@ -493,8 +493,8 @@ const ChatPage: React.FC = () => {
                             "inline-block rounded-[10px] py-[10px] px-[15px]",
                             "font-[Pretendard] text-[14px] leading-[22px] whitespace-pre-wrap break-words",
                             mine
-                              ? "bg-[#B8CDB9] text-[#12381F]" // 내 버블
-                              : "bg-[#555555] text-white", // 상대 버블
+                              ? "bg-[#B8CDB9] text-[##333333]" // 내 버블
+                              : "bg-[rgba(85,85,85,0.15)] text-[##333333]", // 상대 버블
                           ].join(" ")}
                         >
                           {m.content}
@@ -519,7 +519,7 @@ const ChatPage: React.FC = () => {
             onChange={(e) => setMessage(e.target.value)}
             placeholder={isConnected ? "메시지 보내기" : "연결 중..."}
             disabled={!isConnected}
-            className="flex-1 h-11 px-4 rounded-[15px] border border-[#729A73]"
+            className="flex-1 h-11 ml-[20px] mr-[20px] px-4 rounded-[15px] border border-[#729A73]"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -530,11 +530,11 @@ const ChatPage: React.FC = () => {
           <button
   onClick={send}
   disabled={!isConnected || !message.trim()}
-  className="h-11 w-11 rounded-full bg-emerald-500 text-white flex items-center justify-center disabled:opacity-60 active:scale-[0.98] transition"
+  className="h-11 w-11 rounded-full bg-emerald-500 text-white flex items-center justify-center mr-[10px]"
   aria-label="전송"
   title="전송"
 >
-  <img src={sendIcon} alt="전송" className="w-[18px] h-[18px] object-contain" draggable={false} />
+  <img src={sendIcon} alt="전송" className="w-[20px] h-[20px] object-contain" draggable={false} />
 </button>
 
         </div>
