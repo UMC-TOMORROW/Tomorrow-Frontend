@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import CareerForm from "../../components/CareerForm";
 import CareerItem from "../../components/CareerItem";
 import LicenseForm from "../../components/LicenseForm";
@@ -24,6 +24,7 @@ import { axiosInstance } from "../../apis/axios";
 import { isAxiosError } from "axios";
 import type { MyInfo } from "../../types/member";
 import { getMyInfo } from "../../apis/employerMyPage";
+import { SlArrowLeft } from "react-icons/sl";
 
 const labels = [
   "단기",
@@ -87,6 +88,7 @@ type PendingCertificate = {
 const MAX_CERTS = 4;
 
 const ResumeManage = () => {
+  const navigate = useNavigate();
   const [selfIntro, setSelfIntro] = useState("");
   const [hasIntro, setHasIntro] = useState(false);
   const [showSelfIntroBox, setShowSelfIntroBox] = useState(false);
@@ -477,9 +479,16 @@ const ResumeManage = () => {
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <div className="bg-white min-h-screen">
-        <section>
+        <section className="relative flex justify-center items-center h-[52px] border-b border-[#DEDEDE]">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="absolute left-[15px]"
+          >
+            <SlArrowLeft />
+          </button>
           <div
-            className="flex justify-center items-center text-[20px] h-[52px] border-b-[1.5px] border-[#DEDEDE]"
+            className="flex justify-center items-center text-[20px] h-[52px] border-[#DEDEDE]"
             style={{ fontWeight: 700 }}
           >
             이력서 관리
