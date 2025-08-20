@@ -7,7 +7,11 @@ import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import member from "../../assets/member.png";
 import type { MyInfo } from "../../types/member";
-import { getMyInfo, postLogout, updateProfileImage } from "../../apis/employerMyPage";
+import {
+  getMyInfo,
+  postLogout,
+  updateProfileImage,
+} from "../../apis/employerMyPage";
 import { deactivateMember, getMe } from "../../apis/mypage";
 
 const EmployerMyPage = () => {
@@ -70,31 +74,31 @@ const EmployerMyPage = () => {
     []
   );
 
-const handleLogout = useCallback(async () => {
-  if (isLoggingOut) return;
+  const handleLogout = useCallback(async () => {
+    if (isLoggingOut) return;
 
-  try {
-    setIsLoggingOut(true);
     try {
-      await postLogout();
-    } catch (err) {
-      console.warn("[logout] 서버 로그아웃 중 경고(무시 가능):", err);
+      setIsLoggingOut(true);
+      try {
+        await postLogout();
+      } catch (err) {
+        console.warn("[logout] 서버 로그아웃 중 경고(무시 가능):", err);
+      }
+
+      // localStorage.removeItem("accessToken");
+      // localStorage.removeItem("refreshToken");
+      // localStorage.removeItem("memberId");
+
+      //하드 리다이렉트로 메모리 상태까지 초기화
+      // window.location.replace("/auth");
+      // 소프트 리다이렉트
+      navigate("/auth", { replace: true });
+    } catch {
+      alert("로그아웃 중 문제가 발생했습니다.");
+    } finally {
+      setIsLoggingOut(false);
     }
-
-    // localStorage.removeItem("accessToken");
-    // localStorage.removeItem("refreshToken");
-    // localStorage.removeItem("memberId");
-
-    //하드 리다이렉트로 메모리 상태까지 초기화
-    // window.location.replace("/auth");
-    // 소프트 리다이렉트
-    navigate("/auth", { replace: true });
-  } catch {
-    alert("로그아웃 중 문제가 발생했습니다.");
-  } finally {
-    setIsLoggingOut(false);
-  }
-}, [isLoggingOut]);
+  }, [isLoggingOut]);
 
   const handleDeactivate = useCallback(async () => {
     if (isDeactivating) return;
@@ -226,11 +230,27 @@ const handleLogout = useCallback(async () => {
             고객센터
           </div>
           <ul>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li
+              onClick={() =>
+                window.open(
+                  "https://lava-scion-9fd.notion.site/254cf0577e4180e7bfd2c2b8422769e0?pvs=74",
+                  "_blank"
+                )
+              }
+              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]"
+            >
               <span>공지사항</span>
               <SlArrowRight />
             </li>
-            <li className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]">
+            <li
+              onClick={() =>
+                window.open(
+                  "https://lava-scion-9fd.notion.site/254cf0577e4180daab91d614d3e5bddd",
+                  "_blank"
+                )
+              }
+              className="flex h-[50px] px-[25px] text-[15px] items-center justify-between border-b border-[#DEDEDE]"
+            >
               <span>자주 묻는 질문</span>
               <SlArrowRight />
             </li>
