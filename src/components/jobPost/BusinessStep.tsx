@@ -39,10 +39,13 @@ export default function BusinessStep() {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await axiosInstance.get("/api/v1/jobs/business-verifications/me", {
-          withCredentials: true,
-          headers: { Accept: "application/json" },
-        });
+        const { data } = await axiosInstance.get(
+          "/api/v1/jobs/business-verifications/me",
+          {
+            withCredentials: true,
+            headers: { Accept: "application/json" },
+          }
+        );
 
         // 서버 필드명 매핑에 맞춰 채움
         setRegNo(
@@ -83,17 +86,31 @@ export default function BusinessStep() {
 
       // 1) 사업자 정보 저장 (업서트: POST 실패 시 PUT으로 재시도)
       try {
-        await axiosInstance.post("/api/v1/jobs/business-verifications/only", payload, {
-          withCredentials: true,
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-        });
+        await axiosInstance.post(
+          "/api/v1/jobs/business-verifications/only",
+          payload,
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+          }
+        );
       } catch (err: any) {
         const s = err?.response?.status;
         if (s === 405 || s === 409) {
-          await axiosInstance.put("/api/v1/jobs/business-verifications/only", payload, {
-            withCredentials: true,
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-          });
+          await axiosInstance.put(
+            "/api/v1/jobs/business-verifications/only",
+            payload,
+            {
+              withCredentials: true,
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            }
+          );
         } else {
           throw err;
         }
@@ -135,9 +152,15 @@ export default function BusinessStep() {
       console.groupEnd();
 
       // 검증에러(COMMON402) 등 필드 메시지 우선 노출
-      if (s === 400 && (d?.code === "COMMON402" || /Validation/i.test(String(d?.message ?? "")))) {
+      if (
+        s === 400 &&
+        (d?.code === "COMMON402" ||
+          /Validation/i.test(String(d?.message ?? "")))
+      ) {
         const errs = d?.result && typeof d.result === "object" ? d.result : {};
-        const merged = Object.values(errs).filter(Boolean).join("\n") || "입력값을 확인해주세요.";
+        const merged =
+          Object.values(errs).filter(Boolean).join("\n") ||
+          "입력값을 확인해주세요.";
         alert(merged);
         return;
       }
@@ -154,6 +177,16 @@ export default function BusinessStep() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // util (컴포넌트 안 위쪽에 추가해도 됨)
+  const clampDateYear = (raw: string) => {
+    const [y = "", m = "", d = ""] = String(raw).split("-");
+    // 숫자만, 4자리로 자르고 9999 초과 시 9999로
+    let year = y.replace(/\D/g, "");
+    if (year.length > 4) year = year.slice(0, 4);
+    if (year && Number(year) > 9999) year = "9999";
+    return [year, m, d].filter(Boolean).join("-");
   };
 
   return (
@@ -182,17 +215,23 @@ export default function BusinessStep() {
 
       <div className="flex flex-col gap-6">
         <div>
-          <label className="block text-[14px] font-semibold text-[#333] !mb-2">사업자 등록 번호</label>
+          <label className="block text-[14px] font-semibold text-[#333] !mb-2">
+            사업자 등록 번호
+          </label>
           <input
             type="text"
             placeholder="1234567890"
             className="w-[336px] h-[52px] px-[10px] rounded-[10px] border border-[#729A73]"
             value={regNo}
-            onChange={(e) => setRegNo(e.target.value.replace(/\D+/g, "").slice(0, 10))}
+            onChange={(e) =>
+              setRegNo(e.target.value.replace(/\D+/g, "").slice(0, 10))
+            }
           />
         </div>
         <div>
-          <label className="block text-[14px] font-semibold text-[#333] !mb-2">상호 (법인/단체명)</label>
+          <label className="block text-[14px] font-semibold text-[#333] !mb-2">
+            상호 (법인/단체명)
+          </label>
           <input
             type="text"
             placeholder="(주) 내일"
@@ -202,7 +241,9 @@ export default function BusinessStep() {
           />
         </div>
         <div>
-          <label className="block text-[14px] font-semibold text-[#333] !mb-2">성명 (대표자)</label>
+          <label className="block text-[14px] font-semibold text-[#333] !mb-2">
+            성명 (대표자)
+          </label>
           <input
             type="text"
             placeholder="이내일"
@@ -212,17 +253,34 @@ export default function BusinessStep() {
           />
         </div>
         <div className="!mb-6">
-          <label className="block text-[14px] font-semibold text-[#333] !mb-2">개업연월일</label>
+          <label className="block text-[14px] font-semibold text-[#333] !mb-2">
+            개업연월일
+          </label>
           <input
             type="date"
             className="w-[336px] h-[52px] px-[10px] !text-[#555]/85 rounded-[10px] border border-[#729A73]"
             value={openDate}
-            onChange={(e) => setOpenDate(e.target.value)}
+            max="9999-12-31"
+            onInput={(e) => {
+              const t = e.currentTarget;
+              const fixed = clampDateYear(t.value);
+              if (fixed !== t.value) {
+                t.value = fixed; // 타이핑 중 즉시 교정 (사파리/크롬 모두 동작)
+              }
+            }}
+            onChange={(e) => {
+              // 최종 반영 시도 시에도 한 번 더 안전하게 클램프
+              const fixed = clampDateYear(e.target.value);
+              setOpenDate(fixed);
+            }}
           />
         </div>
       </div>
 
-      <CommonButton label={submitting ? "등록 중..." : "등록하기"} onClick={onSubmit} />
+      <CommonButton
+        label={submitting ? "등록 중..." : "등록하기"}
+        onClick={onSubmit}
+      />
     </div>
   );
 }
