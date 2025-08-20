@@ -6,7 +6,6 @@ import { axiosInstance } from "../../apis/axios";
 
 export default function BusinessStep() {
   const navigate = useNavigate();
-  // const jobId = useStableJobId();
 
   const [regNo, setRegNo] = useState("");
   const [corpName, setCorpName] = useState("");
@@ -14,7 +13,15 @@ export default function BusinessStep() {
   const [openDate, setOpenDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // 날짜 형식 변환 유틸리티
+  // 프리필 상태/초기값 저장 (사업자 등록을 한 이력이 있는 경우)
+  const [hasExisting, setHasExisting] = useState(false);
+  const [initial, setInitial] = useState<{
+    regNo: string;
+    corpName: string;
+    owner: string;
+    openDate: string;
+  } | null>(null);
+
   // YYYY-MM-DD 형식으로 변환
   const toYMD = (v: any) => {
     const s = String(v ?? "");
