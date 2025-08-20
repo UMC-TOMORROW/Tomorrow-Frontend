@@ -5,12 +5,12 @@ import resume from "../../assets/my/resume.png";
 import star_filled_black from "../../assets/my/star_filled_black.png";
 import { Link, useNavigate } from "react-router-dom";
 import { getMe1 } from "../../apis/member";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import recommend from "../../assets/recommend.png";
 import member from "../../assets/member.png";
 import { deactivateMember, getMe } from "../../apis/mypage";
 import type { MyInfo } from "../../types/member";
-import { getMyInfo, postLogout } from "../../apis/employerMyPage";
+import { getMyInfo, postLogout, updateProfileImage } from "../../apis/employerMyPage";
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -18,6 +18,9 @@ const MyPage = () => {
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+    const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const fetchMyInfo = async () => {
@@ -110,6 +113,42 @@ const MyPage = () => {
     }
   };
 
+    // 프로필 이미지 src 계산( null/빈값 → 기본 이미지 )
+  const profileSrc = useMemo(() => {
+    const url = myInfo?.profileImageUrl?.trim();
+    return url ? url : member;
+  }, [myInfo?.profileImageUrl]);
+
+  const handleClickProfile = useCallback(() => {
+    if (isUploading) return;
+    fileRef.current?.click();
+  }, [isUploading]);
+
+  const handleChangeProfileFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      try {
+        setIsUploading(true);
+        const uploadedUrl = await updateProfileImage(file);
+
+        // 바로 UI 반영 (state 내 profileImageUrl 교체)
+        setMyInfo((prev) =>
+          prev ? { ...prev, profileImageUrl: uploadedUrl } : prev
+        );
+      } catch (err) {
+        console.error(err);
+        alert("프로필 이미지 업로드에 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        // 같은 파일 재선택 가능하도록 value 리셋
+        if (fileRef.current) fileRef.current.value = "";
+        setIsUploading(false);
+      }
+    },
+    []
+  );
+
   return (
     <div className="bg-white" style={{ fontFamily: "Pretendard" }}>
       <Header title="마이페이지" />
@@ -117,7 +156,28 @@ const MyPage = () => {
       <div className="min-h-screen pb-[100px] overflow-y-auto mt-[50px]">
         <section className="flex items-center justify-between px-[20px] py-[15px] h-[115px] border-b border-[#DEDEDE]">
           <div className="flex items-center gap-4">
-            <img src={member} />
+            <button
+              type="button"
+              onClick={handleClickProfile}
+              className="relative w-[60px] h-[60px] rounded-full overflow-hidden shrink-0 focus:outline-none"
+              aria-label="프로필 이미지 수정"
+              title="프로필 이미지 수정"
+            >
+              <img
+                src={profileSrc}
+                alt="프로필 이미지"
+                className="w-full h-full object-cover"
+              />
+            </button>
+
+            {/* 숨김 파일 입력 */}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleChangeProfileFile}
+            />
             <div>
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
                 {myInfo?.name ?? "이름을 등록해주세요"}
