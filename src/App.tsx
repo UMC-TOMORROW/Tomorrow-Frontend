@@ -35,12 +35,14 @@ import JobDetailPage from "./pages/job/JobDetailPage";
 import ChatPage from "./pages/careerTalk/ChatPage";
 import JobReviewPage from "./pages/job/JobReviewPage";
 import { getMyInfo } from "./apis/employerMyPage";
+import MemberRecover from "./pages/auth/MemberRecover";
 
 /* ───────────────── 헬퍼 ───────────────── */
 type MeShape = {
   id?: number | null;
   isOnboarded?: boolean | null;
   inOnboarded?: boolean | null;
+  status?: string | null; // INACTIVE 체크용
   [k: string]: any;
 };
 
@@ -53,9 +55,13 @@ const getMeOrNull = async (): Promise<MeShape | null> => {
   }
 };
 
-// 온보딩 완료 여부를 일관되게 계산
+// 온보딩 완료 여부
 const isOnboardedBool = (me?: MeShape | null) =>
   Boolean(me && (me.isOnboarded ?? me.inOnboarded ?? false));
+
+// 탈퇴 상태 여부
+const isInactive = (me?: MeShape | null) =>
+  (me?.status || "").toUpperCase() === "INACTIVE";
 
 /* ───────────────── 라우트 보호 로더 ───────────────── */
 
@@ -63,13 +69,15 @@ const isOnboardedBool = (me?: MeShape | null) =>
 const requireAuthLoader = async () => {
   const me = await getMeOrNull();
   if (!me?.id) throw redirect("/auth");
+  if (isInactive(me)) throw redirect("/auth/recover");
   return null;
 };
 
-// 로그인/스플래시: 로그인 상태면 홈 또는 user-info로
+// 로그인/스플래시: 로그인 상태면 홈/유저정보/복구로
 const requireAnonLoader = async () => {
   const me = await getMeOrNull();
   if (!me) return null; // 비로그인 그대로 접근
+  if (isInactive(me)) throw redirect("/auth/recover");
   if (!isOnboardedBool(me)) throw redirect("/auth/user-info");
   throw redirect("/");
 };
@@ -78,6 +86,7 @@ const requireAnonLoader = async () => {
 const requireUserInfoLoader = async () => {
   const me = await getMeOrNull();
   if (!me) throw redirect("/auth");
+  if (isInactive(me)) throw redirect("/auth/recover");
   if (isOnboardedBool(me)) throw redirect("/");
   return null;
 };
@@ -86,6 +95,7 @@ const requireUserInfoLoader = async () => {
 const requireNeedsOnboardingLoader = async () => {
   const me = await getMeOrNull();
   if (!me) throw redirect("/auth");
+  if (isInactive(me)) throw redirect("/auth/recover");
   if (isOnboardedBool(me)) throw redirect("/");
   return null;
 };
@@ -100,6 +110,18 @@ const router = createBrowserRouter([
     loader: requireUserInfoLoader, // ← 회원정보 입력(온보딩 전)
   },
 
+  // 회원 복구
+  {
+    path: "/auth/recover",
+    element: <MemberRecover />,
+    loader: async () => {
+      const me = await getMeOrNull();
+      if (!me) throw redirect("/auth");
+      if (!isInactive(me)) throw redirect("/");
+      return null;
+    },
+  },
+
   // 2) 메인 섹션
   {
     path: "/",
@@ -111,6 +133,7 @@ const router = createBrowserRouter([
         loader: async () => {
           const me = await getMeOrNull();
           if (!me) throw redirect("/splash");
+          if (isInactive(me)) throw redirect("/auth/recover");
           if (!isOnboardedBool(me)) throw redirect("/auth/user-info");
           return null;
         },
