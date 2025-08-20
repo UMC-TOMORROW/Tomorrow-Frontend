@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import member from "../../assets/member.png";
 import type { MyInfo } from "../../types/member";
-import { getMyInfo, updateProfileImage } from "../../apis/employerMyPage";
+import { getMyInfo, postLogout, updateProfileImage } from "../../apis/employerMyPage";
 import { deactivateMember, getMe } from "../../apis/mypage";
 
 const EmployerMyPage = () => {
@@ -70,21 +70,31 @@ const EmployerMyPage = () => {
     []
   );
 
-  const handleLogout = useCallback(async () => {
-    if (isLoggingOut) return;
+const handleLogout = useCallback(async () => {
+  if (isLoggingOut) return;
+
+  try {
+    setIsLoggingOut(true);
     try {
-      setIsLoggingOut(true);
-      // 필요하면 여기서 서버 로그아웃 API 호출(postLogout)도 추가 가능
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("memberId");
-      navigate("/auth", { replace: true });
-    } catch {
-      alert("로그아웃 중 문제가 발생했습니다.");
-    } finally {
-      setIsLoggingOut(false);
+      await postLogout();
+    } catch (err) {
+      console.warn("[logout] 서버 로그아웃 중 경고(무시 가능):", err);
     }
-  }, [isLoggingOut, navigate]);
+
+    // localStorage.removeItem("accessToken");
+    // localStorage.removeItem("refreshToken");
+    // localStorage.removeItem("memberId");
+
+    //하드 리다이렉트로 메모리 상태까지 초기화
+    // window.location.replace("/auth");
+    // 소프트 리다이렉트
+    navigate("/auth", { replace: true });
+  } catch {
+    alert("로그아웃 중 문제가 발생했습니다.");
+  } finally {
+    setIsLoggingOut(false);
+  }
+}, [isLoggingOut]);
 
   const handleDeactivate = useCallback(async () => {
     if (isDeactivating) return;

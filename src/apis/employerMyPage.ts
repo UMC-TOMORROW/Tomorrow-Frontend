@@ -120,3 +120,10 @@ export const updateProfileImage = async (file: File): Promise<string> => {
 
   return res.data.result;
 };
+
+// 로그아웃
+export const postLogout = async (): Promise<void> => {
+  const res = await axiosInstance.post("/api/v1/auth/logout", null, {
+  });
+  console.log(res)
+};
