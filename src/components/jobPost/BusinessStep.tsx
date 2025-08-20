@@ -124,7 +124,7 @@ export default function BusinessStep() {
       // }
 
       alert("사업자 정보가 저장되었습니다.");
-      navigate("/mypage", { replace: true });
+      navigate("/Mypage/EmployerMyPage", { replace: true });
     } catch (e: any) {
       const s = e?.response?.status;
       const d = e?.response?.data;
