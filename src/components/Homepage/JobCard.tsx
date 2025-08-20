@@ -47,8 +47,8 @@ interface JobCardProps {
   wage: string;
   image: string;
   isTime: boolean;
-  workPeriod?: string; // ✅ 추가
-  environment?: Record<string, boolean>; // ✅ 객체 타입으로 받기
+  workPeriod?: string;
+  environment?: Record<string, boolean>;
   paymentType: PaymentType;
 }
 
@@ -88,13 +88,24 @@ const JobCard = ({
     canLiftHeavyObjects: "무거운 물건 운반",
     canMoveActively: "신체 활동 중심",
     canCommunicate: "사람 응대 중심",
+
+    can_work_standing: "서서 근무 중심",
+    can_work_sitting: "앉아서 근무 중심",
+    can_carry_objects: "가벼운 물건 운반",
+    can_lift_light_objects: "가벼운 물건 운반",
+    can_lift_heavy_objects: "무거운 물건 운반",
+    can_move_actively: "신체 활동 중심",
+    can_communicate: "사람 응대 중심",
   };
+
+  const isTrueLike = (v: unknown) =>
+    v === true || v === 1 || v === "1" || v === "true" || v === "Y";
 
   const timeText = isTime ? "시간협의" : "시간 고정";
 
   const translatedEnv = environment
     ? Object.entries(environment)
-        .filter(([, v]) => v === true)
+        .filter(([, v]) => isTrueLike(v))
         .map(([k]) => environmentMap[k] ?? "")
         .filter(Boolean)
         .join(", ")
