@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import BottomNavbar from "../../components/BottomNavbar";
 import CareerTalkCard from "../../components/careerTalk/CareerTalkCard";
@@ -15,7 +15,7 @@ import type { CareerTalk } from "../../types/careerTalk";
 import CareerTalkCardSkeleton from "../../components/careerTalk/CareerTalkCardSkeleton";
 
 const BATCH_SIZE = 8;
-type SearchMode = "none" | "title" | "category"; 
+type SearchMode = "none" | "title" | "category";
 
 function CareerTalkListPage() {
   const navigate = useNavigate();
@@ -29,62 +29,95 @@ function CareerTalkListPage() {
   const [searchMode, setSearchMode] = useState<SearchMode>("none");
   const [searchKeyword, setSearchKeyword] = useState<string>("");
 
-  const handleSearch = async (keyword: string) => {
-    const trimmed = keyword.trim();
+  const debounceRef = useRef<number | null>(null);
+  const searchSeqRef = useRef(0);
 
+  const resetListState = () => {
     setTalks([]);
     setCursor(undefined);
     setHasMore(true);
+  };
 
-    // 입력 비었으면 전체 리스트로 복귀
-    if (!trimmed) {
-      setSearchMode("none");
-      setSearchKeyword("");
-      setLoading(true);
-      try {
-        const res = await getCareerTalks(BATCH_SIZE);
-        const list = res.result.careertalkList ?? [];
-        setTalks(list);
-        setHasMore(res.result.hasNext);
-        if (list.length) setCursor(list[list.length - 1].id);
-      } catch (err) {
-        console.error("초기 목록 로딩 실패", err);
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
+  const handleSearch = useCallback(
+    async (keyword: string) => {
+      const trimmed = keyword.trim();
 
-    // 키워드 검색 시작
-    setLoading(true);
-    setSearchKeyword(trimmed);
-
-    try {
-      // 1) 카테고리 검색 먼저 시도
-      const byCategory = await searchCareerTalksByCategory(trimmed, BATCH_SIZE);
-      const catList = byCategory.result.careertalkList ?? [];
-      if (catList.length > 0) {
-        setSearchMode("category");
-        setTalks(catList);
-        setHasMore(byCategory.result.hasNext);
-        setCursor(catList[catList.length - 1].id);
+      resetListState();
+      // 입력 비었으면 전체 리스트로 복귀
+      if (!trimmed) {
+        setSearchMode("none");
+        setSearchKeyword("");
+        setLoading(true);
+        try {
+          const res = await getCareerTalks(BATCH_SIZE);
+          const list = res.result.careertalkList ?? [];
+          setTalks(list);
+          setHasMore(res.result.hasNext);
+          if (list.length) setCursor(list[list.length - 1].id);
+        } catch (err) {
+          console.error("초기 목록 로딩 실패", err);
+          setHasMore(false);
+        } finally {
+          setLoading(false);
+        }
         return;
       }
 
-      // 2) 없으면 제목 검색
-      const byTitle = await searchCareerTalksByTitle(trimmed, BATCH_SIZE);
-      const titleList = byTitle.result.careertalkList ?? [];
-      setSearchMode("title");
-      setTalks(titleList);
-      setHasMore(byTitle.result.hasNext);
-      if (titleList.length) setCursor(titleList[titleList.length - 1].id);
-    } catch (err) {
-      console.error("검색 실패", err);
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-    }
-  };
+      // 키워드 검색 시작
+      setLoading(true);
+      setSearchKeyword(trimmed);
+
+      try {
+        // 1) 카테고리 우선
+        const byCategory = await searchCareerTalksByCategory(trimmed, BATCH_SIZE);
+        const catList = byCategory.result.careertalkList ?? [];
+        if (catList.length > 0) {
+          setSearchMode("category");
+          setTalks(catList);
+          setHasMore(byCategory.result.hasNext);
+          setCursor(catList[catList.length - 1].id);
+          return;
+        }
+
+        // 2) 없으면 제목 검색
+        const byTitle = await searchCareerTalksByTitle(trimmed, BATCH_SIZE);
+        const titleList = byTitle.result.careertalkList ?? [];
+        setSearchMode("title");
+        setTalks(titleList);
+        setHasMore(byTitle.result.hasNext);
+        if (titleList.length) setCursor(titleList[titleList.length - 1].id);
+      } catch (err) {
+        console.error("검색 실패", err);
+        setHasMore(false);
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  const handleInputCapture = useCallback(
+    (e: React.FormEvent<HTMLDivElement>) => {
+      const target = e.target as EventTarget | null;
+      if (!(target instanceof HTMLInputElement)) return; // 버튼/이미지 클릭 등은 무시
+
+      const value = target.value ?? "";
+
+      // 디바운스
+      if (debounceRef.current) {
+        window.clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      const seq = ++searchSeqRef.current;
+      debounceRef.current = window.setTimeout(() => {
+        // 최신 입력만 처리(혹시 추후 비동기 확장되면 사용)
+        if (seq === searchSeqRef.current) {
+          handleSearch(value);
+        }
+      }, 300);
+    },
+    [handleSearch]
+  );
 
   const handleMoveToWrite = () => {
     navigate("/career-talk/write");
@@ -155,7 +188,6 @@ function CareerTalkListPage() {
     );
     if (observerRef.current) observer.observe(observerRef.current);
     return () => observer.disconnect();
-    // cursor/hasMore 변경에 반응 (모드/키워드는 fetchCareerTalks 내부에서 참조)
   }, [cursor, hasMore]);
 
   // 최초 로딩
@@ -174,6 +206,11 @@ function CareerTalkListPage() {
         setLoading(false);
       }
     })();
+
+    // 언마운트 시 디바운스 타이머 정리
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
   }, []);
 
   return (
@@ -188,7 +225,9 @@ function CareerTalkListPage() {
         style={{ backgroundColor: palette.gray.light }}
       >
         <div className="mb-[10px] flex justify-center">
-          <SearchBar onSearch={handleSearch} />
+          <div onInputCapture={handleInputCapture} className="w-full flex justify-center">
+            <SearchBar onSearch={handleSearch} />
+          </div>
         </div>
 
         <div className="h-[1px] bg-[#555555D9] mb-[25px]" />
