@@ -4,17 +4,24 @@ import { useJobStore } from "../../stores/useJobStore";
 import type { MyPostItem } from "../../types/employer";
 import { getMyClosedPosts, getMyOpenPosts } from "../../apis/employerMyPage";
 import { SlArrowLeft } from "react-icons/sl";
+import defaultLogo from "../../assets/logo/logo.png";
 
-const formatDotDate = (iso: string) => iso.replaceAll("-", ".");
+const formatDotDate = (iso: string) => (iso ? iso.replaceAll("-", ".") : "");
 
 const mapToJob = (p: MyPostItem) => ({
   id: p.jobId,
   date: formatDotDate(p.date),
   company: p.location,
   title: p.title,
-  status: p.status,
+  status: p.status as "모집중" | "모집완료",
   tags: p.tags ?? [],
+  imageUrl: (p as any).imageUrl ?? "",
 });
+
+const getJobImage = (j: unknown) => {
+  const u = (j as any)?.imageUrl;
+  return typeof u === "string" ? u : "";
+};
 
 const ManageMyJobs = () => {
   const navigate = useNavigate();
@@ -33,8 +40,8 @@ const ManageMyJobs = () => {
 
         if (cancelled) return;
 
-        const openJobs = open.map(mapToJob);
-        const closedJobs = closed.map(mapToJob);
+        const openJobs = (open ?? []).map(mapToJob);
+        const closedJobs = (closed ?? []).map(mapToJob);
 
         setJobs([...openJobs, ...closedJobs]);
       } catch (e) {
@@ -49,7 +56,7 @@ const ManageMyJobs = () => {
   }, [setJobs]);
 
   const filteredJobs = useMemo(
-    () => jobs.filter((job) => job.status === activeTab),
+    () => jobs.filter((job: any) => job.status === activeTab),
     [jobs, activeTab]
   );
 
@@ -71,6 +78,7 @@ const ManageMyJobs = () => {
             내 공고 관리
           </div>
         </section>
+
         <section className="flex justify-around items-center h-[45px]">
           <button
             onClick={() => setActiveTab("모집중")}
@@ -89,11 +97,13 @@ const ManageMyJobs = () => {
             모집 완료
           </button>
         </section>
+
         <div className="flex text-[12px] items-center pl-[20px] h-[36px] border-b border-[#DEDEDE]">
           {filteredJobs.length}건
         </div>
+
         <ul>
-          {filteredJobs.map((job) => (
+          {filteredJobs.map((job: any) => (
             <div
               key={job.id}
               onClick={() => navigate(`/MyPage/ApplicantList?jobId=${job.id}`)}
@@ -105,7 +115,10 @@ const ManageMyJobs = () => {
                     <p className="flex items-end text-[14px]">{job.date}</p>
                     <p className="text-[14px]">{job.company}</p>
                     <div className="flex gap-[10px]">
-                      <p className="text-[16px]" style={{ fontWeight: 800 }}>
+                      <p
+                        className="text-[16px] !w-[200px]"
+                        style={{ fontWeight: 800 }}
+                      >
                         {job.title}
                       </p>
                       <div
@@ -120,10 +133,20 @@ const ManageMyJobs = () => {
                       </div>
                     </div>
                     <p className="text-[14px] text-[#729A73]">
-                      {job.tags.join(", ")}
+                      {(job.tags ?? []).join(", ")}
                     </p>
                   </div>
-                  <div className="w-[79px] h-[79px] bg-gray-300"></div>
+
+                  <div className="flex-shrink-0 self-center w-[79px] h-[79px] flex items-center justify-center">
+                    <img
+                      src={getJobImage(job) || defaultLogo}
+                      alt={job.title}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = defaultLogo;
+                      }}
+                      className="w-[79px] h-[79px] object-contain"
+                    />
+                  </div>
                 </div>
                 <div className="px-[15px]">
                   <div className="h-[20px] w-full bg-white border-b border-[#DEDEDE]"></div>
