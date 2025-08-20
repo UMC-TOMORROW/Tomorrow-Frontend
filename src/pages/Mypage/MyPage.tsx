@@ -10,7 +10,7 @@ import recommend from "../../assets/recommend.png";
 import member from "../../assets/member.png";
 import { deactivateMember, getMe } from "../../apis/mypage";
 import type { MyInfo } from "../../types/member";
-import { getMyInfo } from "../../apis/employerMyPage";
+import { getMyInfo, postLogout } from "../../apis/employerMyPage";
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -33,18 +33,29 @@ const MyPage = () => {
 
   const handleLogout = useCallback(async () => {
     if (isLoggingOut) return;
+
     try {
       setIsLoggingOut(true);
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("memberId");
+      try {
+        await postLogout();
+      } catch (err) {
+        console.warn("[logout] 서버 로그아웃 중 경고(무시 가능):", err);
+      }
+
+      // localStorage.removeItem("accessToken");
+      // localStorage.removeItem("refreshToken");
+      // localStorage.removeItem("memberId");
+
+      //하드 리다이렉트로 메모리 상태까지 초기화
+      // window.location.replace("/auth");
+      // 소프트 리다이렉트
       navigate("/auth", { replace: true });
     } catch {
       alert("로그아웃 중 문제가 발생했습니다.");
     } finally {
       setIsLoggingOut(false);
     }
-  }, [isLoggingOut, navigate]);
+  }, [isLoggingOut]);
 
   const handleDeactivate = useCallback(async () => {
     if (isDeactivating) return;
