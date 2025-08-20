@@ -35,6 +35,7 @@ import JobDetailPage from "./pages/job/JobDetailPage";
 import ChatPage from "./pages/careerTalk/ChatPage";
 import JobReviewPage from "./pages/job/JobReviewPage";
 import { getMyInfo } from "./apis/employerMyPage";
+import MemberRecover from "./pages/auth/MemberRecover";
 
 /* ───────────────── 헬퍼 ───────────────── */
 type MeShape = {
@@ -99,6 +100,18 @@ const router = createBrowserRouter([
     element: <UserInfoForm />,
     loader: requireUserInfoLoader, // ← 회원정보 입력(온보딩 전)
   },
+
+  // 회원 복구
+  // {
+  //   path: "/auth/recover",
+  //   element: <MemberRecover />,
+  //   loader: async () => {
+  //     const me = await getMeOrNull();
+  //     if (!me) throw redirect("/auth");
+  //     if (me.status !== "INACTIVE") throw redirect("/");
+  //     return null;
+  //   },
+  // },
 
   // 2) 메인 섹션
   {
@@ -189,6 +202,7 @@ const router = createBrowserRouter([
       { path: "ApplicantList", element: <ApplicantList /> },
       { path: "ApplicantDetail", element: <ApplicantDetail /> },
       { path: "WorkPreference", element: <WorkPreference /> },
+      { path: "recover", element: <MemberRecover /> },
     ],
   },
 ]);
