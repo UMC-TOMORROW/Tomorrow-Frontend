@@ -21,6 +21,7 @@ interface ChatMessage {
   senderId?: number | null;
   anonymousName?: string | null; // "작성자"/"익명N"
   sentAt: string; // ISO
+  mine?: boolean; // 서버가 주는 내 메시지 여부
 }
 
 interface ChatMessageOut {
@@ -30,6 +31,7 @@ interface ChatMessageOut {
 
 const SUB_BASE = "/sub/chats";
 const PUB_SEND = "/pub/chats/send";
+const ANON_REGEX = /^익명(\d+)$/;
 
 const ChatPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,8 +47,8 @@ const ChatPage: React.FC = () => {
 
   // 작성자 여부 / 소유자 정보 / 내 익명명 / 제목
   const [myId, setMyId] = useState<number | null>(null);
-  const [ownerId, setOwnerId] = useState<number | null>(null); // 숫자 id 지원
-  const [isOwner, setIsOwner] = useState<boolean>(false); // boolean 지원
+  const [ownerId, setOwnerId] = useState<number | null>(null);
+  const [isOwner, setIsOwner] = useState<boolean>(false);
   const [myAlias, setMyAlias] = useState<string | null>(null);
   const [title, setTitle] = useState<string>("채팅");
 
@@ -69,9 +71,10 @@ const ChatPage: React.FC = () => {
     senderId: raw.senderId ?? null,
     anonymousName: raw.anonymousName ?? null,
     sentAt: raw.sentAt ?? raw.createdAt ?? new Date().toISOString(),
+    mine: raw.mine ?? raw.isMine ?? false,
   });
 
-  // 익명 라벨 캐싱
+  // 익명 라벨 캐싱(서버가 anonymousName 안 줄 때만 보조)
   const aliasMapRef = useRef<Map<string, string>>(new Map());
   const nextAliasRef = useRef<number>(1);
   const resolveDisplayName = useCallback((m: ChatMessage) => {
@@ -105,16 +108,74 @@ const ChatPage: React.FC = () => {
     return Array.from(map.entries());
   }, [logs]);
 
-  // ----- WS handlers -----
-  const handleIncoming = useCallback((frame: IMessage) => {
-    try {
-      const raw = JSON.parse(frame.body);
-      const msg = normalize(raw);
-      setLogs((prev) => [...prev, msg]);
-    } catch (e) {
-      console.error("Failed to parse message", e);
+  // ----- alias 자동 추론 -----
+  // 1) mine === true + anonymousName 존재 → 내 실제 alias로 추론
+  const inferredAlias = useMemo(() => {
+    for (let i = logs.length - 1; i >= 0; i--) {
+      const m = logs[i];
+      if (m.mine && m.anonymousName && m.anonymousName !== "작성자") {
+        return m.anonymousName as string;
+      }
     }
-  }, []);
+    return null;
+  }, [logs]);
+
+  // 2) 지금까지 등장한 익명N의 최댓값을 찾아 +1
+  const maxAnonNumber = useMemo(() => {
+    let max = 0;
+    for (const m of logs) {
+      const name = m.anonymousName;
+      if (!name || name === "작성자") continue;
+      const match = name.match(ANON_REGEX);
+      if (match) {
+        const n = Number(match[1]);
+        if (!Number.isNaN(n)) max = Math.max(max, n);
+      }
+    }
+    return max;
+  }, [logs]);
+
+  const nextAnonName = useMemo(() => `익명${maxAnonNumber + 1}`, [maxAnonNumber]);
+
+  // myAlias가 아직 없다면 inferredAlias로 채우고, 과거 낙관 메시지 라벨도 보정
+  useEffect(() => {
+    if (!myAlias && inferredAlias) {
+      setMyAlias(inferredAlias);
+      setLogs((prev) =>
+        prev.map((m) =>
+          m.mine && !m.anonymousName ? { ...m, anonymousName: inferredAlias } : m
+        )
+      );
+    }
+  }, [myAlias, inferredAlias]);
+
+  // ----- WS handlers -----
+  const handleIncoming = useCallback(
+    (frame: IMessage) => {
+      try {
+        const raw = JSON.parse(frame.body);
+        const msg = normalize(raw);
+
+        // 실시간에서도 alias 학습 및 보정
+        if (msg.mine && msg.anonymousName && msg.anonymousName !== "작성자") {
+          if (!myAlias || myAlias !== msg.anonymousName) {
+            setMyAlias(msg.anonymousName);
+            // 과거 낙관(추정) 라벨이 있으면 실제 라벨로 교체
+            setLogs((prev) =>
+              prev.map((m) =>
+                m.mine ? { ...m, anonymousName: msg.anonymousName } : m
+              )
+            );
+          }
+        }
+
+        setLogs((prev) => [...prev, msg]);
+      } catch (e) {
+        console.error("Failed to parse message", e);
+      }
+    },
+    [myAlias]
+  );
 
   const joinRoom = useCallback(
     async (rid: string) => {
@@ -315,21 +376,21 @@ const ChatPage: React.FC = () => {
     (async () => {
       try {
         const res = await fetch(`${base}/api/v1/members/me`, {
-          credentials: "include",
-          headers: { accept: "application/json" },
-        });
-        if (!res.ok) return;
-        const data = await res.json().catch(() => null);
-        const idRaw =
-          data?.id ??
-          data?.result?.id ??
-          data?.result?.memberId ??
-          data?.memberId;
-        const parsed = Number(idRaw);
-        if (!Number.isNaN(parsed)) setMyId(parsed);
-      } catch (e) {
-        console.warn("[myInfo] fetch failed", e);
-      }
+        credentials: "include",
+        headers: { accept: "application/json" },
+      });
+      if (!res.ok) return;
+      const data = await res.json().catch(() => null);
+      const idRaw =
+        data?.id ??
+        data?.result?.id ??
+        data?.result?.memberId ??
+        data?.memberId;
+      const parsed = Number(idRaw);
+      if (!Number.isNaN(parsed)) setMyId(parsed);
+    } catch (e) {
+      console.warn("[myInfo] fetch failed", e);
+    }
     })();
   }, [base]);
 
@@ -386,9 +447,13 @@ const ChatPage: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      // 낙관적 반영
+      // 낙관적 반영: mine=true, alias 우선순위 적용
       const iAmOwner =
         isOwner || (myId != null && ownerId != null && myId === ownerId);
+      const aliasToUse = iAmOwner
+        ? "작성자"
+        : (myAlias ?? inferredAlias ?? nextAnonName); // ← 처음 보내는 경우 익명{max+1}
+
       setLogs((prev) => [
         ...prev,
         {
@@ -396,24 +461,40 @@ const ChatPage: React.FC = () => {
           content: text,
           messageId: Date.now(),
           senderId: myId ?? -1,
-          anonymousName: iAmOwner ? "작성자" : myAlias ?? null,
+          anonymousName: aliasToUse,
           sentAt: new Date().toISOString(),
+          mine: true, // 즉시 오른쪽 정렬
         },
       ]);
+
+      // 내가 처음 보낸 경우, UI 일관성을 위해 임시 alias를 내 alias로 잠정 채택
+      if (!myAlias && !inferredAlias && !iAmOwner && aliasToUse) {
+        setMyAlias(aliasToUse);
+      }
+
       setMessage("");
     } catch (e) {
       console.error("[SEND] publish threw", e);
     }
-  }, [roomId, message, fetchMessages, myId, myAlias, ownerId, isOwner]);
+  }, [
+    roomId,
+    message,
+    fetchMessages,
+    myId,
+    myAlias,
+    inferredAlias,
+    nextAnonName,
+    ownerId,
+    isOwner,
+  ]);
 
+  // 정렬 기준
   const isMine = useCallback(
     (m: ChatMessage) => {
-      if (myId != null && m.senderId === myId) return true; // WS/낙관
-      if (isOwner && m.anonymousName === "작성자") return true;
+      if (m.mine === true) return true;
+      if (myId != null && m.senderId === myId) return true;
       if (
-        myId != null &&
-        ownerId != null &&
-        myId === ownerId &&
+        (isOwner || (myId != null && ownerId != null && myId === ownerId)) &&
         m.anonymousName === "작성자"
       )
         return true;
@@ -467,11 +548,7 @@ const ChatPage: React.FC = () => {
             <ul className="space-y-3">
               {items.map((m) => {
                 const mine = isMine(m);
-                const who = resolveDisplayName(m);
-                const showMyAuthor =
-                  mine &&
-                  (isOwner ||
-                    (myId != null && ownerId != null && myId === ownerId));
+                const label = m.anonymousName ?? resolveDisplayName(m);
 
                 return (
                   <li
@@ -482,7 +559,7 @@ const ChatPage: React.FC = () => {
                       {/* 상단 라벨 */}
                       <div className={`${mine ? "text-right" : "text-left"}`}>
                         <span className="font-[Pretendard] text-[16px] font-medium text-[#1C1C1E]">
-                          {mine ? (showMyAuthor ? "작성자" : undefined) : who}
+                          {label}
                         </span>
                       </div>
 
@@ -493,8 +570,8 @@ const ChatPage: React.FC = () => {
                             "inline-block rounded-[10px] py-[10px] px-[15px]",
                             "font-[Pretendard] text-[14px] leading-[22px] whitespace-pre-wrap break-words",
                             mine
-                              ? "bg-[#B8CDB9] text-[##333333]" // 내 버블
-                              : "bg-[rgba(85,85,85,0.15)] text-[##333333]", // 상대 버블
+                              ? "bg-[#B8CDB9] text-[#333333]" // 내 버블(오른쪽)
+                              : "bg-[rgba(85,85,85,0.15)] text-[#333333]", // 상대 버블(왼쪽)
                           ].join(" ")}
                         >
                           {m.content}
@@ -519,7 +596,7 @@ const ChatPage: React.FC = () => {
             onChange={(e) => setMessage(e.target.value)}
             placeholder={isConnected ? "메시지 보내기" : "연결 중..."}
             disabled={!isConnected}
-            className="flex-1 h-11 ml-[20px] mr-[20px] px-4 rounded-[15px] border border-[#729A73]"
+            className="flex-1 h-11 ml-[20px] mr-[20px] px-4 rounded-[15px] border border-[#729A73] disabled:bg-gray-100"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -528,15 +605,19 @@ const ChatPage: React.FC = () => {
             }}
           />
           <button
-  onClick={send}
-  disabled={!isConnected || !message.trim()}
-  className="h-11 w-11 rounded-full bg-emerald-500 text-white flex items-center justify-center mr-[10px]"
-  aria-label="전송"
-  title="전송"
->
-  <img src={sendIcon} alt="전송" className="w-[20px] h-[20px] object-contain" draggable={false} />
-</button>
-
+            onClick={send}
+            disabled={!isConnected || !message.trim()}
+            className="h-11 w-11 rounded-full bg-emerald-500 text-white flex items-center justify-center mr-[10px] disabled:opacity-60 active:scale-[0.98] transition"
+            aria-label="전송"
+            title="전송"
+          >
+            <img
+              src={sendIcon}
+              alt="전송"
+              className="w-[20px] h-[20px] object-contain"
+              draggable={false}
+            />
+          </button>
         </div>
       </div>
     </div>
