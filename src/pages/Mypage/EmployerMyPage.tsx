@@ -4,10 +4,10 @@ import { SlArrowRight } from "react-icons/sl";
 import resume from "../../assets/my/resume.png";
 import suitcase from "../../assets/my/suitcase.png";
 import { useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import member from "../../assets/member.png";
 import type { MyInfo } from "../../types/member";
-import { getMyInfo } from "../../apis/employerMyPage";
+import { getMyInfo, updateProfileImage } from "../../apis/employerMyPage";
 import { deactivateMember, getMe } from "../../apis/mypage";
 
 const EmployerMyPage = () => {
@@ -17,6 +17,10 @@ const EmployerMyPage = () => {
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  // 파일 인풋 참조
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const fetchMyInfo = async () => {
@@ -30,10 +34,47 @@ const EmployerMyPage = () => {
     fetchMyInfo();
   }, []);
 
+  // 프로필 이미지 src 계산( null/빈값 → 기본 이미지 )
+  const profileSrc = useMemo(() => {
+    const url = myInfo?.profileImageUrl?.trim();
+    return url ? url : member;
+  }, [myInfo?.profileImageUrl]);
+
+  const handleClickProfile = useCallback(() => {
+    if (isUploading) return;
+    fileRef.current?.click();
+  }, [isUploading]);
+
+  const handleChangeProfileFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      try {
+        setIsUploading(true);
+        const uploadedUrl = await updateProfileImage(file);
+
+        // 바로 UI 반영 (state 내 profileImageUrl 교체)
+        setMyInfo((prev) =>
+          prev ? { ...prev, profileImageUrl: uploadedUrl } : prev
+        );
+      } catch (err) {
+        console.error(err);
+        alert("프로필 이미지 업로드에 실패했습니다. 다시 시도해주세요.");
+      } finally {
+        // 같은 파일 재선택 가능하도록 value 리셋
+        if (fileRef.current) fileRef.current.value = "";
+        setIsUploading(false);
+      }
+    },
+    []
+  );
+
   const handleLogout = useCallback(async () => {
     if (isLoggingOut) return;
     try {
       setIsLoggingOut(true);
+      // 필요하면 여기서 서버 로그아웃 API 호출(postLogout)도 추가 가능
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("memberId");
@@ -87,9 +128,33 @@ const EmployerMyPage = () => {
       <Header title="마이페이지" />
 
       <div className="min-h-screen pb-[100px] overflow-y-auto mt-[50px]">
+        {/* 프로필 영역 */}
         <section className="flex items-center justify-between px-[20px] py-[15px] h-[115px] border-b border-[#DEDEDE]">
           <div className="flex items-center gap-4">
-            <img src={member} />
+            {/* 프로필 이미지 */}
+            <button
+              type="button"
+              onClick={handleClickProfile}
+              className="relative w-[60px] h-[60px] rounded-full overflow-hidden shrink-0 focus:outline-none"
+              aria-label="프로필 이미지 수정"
+              title="프로필 이미지 수정"
+            >
+              <img
+                src={profileSrc}
+                alt="프로필 이미지"
+                className="w-full h-full object-cover"
+              />
+            </button>
+
+            {/* 숨김 파일 입력 */}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleChangeProfileFile}
+            />
+
             <div>
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
                 {myInfo?.name ?? "이름을 등록해주세요"}
@@ -99,11 +164,13 @@ const EmployerMyPage = () => {
               </p>
             </div>
           </div>
+
           <button onClick={() => navigate("/MyPage/MemberInfo")}>
             <SlArrowRight className="w-[15px] h-[15px]" />
           </button>
         </section>
 
+        {/* 바로가기 카드 */}
         <section className="flex justify-around h-[100px] border-b border-[#DEDEDE] px-[20px] py-[15px] mb-[30px]">
           <div
             onClick={() => navigate("/MyPage/ManageMyJobs")}
@@ -121,6 +188,7 @@ const EmployerMyPage = () => {
           </div>
         </section>
 
+        {/* 사업자 정보 */}
         <section>
           <div
             className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#DEDEDE]"
@@ -139,6 +207,7 @@ const EmployerMyPage = () => {
           </ul>
         </section>
 
+        {/* 고객센터 */}
         <section>
           <div
             className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#DEDEDE]"
@@ -172,6 +241,7 @@ const EmployerMyPage = () => {
           </ul>
         </section>
 
+        {/* 약관 */}
         <section>
           <div
             className="flex px-[25px] h-[55px] mt-[10px] text-[15px] items-center border-b border-[#DEDEDE]"
@@ -207,6 +277,7 @@ const EmployerMyPage = () => {
           </ul>
         </section>
 
+        {/* 로그아웃/탈퇴 */}
         <section>
           <div className="flex justify-center items-center text-[14px] h-[16px] gap-5 my-[70px]">
             <button
