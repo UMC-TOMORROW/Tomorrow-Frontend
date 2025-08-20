@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import palette from "../../styles/theme";
 import defaultLogo from "../../assets/logo/logo.png";
 import { Link } from "react-router-dom";
-import type { PaymentType } from "../../types/recommendation";
+import type { PaymentType } from "../../types/homepage";
 
 const paymentUnitMap: Record<PaymentType, string> = {
   HOURLY: "시",
@@ -33,7 +33,7 @@ const buildS3Candidates = (url?: string) => {
       out.add(up.toString());
     }
   } catch {
-    // 그냥 원본만 사용
+    // 원본만 사용
   }
   return Array.from(out);
 };
@@ -80,13 +80,24 @@ const JobCard = ({
     }
   };
 
+  // camelCase/snake_case 둘 다 대응
   const environmentMap: Record<string, string> = {
+    // snake_case
     can_work_standing: "서서 근무 중심",
     can_work_sitting: "앉아서 근무 중심",
     can_lift_light_objects: "가벼운 물건 운반",
     can_lift_heavy_objects: "무거운 물건 운반",
-    use_arm_frequently: "손과 팔을 자주 사용하는 작업",
+    use_arm_frequently: "신체 활동 중심",
     repetitive_hand_work: "반복 손작업 포함",
+
+    // camelCase
+    canWorkStanding: "서서 근무 중심",
+    canWorkSitting: "앉아서 근무 중심",
+    canCarryObjects: "가벼운 물건 운반",
+    canLiftLightObjects: "가벼운 물건 운반",
+    canLiftHeavyObjects: "무거운 물건 운반",
+    canMoveActively: "신체 활동 중심",
+    canCommunicate: "사람 응대 중심",
   };
 
   const timeText = isTime ? "시간협의" : "시간 고정";
@@ -94,7 +105,7 @@ const JobCard = ({
 
   const translatedEnv =
     environment
-      ?.map((e) => environmentMap[e])
+      ?.map((e) => environmentMap[e] ?? "")
       .filter(Boolean)
       .join(", ") || "";
 
