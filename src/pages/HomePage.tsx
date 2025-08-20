@@ -233,13 +233,16 @@ const HomePage = () => {
                 (jobCard as any).job_image_url ?? jobCard.jobImageUrl ?? ""
               }
               isTime={Boolean(jobCard.isTimeNegotiable)}
-              isPeriod={Boolean(jobCard.isPeriodNegotiable)}
+              workPeriod={jobCard.workPeriod}
               environment={
-                Array.isArray(jobCard.workEnvironment)
-                  ? jobCard.workEnvironment
-                  : jobCard.workEnvironment
-                  ? [String(jobCard.workEnvironment)]
-                  : []
+                typeof (jobCard as any).workEnvironment === "object" &&
+                (jobCard as any).workEnvironment !== null &&
+                !Array.isArray((jobCard as any).workEnvironment)
+                  ? ((jobCard as any).workEnvironment as Record<
+                      string,
+                      boolean
+                    >)
+                  : undefined
               }
               paymentType={asPaymentType(
                 (jobCard as any).payment_type ??

@@ -41,4 +41,5 @@ export interface MyInfo {
   createdAt: string;
   updatedAt: string;
   resumeId: number | null;
+  profileImageUrl: string | null;
 }

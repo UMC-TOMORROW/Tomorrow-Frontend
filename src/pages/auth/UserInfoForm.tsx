@@ -48,6 +48,16 @@ export default function UserInfoForm() {
     return providerKo[key] ?? null;
   };
 
+  const normalizeMe = (me: any) => ({
+    ...me,
+    isOnboarded:
+      typeof me?.isOnboarded === "boolean"
+        ? me.isOnboarded
+        : typeof me?.inOnboarded === "boolean"
+        ? me.inOnboarded
+        : false,
+  });
+
   const buildFullBody = (me: any, overrides?: Partial<any>) => {
     const rawProviderUserId =
       overrides?.providerUserId ?? me.providerUserId ?? me.providerUseId ?? "";
@@ -86,39 +96,46 @@ export default function UserInfoForm() {
   };
 
   const handleSave = async () => {
-    if (saving) return;
+    if (introOpen) {
+      setIntroOpen(false);
+      return;
+    }
 
-    if (introOpen) return;
+    const emailTrim = email.trim();
+    const nameTrim = name.trim();
+    const emailLike = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!email.trim()) {
+    if (!emailTrim) {
       alert("이메일은 필수 입력 항목입니다.");
       return;
     }
-    if (!name.trim()) {
+    if (!emailLike.test(emailTrim)) {
+      alert("이메일 형식이 올바르지 않습니다.");
+      return;
+    }
+    if (!nameTrim) {
       alert("이름은 필수 입력 항목입니다.");
       return;
     }
 
     try {
       setSaving(true);
-      const me = myInfo ?? (await getMyInfo());
 
-      const overrides = {
-        email: email || undefined,
-        name: name || undefined,
-        gender: mapGender(gender) ?? undefined,
+      // 최소 필드만 전송 + 온보딩 진입을 위해 isOnboarded:false 포함
+      await putMyProfile({
+        email: emailTrim,
+        name: nameTrim,
+        gender: mapGender(gender),
         phoneNumber: phoneNumber || undefined,
         address: address || undefined,
-      };
-
-      const fullBody = buildFullBody(me, overrides);
-      await putMyProfile(fullBody);
+        isOnboarded: false,
+      });
 
       alert("회원 정보가 저장되었습니다.");
       navigate("/onboarding", { replace: true });
     } catch (e) {
       console.error(e);
-      alert("저장 중 오류가 발생했습니다.");
+      alert((e as Error).message || "저장 중 오류가 발생했습니다.");
     } finally {
       setSaving(false);
     }
@@ -138,7 +155,8 @@ export default function UserInfoForm() {
     }
     try {
       setPhoneSaving(true);
-      const me = myInfo ?? (await getMyInfo());
+      const raw = myInfo ?? (await getMyInfo());
+      const me = normalizeMe(raw);
       const fullBody = buildFullBody(me, { phoneNumber });
       await putMyProfile(fullBody);
       alert("휴대폰 번호가 변경되었습니다.");
@@ -154,7 +172,8 @@ export default function UserInfoForm() {
   useEffect(() => {
     (async () => {
       try {
-        const me = await getMyInfo();
+        const raw = await getMyInfo();
+        const me = normalizeMe(raw);
         setMyInfo(me);
         setEmail(me.email ?? "");
         setName(me.name ?? "");
@@ -206,6 +225,7 @@ export default function UserInfoForm() {
               </p>
               <input
                 type="email"
+                required
                 disabled={allDisabled}
                 className="w-full h-[42px] px-[5px] border border-[#5555558C] text-[13px] disabled:bg-[#F5F5F5]"
                 style={{ borderRadius: "10px" }}
@@ -229,6 +249,7 @@ export default function UserInfoForm() {
               </p>
               <input
                 type="text"
+                required
                 disabled={allDisabled}
                 className="w-full h-[42px] px-[5px] border border-[#5555558C] text-[13px] disabled:bg-[#F5F5F5]"
                 style={{ borderRadius: "10px" }}
@@ -309,7 +330,7 @@ export default function UserInfoForm() {
                 <input
                   type="text"
                   placeholder="서울시 OO구"
-                  disabled={true} // 검색으로만 변경
+                  disabled={true}
                   className="flex-1 w-[235px] h-[44px] px-[10px] border border-[#5555558C] text-[13px] disabled:bg-[#F5F5F5]"
                   style={{ borderRadius: "10px" }}
                   value={address}
@@ -334,7 +355,7 @@ export default function UserInfoForm() {
             className="text-[#FFFFFF] text-[16px] w-[333px] h-[50px] bg-[#729A73]"
             style={{ fontWeight: 600, borderRadius: "10px" }}
             onClick={handleSave}
-            disabled={saving || introOpen}
+            disabled={saving}
           >
             {saving ? "저장 중..." : "수정 완료"}
           </button>
@@ -366,7 +387,7 @@ export default function UserInfoForm() {
                 필수 동의 및 정보 입력이 필요해요.
               </p>
 
-              {/* 본문 (제목과 간격 확보) */}
+              {/* 본문 */}
               <p
                 className="text-[16px] text-center leading-6 text-[#333] flex-1 flex items-center justify-center"
                 style={{ fontFamily: "Pretendard" }}

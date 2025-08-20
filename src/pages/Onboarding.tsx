@@ -4,6 +4,7 @@ import palette from "../styles/theme";
 import { useNavigate } from "react-router-dom";
 import OnboardingSkipModal from "../components/Onboarding/OnboardingSkipModal";
 import { postPreferences, patchMemberType } from "../apis/Onboarding";
+import { putMyProfile } from "../apis/mypage";
 import axios from "axios";
 
 import checklist from "../assets/onboarding/Checklist-pana.png";
@@ -81,7 +82,12 @@ function Onboarding() {
                   } catch (e) {
                     console.error("회원유형 설정 실패(EMPLOYER):", e);
                   } finally {
-                    navigate("../MyPage/EmployerMyPage");
+                    try {
+                      await putMyProfile({ isOnboarded: true });
+                    } catch (e) {
+                      console.warn("isOnboarded 업데이트 실패(무시):", e);
+                    }
+                    navigate("/MyPage/EmployerMyPage", { replace: true });
                   }
                 },
               },
@@ -284,7 +290,7 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          <img src={bricklayer} className="w-[340px] h-[300px]" />
+          <img src={bricklayer} className="w/[340px] h-[300px]" />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -412,7 +418,7 @@ function Onboarding() {
             <br />
             괜찮으신가요?"
           </h1>
-          <img src={gardening} className="w-[340px] h-[300px]" />
+          <img src={gardening} className="w/[340px] h-[300px]" />
           <div
             className="w-full font-bold max-w-[320px] items-center flex flex-col gap-3"
             style={{ fontFamily: "Pretendard" }}
@@ -532,7 +538,7 @@ function Onboarding() {
           className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10"
         >
           <img src={logoWhite} className="w-[233px] h-[153px]" />
-          <img src={formingTeam} className="w-[340px] h-[300px]" />
+          <img src={formingTeam} className="w/[340px] h/[300px]" />
           <p
             className="text-[20px] !font-semibold text-white text-center"
             style={{ fontFamily: "Pretendard" }}
@@ -544,7 +550,7 @@ function Onboarding() {
           <div className="w-full max-w-[320px] font-bold items-center flex flex-col gap-3">
             <CommonButton
               label="시작하기"
-              className="!w-[315px] !h-[52px] !rounded-[10px] !bg-white !text-[#729A73]"
+              className="!w/[315px] !h/[52px] !rounded/[10px] !bg-white !text-[#729A73]"
               onClick={async () => {
                 if (isSavingRef.current) return;
 
@@ -565,10 +571,14 @@ function Onboarding() {
 
                 try {
                   isSavingRef.current = true;
-
                   const saved = await postPreferences({ preferences: mapped });
                   if (saved) {
-                    navigate("/recommendation");
+                    try {
+                      await putMyProfile({ isOnboarded: true });
+                    } catch (e) {
+                      console.warn("isOnboarded 업데이트 실패(무시):", e);
+                    }
+                    navigate("/recommendation", { replace: true });
                   } else {
                     alert(
                       "선호 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."
@@ -605,7 +615,15 @@ function Onboarding() {
             setShowSkipModal(false);
             setPage(3);
           }}
-          onClose={() => navigate("/")}
+          onClose={async () => {
+            setShowSkipModal(false);
+            try {
+              await putMyProfile({ isOnboarded: true });
+            } catch (e) {
+              console.warn("isOnboarded 업데이트 실패(무시):", e);
+            }
+            navigate("/", { replace: true });
+          }}
         />
       )}
     </div>

@@ -5,8 +5,6 @@ import type {
   applyStatus,
   BookmarkItem,
   deleteMember,
-  Member,
-  MemberUpdate,
   reviews,
 } from "../types/mypage";
 import { axiosInstance } from "./axios";
@@ -144,38 +142,37 @@ export const postReview = async (reviewData: reviews): Promise<number> => {
 };
 
 // 내 프로필 수정
-export const putMyProfile = async (body: MemberUpdate): Promise<void> => {
+export type MemberUpdatePayload = {
+  email?: string;
+  name?: string;
+  gender?: "MALE" | "FEMALE";
+  phoneNumber?: string;
+  address?: string;
+  isOnboarded?: boolean;
+  resumeId?: number | null;
+};
+
+export const putMyProfile = async (
+  body: MemberUpdatePayload
+): Promise<void> => {
   const payload: Record<string, unknown> = {};
-  Object.entries(body).forEach(([k, v]) => {
-    if (v !== undefined && v !== null && String(v).trim() !== "")
+  (Object.keys(body) as (keyof MemberUpdatePayload)[]).forEach((k) => {
+    const v = body[k];
+    if (
+      v !== undefined &&
+      v !== null &&
+      !(typeof v === "string" && v.trim() === "")
+    ) {
       payload[k] = v;
+    }
   });
 
-  try {
-    const res = await axiosInstance.put<ApiResponse<Member | null>>(
-      "/api/v1/members/me",
-      payload,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        withCredentials: true,
-      }
-    );
+  const res = await axiosInstance.put("/api/v1/members/me", payload, {
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    withCredentials: true,
+  });
 
-    if (res.status < 200 || res.status >= 300) {
-      throw new Error(res.data?.message || "프로필 수정에 실패했습니다.");
-    }
-  } catch (e) {
-    if (axios.isAxiosError(e)) {
-      const msg =
-        (e.response?.data as Partial<ApiResponse<unknown>> | undefined)
-          ?.message ||
-        e.message ||
-        "프로필 수정에 실패했습니다.";
-      throw new Error(msg);
-    }
-    throw e instanceof Error ? e : new Error("프로필 수정에 실패했습니다.");
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error("프로필 수정에 실패했습니다.");
   }
 };

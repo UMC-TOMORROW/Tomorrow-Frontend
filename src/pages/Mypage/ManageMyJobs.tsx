@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useJobStore } from "../../stores/useJobStore";
 import type { MyPostItem } from "../../types/employer";
 import { getMyClosedPosts, getMyOpenPosts } from "../../apis/employerMyPage";
+import { SlArrowLeft } from "react-icons/sl";
 
 const formatDotDate = (iso: string) => iso.replaceAll("-", ".");
 
@@ -18,7 +19,7 @@ const mapToJob = (p: MyPostItem) => ({
 const ManageMyJobs = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"모집중" | "모집완료">("모집중");
-  const { jobs, setJobs } = useJobStore(); 
+  const { jobs, setJobs } = useJobStore();
 
   useEffect(() => {
     let cancelled = false;
@@ -42,7 +43,9 @@ const ManageMyJobs = () => {
     };
 
     fetchAll();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [setJobs]);
 
   const filteredJobs = useMemo(
@@ -53,7 +56,14 @@ const ManageMyJobs = () => {
   return (
     <div style={{ fontFamily: "Pretendard" }}>
       <div className="bg-white min-h-screen">
-        <section>
+        <section className="relative flex justify-center items-center text-[20px] h-[52px] border-b border-[#DEDEDE]">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="absolute left-[15px]"
+          >
+            <SlArrowLeft />
+          </button>
           <div
             className="flex justify-center items-center text-[20px] h-[52px] border-b border-[#DEDEDE]"
             style={{ fontWeight: 600 }}
