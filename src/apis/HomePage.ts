@@ -2,12 +2,20 @@ import type { JobsView } from "../types/homepage";
 import { axiosInstance } from "./axios";
 
 const asList = <T>(data: unknown): T[] => {
+  if (data && typeof data === "object" && Array.isArray((data as any).jobs)) {
+    return (data as any).jobs as T[];
+  }
+  // 보조 케이스들
   if (Array.isArray(data)) return data as T[];
-  if (typeof data === "object" && data !== null) {
-    const obj = data as Record<string, unknown>;
+  if (data && typeof data === "object") {
+    const obj: any = data;
     if (Array.isArray(obj.result)) return obj.result as T[];
-    const r = obj.result as Record<string, unknown> | undefined;
-    if (r && Array.isArray(r.content)) return r.content as T[];
+    if (obj.result && Array.isArray(obj.result.content))
+      return obj.result.content as T[];
+    if (obj.data && Array.isArray(obj.data)) return obj.data as T[];
+    if (obj.data && Array.isArray(obj.data.jobs)) return obj.data.jobs as T[];
+    if (obj.result && Array.isArray(obj.result.jobs))
+      return obj.result.jobs as T[];
   }
   return [];
 };
@@ -64,7 +72,6 @@ export const getJobsByKeyword = async (
 ): Promise<JobsView[]> => {
   const kw = (keyword ?? "").trim();
   if (!kw) return [];
-
   try {
     const r1 = await axiosInstance.post("/api/v1/jobs/search", { keyword: kw });
     return asList<JobsView>(r1.data);
