@@ -253,7 +253,6 @@ function mapSwaggerJobDetail(api: any) {
     companyName: api.companyName ?? "",
     place: undefined,
 
-    // 상세의 rating/reviewCount는 참고용(렌더는 reviewMeta 사용)
     rating: api.avgRating ?? api.rating ?? 0,
     reviewCount: api.reviewCount,
 
@@ -304,7 +303,7 @@ export default function JobDetailPage() {
   const [error, setError] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // 리뷰 메타(요약) 전용 상태: 캐시 → 즉시 표시, 네트워크 → 조용히 갱신
+  // 리뷰 메타(요약) 전용 상태: 캐시 → 즉시 표시, 네트워크 → 갱신
   const [reviewMeta, setReviewMeta] = useState<{ count: number | null; avg: number | null }>({
     count: null,
     avg: null,
@@ -853,7 +852,7 @@ export default function JobDetailPage() {
           <ApplySheet
             open={applyOpen}
             content={applyContent}
-            setContent={(v) => startTransition(() => setApplyContent(v))}
+            setContent={(v) => setApplyContent(v)}
             attachChecked={attachChecked}
             onToggleAttach={handleToggleAttach}
             canSubmit={!submitting && applyContent.trim().length > 0}
