@@ -216,7 +216,6 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const isEmployer = userRole === "EMPLOYER";
 
   // 내 정보(role) 조회 헬퍼 추가
   async function fetchMyRole(): Promise<string | null> {
@@ -330,20 +329,23 @@ export default function JobDetailPage() {
   const [resumeId, setResumeId] = useState<number | null>(null);
   const [applied, setApplied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const isEmployer = (userRole ?? "").toUpperCase() === "EMPLOYER";
 
   async function onClickApplyCTA() {
     if (applied) return;
 
-    // 구인자면 지원 불가
-    if (isEmployer) {
-      alert("구인자는 공고에 지원할 수 없습니다.");
-      return;
-    }
     // 로그인 보장
     const authed = await ensureLoggedIn();
     if (!authed) {
       alert("로그인이 필요합니다.");
       gotoLogin();
+      return;
+    }
+
+    // role을 즉시 재확인 (초기 로딩 레이스 대비)
+    const roleNow = userRole ?? (await fetchMyRole());
+    if ((roleNow ?? "").toUpperCase() === "EMPLOYER") {
+      alert("구인자는 공고에 지원할 수 없습니다.");
       return;
     }
 
@@ -732,7 +734,9 @@ export default function JobDetailPage() {
                 applied || isEmployer ? "bg-[#C9C9C9]" : "bg-[#729A73]"
               } !text-white font-semibold`}
               onClick={onClickApplyCTA}
-              disabled={applied || isEmployer}
+              disabled={applied}
+              aria-disabled={isEmployer}
+              title={isEmployer ? "구인자는 지원할 수 없어요" : undefined}
             >
               {applied ? "지원완료" : "지원하기"}
             </button>
