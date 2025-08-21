@@ -10,7 +10,11 @@ import recommend from "../../assets/recommend.png";
 import member from "../../assets/member.png";
 import { deactivateMember, getMe } from "../../apis/mypage";
 import type { MyInfo } from "../../types/member";
-import { getMyInfo, postLogout, updateProfileImage } from "../../apis/employerMyPage";
+import {
+  getMyInfo,
+  postLogout,
+  updateProfileImage,
+} from "../../apis/employerMyPage";
 
 const MyPage = () => {
   const navigate = useNavigate();
@@ -20,7 +24,7 @@ const MyPage = () => {
   const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
-    const fileRef = useRef<HTMLInputElement | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const fetchMyInfo = async () => {
@@ -45,20 +49,13 @@ const MyPage = () => {
         console.warn("[logout] 서버 로그아웃 중 경고(무시 가능):", err);
       }
 
-      // localStorage.removeItem("accessToken");
-      // localStorage.removeItem("refreshToken");
-      // localStorage.removeItem("memberId");
-
-      //하드 리다이렉트로 메모리 상태까지 초기화
-      // window.location.replace("/auth");
-      // 소프트 리다이렉트
       navigate("/auth", { replace: true });
     } catch {
       alert("로그아웃 중 문제가 발생했습니다.");
     } finally {
       setIsLoggingOut(false);
     }
-  }, [isLoggingOut]);
+  }, [isLoggingOut, navigate]);
 
   const handleDeactivate = useCallback(async () => {
     if (isDeactivating) return;
@@ -67,30 +64,54 @@ const MyPage = () => {
       setIsDeactivating(true);
 
       const meId = await getMe();
-      if (!meId)
+      if (!meId) {
         throw new Error(
           "회원 정보를 찾을 수 없습니다. 다시 로그인 후 이용해 주세요."
         );
+      }
 
-      const res = await deactivateMember(meId);
-      const recoverableUntil = res?.recoverableUntil
-        ? new Date(res.recoverableUntil).toLocaleString()
-        : "알 수 없음";
-      alert(`탈퇴가 접수되었습니다.\n복구 가능 기한: ${recoverableUntil}`);
-    } catch (e: unknown) {
-      const msg =
-        e instanceof Error ? e.message : "알 수 없는 오류가 발생했습니다.";
-      alert(`탈퇴 처리에 실패했을 수 있습니다.\n${msg}`);
-      console.error(e);
+      try {
+        const res = await deactivateMember(meId);
+        const recoverableUntil = (res as any)?.recoverableUntil
+          ? new Date((res as any).recoverableUntil).toLocaleString()
+          : "알 수 없음";
+        alert(`탈퇴가 접수되었습니다.\n복구 가능 기한: ${recoverableUntil}`);
+      } catch (e: any) {
+        const status = e?.response?.status;
+        const msg =
+          e?.response?.data?.message ||
+          e?.response?.data?.result ||
+          e?.message ||
+          "";
+
+        // 백엔드가 500이라도 본문이 "이미 탈퇴"면 성공처럼 처리
+        if (status === 500 && String(msg).includes("이미 탈퇴")) {
+          alert("이미 탈퇴된 계정입니다.");
+        } else {
+          // 다른 오류는 그대로 알림
+          alert(msg || "탈퇴 처리 중 오류가 발생했습니다.");
+        }
+      }
     } finally {
+      try {
+        // 서버 세션/쿠키 만료 (실패해도 무시)
+        await postLogout();
+      } catch (err) {
+        console.warn("[deactivate] logout warn:", err);
+      }
+
+      // 클라이언트 저장소 정리
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("memberId");
+
       setShowUnregister(false);
       setIsDeactivating(false);
-      navigate("/auth", { replace: true });
+
+      // 하드 리다이렉트로 메모리/스토어까지 초기화
+      window.location.replace("/auth");
     }
-  }, [isDeactivating, navigate]);
+  }, [isDeactivating]);
 
   const [resumeId, setResumeId] = useState<number | undefined>(undefined);
 
@@ -98,7 +119,7 @@ const MyPage = () => {
     (async () => {
       try {
         const me = await getMe1();
-        setResumeId(me.resumeId ?? null);
+        setResumeId((me as any)?.resumeId ?? null);
       } catch (e) {
         console.error("resumeId 조회 실패:", e);
       }
@@ -113,7 +134,7 @@ const MyPage = () => {
     }
   };
 
-    // 프로필 이미지 src 계산( null/빈값 → 기본 이미지 )
+  // 프로필 이미지 src 계산( null/빈값 → 기본 이미지 )
   const profileSrc = useMemo(() => {
     const url = myInfo?.profileImageUrl?.trim();
     return url ? url : member;
@@ -192,7 +213,6 @@ const MyPage = () => {
 
         <section className="flex justify-around h-[100px] border-b border-[#DEDEDE] px-[20px] py-[15px]">
           <div
-            //onClick={() => navigate(`/MyPage/ResumeManage/${resumeId}`)}
             onClick={handleGoResumeManage}
             className="flex flex-col items-center justify-center text-[15px] gap-[5px] w-[140px] h-[70px] bg-[#B8CDB9BF] rounded-xl"
           >
