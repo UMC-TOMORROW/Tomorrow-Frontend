@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, lazy, Suspense, startTransition, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getJobDetail } from "../../apis/jobs";
-import ApplySheet from "../../components/jobApply/ApplySheet";
+// import ApplySheet from "../../components/jobApply/ApplySheet";
+const ApplySheet = lazy(() => import("../../components/jobApply/ApplySheet"));
+
 import { createApplication, AuthRequiredError, fetchAppliedJobIdsFromServer } from "../../apis/applications";
 import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
 import { getMe } from "../../apis/mypage";
@@ -73,22 +75,21 @@ const appliedAdd = (id: number) => writeApplied([...readApplied(), id]);
 const appliedReplace = (ids: number[]) => writeApplied(ids);
 
 /* ───────────────── UI 컴포넌트 ───────────────── */
-const Divider: React.FC = () => <div className="h-px bg-[#EAEAEA] -mx-4" />;
-
-const Badge: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+const Divider = React.memo(() => <div className="h-px bg-[#EAEAEA] -mx-4" />);
+const Badge = React.memo<{ children: React.ReactNode }>(({ children }) => (
   <span className="items-center !px-2 opacity-100 rounded-[8px] border border-[#EE0606CC]/80 text-[14px] bg-white text-[#EE0606CC]">
     {children}
   </span>
-);
+));
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+const Section = React.memo<{ title: string; children: React.ReactNode }>(({ title, children }) => (
   <section className="space-y-3">
-    <h3 className="text-[16px] leading-[100%] !font-bold text-[#333] font-pretendard font-bold !pb-4">{title}</h3>
+    <h3 className="text-[16px] leading-[100%] !font-bold text-[#333] font-pretendard !pb-4">{title}</h3>
     {children}
   </section>
-);
+));
 
-const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({ k, v, helper }) => (
+const KV = React.memo<{ k: string; v: React.ReactNode; helper?: string }>(({ k, v, helper }) => (
   <div className="!py-1 ">
     <div className="flex items-start gap-4 ">
       <span className="w-[72px] shrink-0 text-[12px] text-[#666] whitespace-nowrap">{k}</span>
@@ -101,9 +102,13 @@ const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({ k, v
       </div>
     ) : null}
   </div>
-);
+));
 
-const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({ value = 0, size = 17, gap = 2 }) => {
+const StarsImg = React.memo<{
+  value?: number;
+  size?: number;
+  gap?: number;
+}>(({ value = 0, size = 17, gap = 2 }) => {
   const safe = Math.max(0, Math.min(5, Number.isFinite(value as number) ? (value as number) : 0));
   const full = Math.floor(safe);
   const frac = safe - full;
@@ -119,11 +124,11 @@ const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({ v
   return (
     <div className="flex items-center" style={{ gap }} aria-label={`평점 ${safe.toFixed(1)} / 5`}>
       {parts.map((p, idx) => (
-        <img key={idx} src={srcMap[p]} alt="" width={size} height={size} />
+        <img key={idx} loading="lazy" src={srcMap[p]} alt="" width={size} height={size} />
       ))}
     </div>
   );
-};
+});
 
 /* ───────────────── 매핑 유틸 (응답 → 화면 모델) ───────────────── */
 const DAY_KO: Record<string, string> = { mon: "월", tue: "화", wed: "수", thu: "목", fri: "금", sat: "토", sun: "일" };
@@ -162,6 +167,7 @@ const ENV_KO: Record<string, string> = {
   canCarryObjects: "가벼운 물건 운반",
   canCommunicate: "사람 응대 중심",
 };
+
 const hhmm = (s?: string) => (s ? s.slice(0, 5) : "");
 
 function mapSwaggerJobDetail(api: any) {
@@ -187,9 +193,8 @@ function mapSwaggerJobDetail(api: any) {
     companyName: api.companyName ?? "",
     place: undefined,
 
-    // 백엔드가 주면 우선 사용 (없으면 0 → 아래 요약으로 덮어씀)
     rating: api.avgRating ?? api.rating ?? 0,
-    reviewCount: api.reviewCount ?? 0,
+    reviewCount: api.reviewCount,
 
     paymentType: paymentLabel(api.paymentType),
     salary: api.salary ?? 0,
@@ -208,6 +213,26 @@ function mapSwaggerJobDetail(api: any) {
     envTags,
   };
 }
+const JOB_FALLBACK = {
+  category: "",
+  title: "",
+  companyName: "",
+  place: "",
+  rating: 0,
+  reviewCount: "",
+  paymentType: "",
+  salary: 0,
+  minWageNote: undefined as string | undefined,
+  period: "",
+  weekdays: "",
+  time: "",
+  role: "",
+  headcount: "-",
+  preference: "-",
+  address: "",
+  description: "",
+  envTags: [] as string[],
+};
 
 /* ───────────────── 페이지 컴포넌트 ───────────────── */
 export default function JobDetailPage() {
@@ -263,9 +288,12 @@ export default function JobDetailPage() {
       try {
         setLoading(true);
         const res = await getJobDetail(effectiveId);
-        const api = (res as any)?.result ?? res; // ⬅️ 공통 랩퍼 언랩
-        setData(mapSwaggerJobDetail(api));
-        setError(null);
+        const api = (res as any)?.result ?? res;
+        startTransition(() => {
+          setData(mapSwaggerJobDetail(api));
+          setError(null);
+        });
+        setLoading(false);
       } catch (e: any) {
         setError(e);
       } finally {
@@ -274,26 +302,7 @@ export default function JobDetailPage() {
     })();
   }, [jobId]);
 
-  const job = data ?? {
-    category: "",
-    title: "",
-    companyName: "",
-    place: "",
-    rating: 0,
-    reviewCount: 0,
-    paymentType: "",
-    salary: 0,
-    minWageNote: undefined as string | undefined,
-    period: "",
-    weekdays: "",
-    time: "",
-    role: "",
-    headcount: "-",
-    preference: "-",
-    address: "",
-    description: "",
-    envTags: [] as string[],
-  };
+  const job = useMemo(() => (data ? data : JOB_FALLBACK), [data]);
 
   // 1) id 결정되면 캐시 기준으로 UI를 즉시 고정
   useEffect(() => {
@@ -556,19 +565,27 @@ export default function JobDetailPage() {
     }
   }
 
-  // id 확정 시 요약 호출 + 포커스 복귀 시 갱신
   useEffect(() => {
     if (effectivePostId == null) return;
+
+    let t: ReturnType<typeof setTimeout> | null = null;
+
     const run = () => refreshReviewSummary(effectivePostId);
     run(); // 최초 1회
-    const onFocus = () => {
-      if (document.visibilityState === "visible") run();
+
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (t) clearTimeout(t);
+      t = setTimeout(run, 200);
     };
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
+
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+
     return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
+      if (t) clearTimeout(t);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
     };
   }, [effectivePostId]);
 
@@ -744,17 +761,21 @@ export default function JobDetailPage() {
         </div>
       </div>
 
-      <ApplySheet
-        open={applyOpen}
-        content={applyContent}
-        setContent={setApplyContent}
-        attachChecked={attachChecked}
-        onToggleAttach={handleToggleAttach}
-        canSubmit={!submitting && applyContent.trim().length > 0}
-        submitting={submitting}
-        onClose={() => setApplyOpen(false)}
-        onSubmit={onSubmitApply}
-      />
+      {applyOpen ? (
+        <Suspense fallback={null}>
+          <ApplySheet
+            open={applyOpen}
+            content={applyContent}
+            setContent={(v) => startTransition(() => setApplyContent(v))} // 입력은 낮은 우선순위로
+            attachChecked={attachChecked}
+            onToggleAttach={handleToggleAttach}
+            canSubmit={!submitting && applyContent.trim().length > 0}
+            submitting={submitting}
+            onClose={() => setApplyOpen(false)}
+            onSubmit={onSubmitApply}
+          />
+        </Suspense>
+      ) : null}
     </div>
   );
 }
