@@ -12,16 +12,22 @@ const SearchPage = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem("recentSearches");
-    if (saved) {
-      setRecentSearches(JSON.parse(saved));
-    }
+    if (saved) setRecentSearches(JSON.parse(saved));
   }, []);
 
-  const handleSearch = async (value: string) => {
-    const keyword = value.trim();
+  const handleSearch = async (value: unknown) => {
+    const raw =
+      typeof value === "string"
+        ? value
+        : String(
+            (value && (value as any).target?.value) ??
+              (value as any).value ??
+              (value as any).keyword ??
+              (value as any).q ??
+              ""
+          );
+    const keyword = raw.trim();
     if (!keyword) return;
-
-    console.log("보내는 키워드:", keyword);
 
     setRecentSearches((prev) => {
       if (prev[0] === keyword) return prev;
@@ -35,10 +41,7 @@ const SearchPage = () => {
 
     try {
       const result = await getJobsByKeyword(keyword);
-
-      navigate("/", {
-        state: { keyword, jobList: result },
-      });
+      navigate("/", { state: { keyword, jobList: result } });
     } catch (error) {
       console.error("키워드 검색 실패", error);
     }
@@ -68,7 +71,6 @@ const SearchPage = () => {
       {/* 헤더 하단 선 가리기 + 검색바 */}
       <div className="relative mt-4">
         <div className="absolute left-1/2 -translate-x-1/2 -top-px w-screen h-[1px] bg-white z-[200] pointer-events-none" />
-
         <div className="h-[7px]" />
         <div className="flex items-center justify-start px-4 gap-[8px] max-w-[393px] mx-auto bg-white">
           <button

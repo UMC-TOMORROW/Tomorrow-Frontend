@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import palette from "../../styles/theme";
 import defaultLogo from "../../assets/logo/logo.png";
 import { Link } from "react-router-dom";
-import type { PaymentType } from "../../types/recommendation";
+import type { PaymentType } from "../../types/homepage";
 
 const paymentUnitMap: Record<PaymentType, string> = {
   HOURLY: "시",
@@ -33,7 +33,7 @@ const buildS3Candidates = (url?: string) => {
       out.add(up.toString());
     }
   } catch {
-    // 그냥 원본만 사용
+    // 원본만 사용
   }
   return Array.from(out);
 };
@@ -47,8 +47,8 @@ interface JobCardProps {
   wage: string;
   image: string;
   isTime: boolean;
-  isPeriod: boolean;
-  environment?: string[];
+  workPeriod?: string;
+  environment?: Record<string, boolean>;
   paymentType: PaymentType;
 }
 
@@ -61,7 +61,7 @@ const JobCard = ({
   wage,
   image,
   isTime,
-  isPeriod,
+  workPeriod,
   environment,
   paymentType,
 }: JobCardProps) => {
@@ -81,22 +81,47 @@ const JobCard = ({
   };
 
   const environmentMap: Record<string, string> = {
+    canWorkStanding: "서서 근무 중심",
+    canWorkSitting: "앉아서 근무 중심",
+    canCarryObjects: "가벼운 물건 운반",
+    canLiftLightObjects: "가벼운 물건 운반",
+    canLiftHeavyObjects: "무거운 물건 운반",
+    canMoveActively: "신체 활동 중심",
+    canCommunicate: "사람 응대 중심",
+
     can_work_standing: "서서 근무 중심",
     can_work_sitting: "앉아서 근무 중심",
+    can_carry_objects: "가벼운 물건 운반",
     can_lift_light_objects: "가벼운 물건 운반",
     can_lift_heavy_objects: "무거운 물건 운반",
-    use_arm_frequently: "손과 팔을 자주 사용하는 작업",
-    repetitive_hand_work: "반복 손작업 포함",
+    can_move_actively: "신체 활동 중심",
+    can_communicate: "사람 응대 중심",
   };
 
-  const timeText = isTime ? "시간협의" : "시간 고정";
-  const periodText = isPeriod ? "기간협의" : "기간 고정";
+  const isTrueLike = (v: unknown) =>
+    v === true || v === 1 || v === "1" || v === "true" || v === "Y";
 
-  const translatedEnv =
-    environment
-      ?.map((e) => environmentMap[e])
-      .filter(Boolean)
-      .join(", ") || "";
+  const timeText = isTime ? "시간협의" : "시간 고정";
+
+  const translatedEnv = environment
+    ? Object.entries(environment)
+        .filter(([, v]) => isTrueLike(v))
+        .map(([k]) => environmentMap[k] ?? "")
+        .filter(Boolean)
+        .join(", ")
+    : "";
+
+  const periodText = workPeriod
+    ? workPeriod === "OVER_ONE_MONTH"
+      ? "1개월 이상"
+      : workPeriod === "OVER_THREE_MONTH"
+      ? "3개월 이상"
+      : workPeriod === "OVER_SIX_MONTH"
+      ? "6개월 이상"
+      : workPeriod === "OVER_ONE_YEAR"
+      ? "1년 이상"
+      : "단기"
+    : "기간 고정";
 
   const paymentUnit = paymentUnitMap[paymentType];
 
@@ -106,12 +131,13 @@ const JobCard = ({
       style={{ fontFamily: "Pretendard" }}
     >
       <div className="px-[16px] pt-[10px] pb-[6px]">
-        <div className="flex justify-between items-start">
-          <div className="flex-1 pr-[80px]">
+        <div className="flex justify-between items-start gap-3">
+          {/* 텍스트 */}
+          <div className="flex-1">
             <p className="text-[12px] text-black">{company}</p>
             <p className="text-[16px] font-bold">{title}</p>
             <p
-              className="text-[14px] whitespace-nowrap overflow-hidden text-ellipsis"
+              className="text-[12px] break-keep"
               style={{ color: palette.primary.primary }}
             >
               {translatedEnv}
@@ -129,12 +155,12 @@ const JobCard = ({
           </div>
 
           {/* 사진 */}
-          <div className="flex items-center !mt-[3px] justify-center h-full w-[60px]">
+          <div className="flex-shrink-0 self-center w-[79px] h-[79px] flex items-center justify-center">
             <img
               src={currentSrc || defaultLogo}
               alt={title}
               onError={onImgError}
-              className="!h-15 !w-15"
+              className="w-[79px] h-[79px] object-contain"
             />
           </div>
         </div>

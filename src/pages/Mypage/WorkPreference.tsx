@@ -4,7 +4,7 @@ import check_inactive from "../../assets/check_inactive.png";
 import { useState } from "react";
 import type { WorkPreferenceType } from "../../types/workPreference";
 import { patchPreferences } from "../../apis/recommendation";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const PREFERENCE_MAP: Record<string, WorkPreferenceType> = {
   "앉아서 근무 중심": "SIT",
@@ -100,12 +100,14 @@ const WorkPreference = () => {
 
         {/* 저장 버튼 */}
         <section className="mt-[40px] px-[37px]">
-          <button
-            onClick={handleSubmit}
-            className="w-full h-[50px] bg-[#729A73] text-white rounded-[10px] font-semibold text-[16px]"
-          >
-            저장하기
-          </button>
+          <Link to={"/recommendation"}>
+            <button
+              onClick={handleSubmit}
+              className="w-full h-[50px] bg-[#729A73] text-white rounded-[10px] font-semibold text-[16px]"
+            >
+              저장하기
+            </button>
+          </Link>
         </section>
       </div>
     </div>

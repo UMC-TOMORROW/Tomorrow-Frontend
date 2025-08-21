@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
-// import { postApplication } from "../../apis/applications";
 import { createApplication, AuthRequiredError } from "../../apis/applications";
 import {
   fetchBookmarkedJobIds,
   addJobBookmark,
   deleteJobBookmark,
 } from "../../apis/jobBookmarks";
-import { getMe } from "../../apis/mypage"; // /api/v1/members/me
+import { getMe } from "../../apis/mypage";
 import { authApi } from "../../apis/authApi";
 
 import starEmpty from "../../assets/star/star_empty.png";
@@ -19,6 +18,58 @@ import starHalf from "../../assets/star/star_half_filled.png";
 import bmEmpty from "../../assets/bookmark/star_empty.png";
 import bmFilled from "../../assets/bookmark/star_filled.png";
 
+/* ───────────────── 로컬 캐시 유틸 (파일 내부 인라인) ───────────────── */
+const BM_KEY = "bookmark.ids.v1";
+
+type CacheShape = { ids: number[]; updatedAt: number };
+
+function readBm(): CacheShape {
+  try {
+    const s = localStorage.getItem(BM_KEY);
+    if (!s) return { ids: [], updatedAt: 0 };
+
+    const p = JSON.parse(s) as Partial<CacheShape>;
+    const raw = Array.isArray((p as any)?.ids)
+      ? ((p as any).ids as unknown[])
+      : [];
+
+    const nums = raw
+      .map((x) => Number(x))
+      .filter((n): n is number => Number.isFinite(n));
+
+    const cleaned = Array.from(new Set(nums));
+    const ts = Number((p as any)?.updatedAt) || 0;
+
+    return { ids: cleaned, updatedAt: ts };
+  } catch {
+    return { ids: [], updatedAt: 0 };
+  }
+}
+function writeBm(ids: number[]) {
+  const unique = Array.from(new Set(ids.filter((n) => Number.isFinite(n))));
+  const payload: CacheShape = { ids: unique, updatedAt: Date.now() };
+  localStorage.setItem(BM_KEY, JSON.stringify(payload));
+}
+function bmHas(id: number): boolean {
+  if (!Number.isFinite(id)) return false;
+  return readBm().ids.includes(id);
+}
+function bmAdd(id: number) {
+  if (!Number.isFinite(id)) return;
+  const cur = readBm().ids;
+  if (cur.includes(id)) return;
+  writeBm([...cur, id]);
+}
+function bmRemove(id: number) {
+  if (!Number.isFinite(id)) return;
+  const nxt = readBm().ids.filter((x) => x !== id);
+  writeBm(nxt);
+}
+function bmReplace(ids: number[]) {
+  writeBm(ids.filter((n) => Number.isFinite(n)));
+}
+
+/* ───────────────── UI 컴포넌트 ───────────────── */
 const Divider: React.FC = () => <div className="h-px bg-[#EAEAEA] -mx-4" />;
 
 const Badge: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -97,7 +148,7 @@ const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({
   );
 };
 
-// ---------- 매핑 유틸 (응답 → 화면 모델) ----------
+/* ───────────────── 매핑 유틸 (응답 → 화면 모델) ───────────────── */
 const DAY_KO: Record<string, string> = {
   mon: "월",
   tue: "화",
@@ -107,37 +158,30 @@ const DAY_KO: Record<string, string> = {
   sat: "토",
   sun: "일",
 };
-const periodLabel = (p?: string) =>
-  p === "SHORT_TERM"
-    ? "단기"
-    : p === "OVER_ONE_MONTH"
-    ? "1개월 이상"
-    : p === "OVER_THREE_MONTH"
-    ? "3개월 이상"
-    : p === "OVER_SIX_MONTH"
-    ? "6개월 이상"
-    : p === "OVER_ONE_YEAR"
-    ? "1년 이상"
-    : p ?? "-";
-const paymentLabel = (t?: string) =>
-  t === "HOURLY"
-    ? "시급"
-    : t === "DAILY"
-    ? "일급"
-    : t === "MONTHLY"
-    ? "월급"
-    : t === "PER_TASK"
-    ? "건별"
-    : t ?? "-";
+function periodLabel(p?: string) {
+  if (p === "SHORT_TERM") return "단기";
+  if (p === "OVER_ONE_MONTH") return "1개월 이상";
+  if (p === "OVER_THREE_MONTH") return "3개월 이상";
+  if (p === "OVER_SIX_MONTH") return "6개월 이상";
+  if (p === "OVER_ONE_YEAR") return "1년 이상";
+  return p ?? "-";
+}
+function paymentLabel(t?: string) {
+  if (t === "HOURLY") return "시급";
+  if (t === "DAILY") return "일급";
+  if (t === "MONTHLY") return "월급";
+  if (t === "PER_TASK") return "건별";
+  return t ?? "-";
+}
 
 const JOB_CATEGORY_KO: Record<string, string> = {
   SERVING: "서빙",
-  KITCHEN_ASSIST: "주방보조/설거지",
+  KITCHEN_HELP: "주방보조/설거지",
   CAFE_BAKERY: "카페/베이커리",
   TUTORING: "과외/학원",
   ERRAND: "심부름/소일거리",
   PROMOTION: "전단지/홍보",
-  ELDER_CARE: "어르신 돌봄",
+  SENIOR_CARE: "어르신 돌봄",
   CHILD_CARE: "아이 돌봄",
   BEAUTY: "미용/뷰티",
   OFFICE_HELP: "사무보조",
@@ -155,15 +199,13 @@ const ENV_KO: Record<string, string> = {
 const hhmm = (s?: string) => (s ? s.slice(0, 5) : "");
 
 function mapSwaggerJobDetail(api: any) {
-  // 근무요일
   let weekdays = "요일협의";
   if (api?.workDays && api.workDays.isDayNegotiable === false) {
     const arr = Object.entries(api.workDays)
       .filter(([k, v]) => k !== "isDayNegotiable" && v)
       .map(([k]) => DAY_KO[k] ?? (k as string).toUpperCase());
-    weekdays = arr.length ? arr.join(", ") : "요일협의";
+    if (arr.length > 0) weekdays = arr.join(", ");
   }
-  // 근무시간
   const time = api?.isTimeNegotiable
     ? "시간협의"
     : api?.workStart || api?.workEnd
@@ -171,7 +213,7 @@ function mapSwaggerJobDetail(api: any) {
         api.workEnd
       )}`
     : "-";
-  // 환경 태그
+
   const envTags = Array.isArray(api?.workEnvironment)
     ? api.workEnvironment.map((k: string) => ENV_KO[k] ?? k)
     : [];
@@ -210,32 +252,46 @@ function mapSwaggerJobDetail(api: any) {
   };
 }
 
-// function isHtmlResponse(res: any): boolean {
-//   const ct = String(res?.headers?.["content-type"] || "");
-//   const url = String(res?.request?.responseURL || "");
-//   return ct.includes("text/html") || url.includes("/login");
-// }
-
+/* ───────────────── 페이지 컴포넌트 ───────────────── */
 export default function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<any>(null);
-  const [bookmarked, setBookmarked] = useState(false);
+  const [loading, setLoading] = useState(true); // 사용: 로딩 표시
+  const [error, setError] = useState<any>(null); // 사용: 에러 표시
+
+  // 라우트/응답에서 안전하게 식별자 뽑기
+  const effectivePostId = useMemo(() => {
+    const cands = [
+      data?.jobId,
+      data?.id,
+      data?.postId,
+      jobId ? Number(jobId) : undefined,
+    ];
+    for (let i = 0; i < cands.length; i += 1) {
+      const n = Number(cands[i]);
+      if (Number.isFinite(n)) return n as number;
+    }
+    return null;
+  }, [jobId, data]);
+
+  // 초기 북마크 상태를 캐시로 즉시 채우기(깜빡임 방지)
+  const initialBm = useMemo(() => {
+    if (effectivePostId == null) return false;
+    return bmHas(effectivePostId);
+  }, [effectivePostId]);
+
+  const [bookmarked, setBookmarked] = useState(initialBm);
   const [bookmarking, setBookmarking] = useState(false);
 
-  console.log(loading, error);
   useEffect(() => {
-    const effectiveId = jobId ?? "36"; // 존재하는 ID로 테스트
+    const effectiveId = jobId ?? "10";
     (async () => {
       try {
         setLoading(true);
-        console.log("[JobDetail] GET /api/v1/jobs/", effectiveId);
-        const res = await getJobDetail(effectiveId); // 본문 타입으로 반환됨
-        console.log("[JobDetail] OK ▶", res);
+        const res = await getJobDetail(effectiveId);
         setData(mapSwaggerJobDetail(res));
+        setError(null);
       } catch (e: any) {
-        console.error("[JobDetail] error ▶", e);
         setError(e);
       } finally {
         setLoading(false);
@@ -243,25 +299,6 @@ export default function JobDetailPage() {
     })();
   }, [jobId]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const id = Number(jobId ?? data?.jobId);
-        if (!Number.isFinite(id)) return;
-
-        const ids = await fetchBookmarkedJobIds();
-        if (!cancelled) setBookmarked(ids.includes(id));
-      } catch (e: any) {
-        console.warn("[Bookmark] init failed ▶", e?.response ?? e);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [jobId]);
-
-  // 화면 바인딩용 기본값 (값이 비어도 레이아웃 유지)
   const job = data ?? {
     category: "",
     title: "",
@@ -283,7 +320,32 @@ export default function JobDetailPage() {
     envTags: [] as string[],
   };
 
-  const envTags: string[] = job.envTags ?? [];
+  // 1) id 결정되면 캐시 기준으로 UI를 즉시 고정
+  useEffect(() => {
+    if (effectivePostId == null) return;
+    setBookmarked(bmHas(effectivePostId));
+  }, [effectivePostId]);
+
+  // 2) 곧바로 서버 목록으로 동기화(한 번)
+  useEffect(() => {
+    if (effectivePostId == null) return;
+    let alive = true;
+
+    (async () => {
+      try {
+        const ids = await fetchBookmarkedJobIds(); // result.bookmarks 파서 반영된 함수
+        if (!alive) return;
+        bmReplace(ids);
+        setBookmarked(ids.includes(effectivePostId));
+      } catch {
+        // 실패해도 캐시 기준으로 유지
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [effectivePostId]);
 
   const navigate = useNavigate();
   const [applyOpen, setApplyOpen] = useState(false);
@@ -295,75 +357,44 @@ export default function JobDetailPage() {
 
   function onClickApplyCTA() {
     if (applied) return;
-    console.log("[Apply] open apply sheet");
     setApplyOpen(true);
   }
 
-  // 체크박스 토글 시: 체크=이력서 확인 → 없으면 이동, 있으면 resumeId 저장
   async function handleToggleAttach(checked: boolean) {
     if (!checked) {
       setAttachChecked(false);
-      console.log("[Apply] attach unchecked");
       return;
     }
     try {
       const { hasResume, resumeId: rid } = await getResumeSummary();
-      console.log("[Apply] resume summary ▶", { hasResume, resumeId: rid });
       if (!hasResume || !rid) {
-        // 이력서 없으면 즉시 이동(요구사항)
-        console.warn(
-          "[Apply] resume not found → navigate /Mypage/ResumeManage"
-        );
         setApplyOpen(false);
         setAttachChecked(false);
         navigate("/Mypage/ResumeManage");
         return;
       }
-      console.log("[Apply] resume found → use resumeId:", rid);
       setResumeId(rid);
       setAttachChecked(true);
     } catch (e: any) {
-      console.error("[Apply] resume summary error ▶", e?.response ?? e);
       alert(e?.response?.data?.message ?? "이력서 확인 중 오류가 발생했어요.");
     }
   }
-  useEffect(() => {
-    if (data) {
-      console.log(
-        "[Detail IDs] route jobId:",
-        jobId,
-        "api.jobId:",
-        data?.jobId,
-        "api.id:",
-        data?.id,
-        "api.postId:",
-        data?.postId
-      );
-    }
-  }, [data, jobId]);
 
-  // 파일 안에 유틸 추가
   async function ensureLoggedIn(): Promise<boolean> {
-    // 1) 바로 me 확인 (쿠키가 붙어야 200)
     const me1 = await getMe();
     if (me1) return true;
-
-    // 2) 세션 갱신 한 번 더 시도(쿠키 기반)
     const ok = await authApi.refresh();
     if (!ok) return false;
-
     const me2 = await getMe();
     return !!me2;
   }
 
   function gotoLogin() {
-    // 서버 로그인 페이지로 이동(탑레벨 네비게이션 → 쿠키 1st-party로 심김)
     window.location.href = `https://umctomorrow.shop/login?redirect=${encodeURIComponent(
       window.location.href
     )}`;
   }
 
-  // 지원하기
   async function onSubmitApply() {
     if (submitting || applied) return;
     setSubmitting(true);
@@ -395,15 +426,10 @@ export default function JobDetailPage() {
         )}`;
         return;
       }
-
-      // 🔴 서버 비즈니스 에러 (이미 불합격 등)
       if (status === 400) {
         alert(msg || "요청을 처리할 수 없습니다.");
-        // 필요하면 버튼을 비활성화하고 레이블을 바꿔도 됨:
-        // setApplied(true); // 또는 별도 상태로 '지원불가' 표기
         return;
       }
-
       alert(msg || "지원 중 오류가 발생했어요.");
       console.error("[Apply] error ▶", e?.response ?? e);
     } finally {
@@ -413,8 +439,9 @@ export default function JobDetailPage() {
 
   const handleBack = () => {
     if (window.history.length > 1) navigate(-1);
-    else navigate("/"); // 필요하면 "/jobs" 등으로 변경
+    else navigate("/");
   };
+
   async function onToggleBookmark() {
     const authed = await ensureLoggedIn();
     if (!authed) {
@@ -422,26 +449,29 @@ export default function JobDetailPage() {
       gotoLogin();
       return;
     }
-    const id = Number(jobId ?? data?.jobId);
-    if (!Number.isFinite(id) || bookmarking) return;
+    if (!Number.isFinite(Number(effectivePostId)) || bookmarking) return;
 
     try {
       setBookmarking(true);
 
       if (!bookmarked) {
-        // ▷ 찜 추가 시도
+        // 낙관적 반영 + 캐시 추가
+        setBookmarked(true);
+        bmAdd(Number(effectivePostId));
         try {
-          await addJobBookmark(id);
-          setBookmarked(true);
+          await addJobBookmark(Number(effectivePostId));
         } catch (e: any) {
           const status = e?.response?.status;
           const code = e?.response?.data?.code;
           if (status === 409 || code === "BOOKMARK4002") {
-            // 이미 찜됨 → 성공으로 간주하고 UI만 채움
-            setBookmarked(true);
+            // 이미 서버에도 있음 → 유지
           } else if (status === 401) {
+            setBookmarked(false);
+            bmRemove(Number(effectivePostId));
             alert("로그인이 필요합니다.");
           } else {
+            setBookmarked(false);
+            bmRemove(Number(effectivePostId));
             alert(
               e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요."
             );
@@ -449,19 +479,23 @@ export default function JobDetailPage() {
           }
         }
       } else {
-        // ▷ 찜 취소 시도
+        // 낙관적 반영 + 캐시 제거
+        setBookmarked(false);
+        bmRemove(Number(effectivePostId));
         try {
-          await deleteJobBookmark(id);
-          setBookmarked(false);
+          await deleteJobBookmark(Number(effectivePostId));
         } catch (e: any) {
           const status = e?.response?.status;
           const code = e?.response?.data?.code;
           if (status === 404 || code === "BOOKMARK4001") {
-            // 서버엔 없지만 우리 UI는 찜 상태였던 케이스 → 성공으로 간주하고 비움
-            setBookmarked(false);
+            // 서버엔 없었음 → 해제 유지
           } else if (status === 401) {
+            setBookmarked(true);
+            bmAdd(Number(effectivePostId));
             alert("로그인이 필요합니다.");
           } else {
+            setBookmarked(true);
+            bmAdd(Number(effectivePostId));
             alert(
               e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요."
             );
@@ -472,6 +506,28 @@ export default function JobDetailPage() {
     } finally {
       setBookmarking(false);
     }
+  }
+
+  // 간단한 로딩/에러 UI로 unused 경고 제거
+  if (loading) {
+    return (
+      <div
+        className="max-w-[375px] mx-auto p-6 text-[#333]"
+        style={{ fontFamily: "Pretendard" }}
+      >
+        로딩 중...
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div
+        className="max-w-[375px] mx-auto p-6 text-[#333]"
+        style={{ fontFamily: "Pretendard" }}
+      >
+        오류가 발생했어요. 다시 시도해 주세요.
+      </div>
+    );
   }
 
   return (
@@ -551,7 +607,7 @@ export default function JobDetailPage() {
               추천해드릴게요.
             </p>
             <div className="flex flex-wrap gap-[10px]">
-              {envTags.map((t, i) => (
+              {(job.envTags ?? []).map((t: string, i: number) => (
                 <span
                   key={i}
                   className="min-w-[108px] h-[24px] rounded-[7px] px-[6px] py-[1px] inline-flex items-center justify-center text-[12px] font-pretendard text-[#3F5A41]"
@@ -583,6 +639,7 @@ export default function JobDetailPage() {
           </div>
         </Section>
       </div>
+
       {/* 하단 고정 CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[375px] bg-white border-t border-[#E5E7EB]">
         <div className="px-4 !pt-4 !pb-[max(16px,env(safe-area-inset-bottom))]">
@@ -616,6 +673,7 @@ export default function JobDetailPage() {
           </div>
         </div>
       </div>
+
       <ApplySheet
         open={applyOpen}
         content={applyContent}
@@ -627,7 +685,6 @@ export default function JobDetailPage() {
         onClose={() => setApplyOpen(false)}
         onSubmit={onSubmitApply}
       />
-      ;
     </div>
   );
 }

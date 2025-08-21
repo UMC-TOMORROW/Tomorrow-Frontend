@@ -102,3 +102,28 @@ export const updateApplicationStatus = async (
   >(`/api/v1/jobs/${jobId}/applications/${applicationId}/status`, { status });
   return res.data.result;
 };
+
+// 프로필 이미지 수정
+export const updateProfileImage = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await axiosInstance.post<ApiEnvelope<string>>(
+    "/api/files/profile/update",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return res.data.result;
+};
+
+// 로그아웃
+export const postLogout = async (): Promise<void> => {
+  const res = await axiosInstance.post("/api/v1/auth/logout", null, {
+  });
+  console.log(res)
+};
