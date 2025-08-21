@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
-import { createApplication, AuthRequiredError } from "../../apis/applications";
+import { createApplication, AuthRequiredError, fetchAppliedJobIdsFromServer } from "../../apis/applications";
 import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
 import { getMe } from "../../apis/mypage";
 import { authApi } from "../../apis/authApi";
@@ -56,6 +56,22 @@ function bmRemove(id: number) {
 function bmReplace(ids: number[]) {
   writeBm(ids.filter((n) => Number.isFinite(n)));
 }
+
+const APPLIED_KEY = "applied.job.ids.v1";
+const readApplied = () => {
+  try {
+    const s = localStorage.getItem(APPLIED_KEY);
+    const ids = s ? (JSON.parse(s).ids as number[]) : [];
+    return Array.isArray(ids) ? ids.filter((n) => Number.isFinite(n)) : [];
+  } catch {
+    return [];
+  }
+};
+const writeApplied = (ids: number[]) =>
+  localStorage.setItem(APPLIED_KEY, JSON.stringify({ ids: Array.from(new Set(ids)), updatedAt: Date.now() }));
+const appliedHas = (id: number) => readApplied().includes(id);
+const appliedAdd = (id: number) => writeApplied([...readApplied(), id]);
+const appliedReplace = (ids: number[]) => writeApplied(ids);
 
 /* ───────────────── UI 컴포넌트 ───────────────── */
 const Divider: React.FC = () => <div className="h-px bg-[#EAEAEA] -mx-4" />;
@@ -343,12 +359,14 @@ export default function JobDetailPage() {
       if (attachChecked && resumeId) payload.resumeId = resumeId;
       await createApplication(postId, payload);
       alert("지원이 완료되었습니다.");
+      appliedAdd(postId);
       setApplied(true);
       setApplyOpen(false);
       setApplyContent("");
       setAttachChecked(false);
     } catch (e: any) {
       const status = e?.response?.status;
+      const code = e?.response?.data?.code;
       const msg = e?.response?.data?.message;
       if (e instanceof AuthRequiredError) {
         alert("로그인이 필요합니다.");
@@ -361,14 +379,21 @@ export default function JobDetailPage() {
       }
       alert(msg || "지원 중 오류가 발생했어요.");
       console.error("[Apply] error ▶", e?.response ?? e);
+
+      if (status === 409 || msg?.includes("이미 지원") || code === "APPLICATION_ALREADY_APPLIED") {
+        appliedAdd(Number(data?.jobId ?? jobId));
+        setApplied(true);
+        setApplyOpen(false);
+        return;
+      }
     } finally {
       setSubmitting(false);
     }
   }
 
   const handleBack = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate("/");
+    // if (window.history.length > 1) navigate(-1);else
+    navigate("/");
   };
 
   async function onToggleBookmark() {
@@ -456,6 +481,28 @@ export default function JobDetailPage() {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onFocus);
     };
+  }, [effectivePostId]);
+
+  useEffect(() => {
+    if (effectivePostId == null) return;
+
+    // 1) 캐시로 즉시 반영(깜빡임 방지)
+    setApplied(appliedHas(effectivePostId));
+
+    // 2) 로그인 되어 있으면 서버에서 최신 이력 가져와 보정
+    (async () => {
+      try {
+        const authed = await ensureLoggedIn().catch(() => false);
+        if (!authed) return; // 비로그인: 캐시만 사용
+
+        const ids = await fetchAppliedJobIdsFromServer(); // /api/v1/applications?type=all
+        appliedReplace(ids); // 캐시 동기화
+        if (ids.includes(effectivePostId)) setApplied(true);
+      } catch (e) {
+        // 서버 실패 시 캐시 상태 유지
+        console.debug("[applied] sync skipped", e);
+      }
+    })();
   }, [effectivePostId]);
 
   // 간단한 로딩/에러 UI
