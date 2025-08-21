@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
-import { getResumeSummary } from "../../apis/resumes";
 import { createApplication, AuthRequiredError, fetchAppliedJobIdsFromServer } from "../../apis/applications";
 import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
 import { getMe } from "../../apis/mypage";
@@ -301,6 +300,8 @@ export default function JobDetailPage() {
   }, [effectivePostId]);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const backTo = location.pathname + location.search + location.hash;
   const [applyOpen, setApplyOpen] = useState(false);
   const [applyContent, setApplyContent] = useState("");
   const [attachChecked, setAttachChecked] = useState(false);
@@ -380,7 +381,9 @@ export default function JobDetailPage() {
       setAttachChecked(false);
       setApplyOpen(false);
       // 첨부 체크에서 이력서 없다고 판단되어 이동할 때, 라우팅 state나 쿼리로 “create 모드”로 넘김
-      navigate("/Mypage/ResumeManage", { state: { forceCreate: true } });
+      navigate("/Mypage/ResumeManage", {
+        state: { from: "jobDetail", backTo },
+      }); // 현재 페이지로 돌아올 수 있게
       return;
     }
 
@@ -425,7 +428,7 @@ export default function JobDetailPage() {
       const msg = e?.response?.data?.message;
       if (e instanceof AuthRequiredError) {
         alert("로그인이 필요합니다.");
-        window.location.href = `/auth?next=${encodeURIComponent(location.href)}`;
+        navigate("/login", { state: { backTo } });
         return;
       }
       if (status === 400) {

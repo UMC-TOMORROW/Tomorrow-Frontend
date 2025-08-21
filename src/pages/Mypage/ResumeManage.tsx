@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import CareerForm from "../../components/CareerForm";
 import CareerItem from "../../components/CareerItem";
 import LicenseForm from "../../components/LicenseForm";
@@ -67,6 +67,7 @@ const MAX_CERTS = 4;
 
 const ResumeManage = () => {
   const navigate = useNavigate();
+  const location = useLocation() as { state?: { from?: string; backTo?: string } };
   const [selfIntro, setSelfIntro] = useState("");
   const [hasIntro, setHasIntro] = useState(false);
   const [showSelfIntroBox, setShowSelfIntroBox] = useState(false);
@@ -519,6 +520,14 @@ const ResumeManage = () => {
 
       if (certs.length > 0) setShowLicenseBox(true);
       alert("이력서를 저장했어요.");
+
+      const fromJobDetail = location?.state?.from === "jobDetail";
+      const backToPath = location?.state?.backTo;
+
+      if (fromJobDetail && backToPath) {
+        navigate(backToPath, { replace: true }); // 상세 페이지로 복귀
+        return;
+      }
     } catch (err) {
       console.error("이력서 저장 실패:", err);
       alert("이력서 저장에 실패했습니다.");
