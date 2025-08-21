@@ -131,6 +131,12 @@ export default function UserInfoForm() {
         isOnboarded: false,
       });
 
+      try {
+        sessionStorage.setItem("allowOnboarding", "1");
+      } catch {
+        //
+      }
+
       alert("회원 정보가 저장되었습니다.");
       navigate("/onboarding", { replace: true });
     } catch (e) {

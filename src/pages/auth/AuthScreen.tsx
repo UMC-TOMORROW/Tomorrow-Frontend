@@ -9,7 +9,7 @@ import { getMe1 } from "../../apis/member";
 const BASE = import.meta.env.VITE_SERVER_API_URL as string;
 
 const startLogin = (provider: "kakao" | "google" | "naver") => {
-  // 로그인 성공 후에는 항상 홈("/")로만 돌아오게 고정
+  // ✅ 로그인 성공 후에는 항상 홈("/")로만 돌아오게 고정
   const afterAuth = `/auth?returnTo=${encodeURIComponent("/")}`;
   const url = `${BASE}/oauth2/authorization/${provider}?returnTo=${encodeURIComponent(
     afterAuth
