@@ -34,7 +34,7 @@ import WorkPreference from "./pages/Mypage/WorkPreference";
 import JobDetailPage from "./pages/job/JobDetailPage";
 import ChatPage from "./pages/careerTalk/ChatPage";
 import JobReviewPage from "./pages/job/JobReviewPage";
-import { getMyInfo } from "./apis/employerMyPage";
+import { getMyInfo, getMyMemberType } from "./apis/employerMyPage";
 import MemberRecover from "./pages/auth/MemberRecover";
 
 /* ───────────────── 헬퍼 ───────────────── */
@@ -43,6 +43,7 @@ type MeShape = {
   isOnboarded?: boolean | null;
   inOnboarded?: boolean | null;
   status?: string | null; // INACTIVE 체크용
+  memberType?: string | null; // EMPLOYER 판별용 (없을 수도 있음)
   [k: string]: any;
 };
 
@@ -50,6 +51,14 @@ const getMeOrNull = async (): Promise<MeShape | null> => {
   try {
     const me = await getMyInfo();
     return me ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const getMemberTypeOrNull = async (): Promise<string | null> => {
+  try {
+    return await getMyMemberType();
   } catch {
     return null;
   }
@@ -70,6 +79,14 @@ const isInactive = (me?: MeShape | null) => {
   );
 };
 
+// EMPLOYER 여부 (me.memberType 우선, 없으면 API 조회)
+const isEmployerAsync = async (me?: MeShape | null) => {
+  const raw = (me?.memberType || "").toString().toUpperCase();
+  if (raw) return raw === "EMPLOYER";
+  const fetched = (await getMemberTypeOrNull())?.toUpperCase();
+  return fetched === "EMPLOYER";
+};
+
 // 인증 필요
 const requireAuthLoader = async () => {
   const me = await getMeOrNull();
@@ -78,12 +95,13 @@ const requireAuthLoader = async () => {
   return null;
 };
 
-// 로그인/스플래시: 로그인 상태면 홈/유저정보/복구로
+// 로그인/스플래시: 로그인 상태면 홈/유저정보/복구/EMPLOYER 분기
 const requireAnonLoader = async () => {
   const me = await getMeOrNull();
   if (!me) return null; // 비로그인 그대로 접근
   if (isInactive(me)) throw redirect("/auth/recover");
   if (!isOnboardedBool(me)) throw redirect("/auth/user-info");
+  if (await isEmployerAsync(me)) throw redirect("/MyPage/EmployerMyPage");
   throw redirect("/");
 };
 
@@ -92,7 +110,10 @@ const requireUserInfoLoader = async () => {
   const me = await getMeOrNull();
   if (!me) throw redirect("/auth");
   if (isInactive(me)) throw redirect("/auth/recover");
-  if (isOnboardedBool(me)) throw redirect("/");
+  if (isOnboardedBool(me)) {
+    if (await isEmployerAsync(me)) throw redirect("/MyPage/EmployerMyPage");
+    throw redirect("/");
+  }
   return null;
 };
 
@@ -101,7 +122,30 @@ const requireNeedsOnboardingLoader = async () => {
   const me = await getMeOrNull();
   if (!me) throw redirect("/auth");
   if (isInactive(me)) throw redirect("/auth/recover");
-  if (isOnboardedBool(me)) throw redirect("/");
+  if (isOnboardedBool(me)) {
+    if (await isEmployerAsync(me)) throw redirect("/MyPage/EmployerMyPage");
+    throw redirect("/");
+  }
+  return null;
+};
+
+// ✅ 루트 섹션 공통 로더: 어떤 child로 진입하든 먼저 실행됨
+// EMPLOYER가 "/" 또는 "/MyPage"로 접근하면 선제 리다이렉트
+const rootGuardLoader = async ({ request }: { request: Request }) => {
+  const url = new URL(request.url);
+  const pathname = url.pathname.replace(/\/+$/, "") || "/";
+
+  const me = await getMeOrNull();
+  if (!me) return null; // 비로그인인 경우, 각 child의 로더에서 처리
+
+  if (isInactive(me)) throw redirect("/auth/recover");
+  if (!isOnboardedBool(me)) throw redirect("/auth/user-info");
+
+  if (await isEmployerAsync(me)) {
+    if (pathname === "/" || pathname === "/MyPage") {
+      throw redirect("/MyPage/EmployerMyPage");
+    }
+  }
   return null;
 };
 
@@ -122,7 +166,10 @@ const router = createBrowserRouter([
     loader: async () => {
       const me = await getMeOrNull();
       if (!me) throw redirect("/auth");
-      if (!isInactive(me)) throw redirect("/");
+      if (!isInactive(me)) {
+        if (await isEmployerAsync(me)) throw redirect("/MyPage/EmployerMyPage");
+        throw redirect("/");
+      }
       return null;
     },
   },
@@ -132,6 +179,7 @@ const router = createBrowserRouter([
     path: "/",
     element: <HomeLayout />,
     errorElement: <NotFoundPage />,
+    loader: rootGuardLoader, // ✅ 공통 가드
     children: [
       {
         index: true,
@@ -140,6 +188,8 @@ const router = createBrowserRouter([
           if (!me) throw redirect("/splash");
           if (isInactive(me)) throw redirect("/auth/recover");
           if (!isOnboardedBool(me)) throw redirect("/auth/user-info");
+          // 여기선 rootGuardLoader가 한 번 더 걸러주지만, 이중안전망 유지
+          if (await isEmployerAsync(me)) throw redirect("/MyPage/EmployerMyPage");
           return null;
         },
         element: <HomePage />,
@@ -173,7 +223,9 @@ const router = createBrowserRouter([
         loader: requireAuthLoader,
       },
 
-      { path: "MyPage", element: <MyPage />, loader: requireAuthLoader },
+      // ⛔️ (중요) 여기 있던 "MyPage" 자식 라우트는 제거했습니다.
+      // { path: "MyPage", element: <MyPage />, ... }  ← 삭제!
+
       {
         path: "recommendation",
         element: <RecommendationPage />,
@@ -205,7 +257,17 @@ const router = createBrowserRouter([
     errorElement: <NotFoundPage />,
     loader: requireAuthLoader, // 부모에서 한 번에 보호
     children: [
-      { index: true, element: <MyPage /> },
+      {
+        index: true,
+        element: <MyPage />,
+        loader: async () => {
+          const me = await getMeOrNull();
+          if (!me?.id) throw redirect("/auth");
+          if (isInactive(me)) throw redirect("/auth/recover");
+          if (await isEmployerAsync(me)) throw redirect("/MyPage/EmployerMyPage");
+          return null;
+        },
+      },
       { path: "EmployerMyPage", element: <EmployerMyPage /> },
       { path: "ResumeManage", element: <ResumeManage /> },
       { path: "ResumeManage/:resumeId", element: <ResumeManage /> },
