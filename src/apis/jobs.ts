@@ -122,6 +122,12 @@ function toJobRequest(b: any) {
   const fallbackLng = 126.978;
 
   const alwaysHiring = !!(b.always_hiring ?? b.alwaysHiring);
+  const ONGOING_DEADLINE_ISO = "2099-12-31T23:59:59.000Z";
+  // 자식/부모에서 어떤 키로 들어와도 받도록 여유있게
+  const deadlineInput = b.deadline ?? b.deadlineISO ?? b.deadlineIso ?? null;
+  // 상시모집이면 deadline을 센티널로 보장, 아니면 입력값 사용
+  const deadlineFinal = alwaysHiring ? deadlineInput || ONGOING_DEADLINE_ISO : deadlineInput;
+
   const timeNegotiable = !!(b.is_time_negotiable ?? b.isTimeNegotiable ?? b.timeNegotiable);
 
   const start = timeNegotiable ? undefined : toHm(b.work_start ?? b.workStart);
@@ -151,7 +157,7 @@ function toJobRequest(b: any) {
     longitude: b.longitude != null && b.longitude !== "" ? Number(b.longitude) : fallbackLng,
 
     alwaysHiring,
-    ...(alwaysHiring ? {} : b.deadline ? { deadline: b.deadline } : {}),
+    ...(deadlineFinal ? { deadline: new Date(deadlineFinal).toISOString() } : {}),
 
     ...(b.job_image_url || b.jobImageUrl ? { jobImageUrl: b.job_image_url ?? b.jobImageUrl } : {}),
     ...(b.preferred_qualifications || b.preferredQualifications

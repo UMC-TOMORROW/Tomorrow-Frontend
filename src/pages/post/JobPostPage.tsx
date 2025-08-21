@@ -186,6 +186,7 @@ const JobPostForm = () => {
     return true;
   };
 
+  const ONGOING_DEADLINE_ISO = "2099-12-31T23:59:59.000Z"; // 상시모집일시 대체 deadline
   const buildPayloadV2 = (imageUrl?: string): JobDraftPayload => {
     const primaryKo = selectedTags[0];
     const job_category = categoryMap[primaryKo]; // 필수
@@ -222,7 +223,7 @@ const JobPostForm = () => {
 
       // 마감/상시
       always_hiring: !!alwaysHiring,
-      deadline: alwaysHiring ? undefined : deadlineISO ? new Date(deadlineISO).toISOString() : undefined,
+      deadline: alwaysHiring ? ONGOING_DEADLINE_ISO : deadlineISO ? new Date(deadlineISO).toISOString() : undefined,
 
       // 회사/위치 (검증 했으니 실제 전송)
       company_name: companyName || undefined,
