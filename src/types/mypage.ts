@@ -1,7 +1,10 @@
 export interface applyStatus {
   postTitle: string;
+  jobId: number;
   company: string;
   date: string;
+  jobImageUrl: string | null;
+  jobWorkEnvironment: Record<string, boolean>;
   status: string;
 }
 

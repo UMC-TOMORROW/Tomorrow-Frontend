@@ -3,13 +3,15 @@ import { useNavigate } from "react-router-dom";
 import type { ApplicationFilter, applyStatus } from "../../types/mypage";
 import { getApplications } from "../../apis/mypage";
 import { SlArrowLeft } from "react-icons/sl";
+import defaultLogo from "../../assets/logo/logo.png";
 
 type UIJob = {
   postId?: number;
   date: string;
   company: string;
   title: string;
-  tags: string[];
+  image: string;
+  envText: string;
   status: "" | "합격";
 };
 
@@ -31,19 +33,37 @@ const ApplyStatus = () => {
     return d;
   };
 
-  const mapToUIJob = useCallback((it: applyStatus): UIJob => {
-    const anyIt = it as unknown as Record<string, unknown>;
-    const rawId =
-      (anyIt.postId as number | undefined) ??
-      (anyIt.jobId as number | undefined) ??
-      (anyIt.id as number | undefined);
+  // 백엔드 키 → 한국어 라벨
+  const environmentMap: Record<string, string> = {
+    canCommunicate: "사람 응대 중심",
+    canMoveActively: "신체 활동 중심",
+    canWorkSitting: "앉아서 근무 중심",
+    canWorkStanding: "서서 근무 중심",
+    canCarryObjects: "가벼운 물건 운반",
+    canLiftLightObjects: "가벼운 물건 운반",
+    canLiftHeavyObjects: "무거운 물건 운반",
+  };
 
+  const isTrueLike = (v: unknown) =>
+    v === true || v === 1 || v === "1" || v === "true" || v === "Y";
+
+  const toEnvText = (envObj?: Record<string, unknown>): string => {
+    if (!envObj || typeof envObj !== "object") return "";
+    return Object.entries(envObj)
+      .filter(([, v]) => isTrueLike(v))
+      .map(([k]) => environmentMap[k] ?? "")
+      .filter(Boolean)
+      .join(", ");
+  };
+
+  const mapToUIJob = useCallback((it: applyStatus): UIJob => {
     return {
-      postId: rawId,
+      postId: it.jobId,
       date: formatDateDot(it.date),
       company: it.company,
       title: it.postTitle,
-      tags: [],
+      image: (it.jobImageUrl ?? "").trim(),
+      envText: toEnvText(it.jobWorkEnvironment),
       status: it.status === "ACCEPTED" ? "합격" : "",
     };
   }, []);
@@ -133,7 +153,7 @@ const ApplyStatus = () => {
 
         <ul>
           {filteredJobs.map((job, index) => (
-            <div key={index}>
+            <div key={job.postId ?? index}>
               <li>
                 <div className="px-[15px] h-[18px] w-full bg-white"></div>
                 <div
@@ -148,25 +168,38 @@ const ApplyStatus = () => {
                     }
                   }}
                 >
-                  <div>
+                  <div className="w-[250px]">
                     <p className="flex items-end text-[14px]">{job.date}</p>
                     <p className="text-[14px]">{job.company}</p>
                     <p className="text-[16px]" style={{ fontWeight: 800 }}>
                       {job.title}
                     </p>
-                    <p className="text-[14px] text-[#729A73]">
-                      {job.tags.join(", ")}
+                    <p className="text-[14px]" style={{ color: "#729A73" }}>
+                      {job.envText || ""}
                     </p>
                   </div>
-                  <div className="w-[79px] h-[79px] bg-gray-300"></div>
+
+                  <div className="flex-shrink-0 self-center w-[79px] h-[79px] flex items-center justify-center">
+                    <img
+                      src={job.image || defaultLogo}
+                      alt={job.title}
+                      onError={(e) => {
+                        const img = e.currentTarget;
+                        if (img.src !== defaultLogo) {
+                          img.src = defaultLogo;
+                        }
+                      }}
+                      className="w-[82px] h-[82px] object-contain"
+                    />
+                  </div>
                 </div>
               </li>
 
               {activeTab === "합격" ? (
                 <div>
                   <button
-                    className="w-full px-[15px]"
-                    onClick={() => goWriteReview(job)} // ✅ 여기서 postId 포함 이동
+                    className="w-full px-[15px] mt-[7px]"
+                    onClick={() => goWriteReview(job)}
                   >
                     <div className="h-[13px] w-full bg-white border-t border-[#729A73]"></div>
                     <div
