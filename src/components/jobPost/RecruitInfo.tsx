@@ -20,21 +20,6 @@ const RecruitInfo = ({ deadlineISO, headCount, preferenceText, alwaysHiring, onC
   // ✅ 부모가 주지 않으면 기본 false
   const isOngoing = useMemo(() => (typeof alwaysHiring === "boolean" ? alwaysHiring : false), [alwaysHiring]);
 
-  // deadlineISO → 연/월/일 동기화
-  useEffect(() => {
-    if (!deadlineISO) {
-      setYear("");
-      setMonth("");
-      setDay("");
-      return;
-    }
-    const d = new Date(deadlineISO);
-    if (isNaN(d.getTime())) return;
-    setYear(String(d.getUTCFullYear()));
-    setMonth(String(d.getUTCMonth() + 1).padStart(2, "0")); // ✅ 2자리
-    setDay(String(d.getUTCDate()).padStart(2, "0")); // ✅ 2자리
-  }, [deadlineISO]);
-
   const ymdToISO = (y: string, m: string, d: string): string | undefined => {
     if (!y || !m || !d) return undefined;
     const yy = Number(y);
@@ -44,13 +29,14 @@ const RecruitInfo = ({ deadlineISO, headCount, preferenceText, alwaysHiring, onC
     return new Date(Date.UTC(yy, mm - 1, dd, 0, 0, 0)).toISOString();
   };
 
+  // 상시모집의 마감일은 무조건 먼 미래로 설정 (상시모집 시)
+  const ONGOING_DEADLINE_ISO = "2099-12-31T23:59:59.000Z";
   const pushDate = (nextY: string, nextM: string, nextD: string) => {
     const iso = ymdToISO(nextY, nextM, nextD);
     onChange({
-      deadlineISO: iso,
+      deadlineISO: isOngoing ? ONGOING_DEADLINE_ISO : iso,
       headCount,
       preferenceText,
-      // ✅ 날짜 변경이 상시모집 상태를 바꾸지 않도록 유지
       alwaysHiring: isOngoing,
     });
     console.log("[RecruitInfo] deadline ->", { year: nextY, month: nextM, day: nextD, iso });
@@ -60,7 +46,7 @@ const RecruitInfo = ({ deadlineISO, headCount, preferenceText, alwaysHiring, onC
     const next = !isOngoing;
     // ✅ 상시 ON이면 마감일 비우기, OFF면 날짜는 그대로 (사용자가 다시 입력)
     onChange({
-      deadlineISO: next ? undefined : deadlineISO,
+      deadlineISO: next ? ONGOING_DEADLINE_ISO : ymdToISO(year, month, day),
       headCount,
       preferenceText,
       alwaysHiring: next,
@@ -72,6 +58,21 @@ const RecruitInfo = ({ deadlineISO, headCount, preferenceText, alwaysHiring, onC
     }
     console.log("[RecruitInfo] 상시모집 토글 ->", next);
   };
+
+  // deadlineISO → 연/월/일 동기화
+  useEffect(() => {
+    if (!deadlineISO || deadlineISO === ONGOING_DEADLINE_ISO) {
+      setYear("");
+      setMonth("");
+      setDay("");
+      return;
+    }
+    const d = new Date(deadlineISO);
+    if (isNaN(d.getTime())) return;
+    setYear(String(d.getUTCFullYear()));
+    setMonth(String(d.getUTCMonth() + 1).padStart(2, "0"));
+    setDay(String(d.getUTCDate()).padStart(2, "0"));
+  }, [deadlineISO]);
 
   return (
     <div className="w-full space-y-5">
