@@ -8,28 +8,6 @@ import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
 import starHalf from "../../assets/star/star_half_filled.png";
 
-// ---- 더미 데이터 (UI 확인용) ----
-// const DUMMY_REVIEWS = [
-//   {
-//     id: 101,
-//     createdAt: "2025-06-01T00:00:00Z",
-//     content: "은퇴 후 무료하게 시간을 보내다가 시작했어요.\n몸에 일이 익으면 어렵지 않게 일할 수 있어요!",
-//     rating: 4,
-//   },
-//   {
-//     id: 102,
-//     createdAt: "2025-05-10T00:00:00Z",
-//     content: "하루 몇 시간이라 큰 부담 없고, 생활비 보탬도 되어서 좋아요.",
-//     rating: 4,
-//   },
-//   {
-//     id: 103,
-//     createdAt: "2025-03-20T00:00:00Z",
-//     content: "처음엔 걱정했는데, 잘 가르쳐주셔서 금방 익숙해졌어요.",
-//     rating: 3.5,
-//   },
-// ];
-
 // 날짜 포맷: YYYY.MM.DD
 const fmtDate = (iso?: string) => {
   if (!iso) return "";
@@ -66,16 +44,34 @@ const StarsRow: React.FC<{ value?: number; size?: number; gap?: number }> = ({ v
 };
 
 // API 응답 → UI 모델 정규화 (스웨거 예시: { result: [{ stars, review, createdAt }, ...] })
-type UiReview = { id: number; rating: number; content: string; createdAt: string };
-function normalizeReviews(raw: any): UiReview[] {
-  const arr = Array.isArray(raw?.result) ? raw.result : Array.isArray(raw) ? raw : [];
+type UiReview = { id: number | string; stars: number; content: string; createdAt: string };
+
+function normalizeReviews(payload: any): UiReview[] {
+  const res = payload?.result ?? payload;
+
+  // 다양한 포맷 처리: [], {content:[]}, {items:[]}, {reviews:[]}, {…단일객체…}
+  const arr = Array.isArray(res)
+    ? res
+    : Array.isArray(res?.content)
+    ? res.content
+    : Array.isArray(res?.items)
+    ? res.items
+    : Array.isArray(res?.reviews)
+    ? res.reviews
+    : res
+    ? [res]
+    : [];
+
   return arr.map((r: any, idx: number) => ({
     id: r.id ?? r.reviewId ?? idx,
-    rating: Number(r.stars ?? r.rating ?? 0),
-    content: String(r.review ?? r.content ?? ""),
+    stars: Number(r.stars ?? r.rating ?? r.score ?? 0),
+    content: String(r.review ?? r.content ?? r.text ?? ""),
     createdAt: r.createdAt ?? r.created_at ?? new Date().toISOString(),
   }));
 }
+// const { data } = await axiosInstance.get(`/api/v1/reviews/1`);
+// console.debug("[reviews] raw:", data);
+// const normalized = normalizeReviews(data);
 
 export default function JobDetailPage() {
   const navigate = useNavigate();
@@ -121,9 +117,8 @@ export default function JobDetailPage() {
   }, [jobId]);
 
   return (
-    <div className="max-w-[375px] bg-white min-h-screen">
-      {/* 상단 헤더 (디자인 유지) */}
-      <div className="sticky top-0 z-10 bg-white">
+    <div className="max-w-[375px] bg-white h-[100dvh] flex flex-col">
+      <div className="shrink-0 bg-white border-b border-[#DEDEDE]">
         <div className="-mx-4 px-4 w-full flex items-center justify-between h-14 border-b border-[#DEDEDE] relative">
           <button
             type="button"
@@ -138,15 +133,13 @@ export default function JobDetailPage() {
       </div>
 
       {/* 본문 (디자인 그대로/spacing 동일) */}
-      <div className="!px-4 !pt-[50px] !pb-[max(24px,env(safe-area-inset-bottom))] !space-y-6">
-        {/* 로딩 상태는 조용히 처리 (원하면 한 줄 표시 가능) */}
+      <div className="flex-1 overflow-y-auto !px-4 !pt-[50px] !pb-[max(24px,env(safe-area-inset-bottom))] !space-y-6">
         {!loading && list.length === 0 && (
           <p className="text-[14px] text-[#666]">
             {error ? "후기가 등록되지 않았습니다" : "후기가 등록되지 않았습니다"}
           </p>
         )}
 
-        {/* 리뷰 카드들 (디자인 변경 없음) */}
         {list.map((r) => (
           <article
             key={r.id}
@@ -155,7 +148,7 @@ export default function JobDetailPage() {
           >
             <p className="text-[16px] !font-semibold text-[#3D3D3D] !mb-2">{fmtDate(r.createdAt)}</p>
             <p className="text-[16px] text-[#000] leading-6 whitespace-pre-wrap !mb-3">{r.content}</p>
-            <StarsRow value={r.rating} />
+            <StarsRow value={r.stars} />
           </article>
         ))}
       </div>
