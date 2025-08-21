@@ -559,7 +559,9 @@ export default function JobDetailPage() {
     if (effectivePostId == null) return;
     const run = () => refreshReviewSummary(effectivePostId);
     run(); // 최초 1회
-    const onFocus = () => run();
+    const onFocus = () => {
+      if (document.visibilityState === "visible") run();
+    };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onFocus);
     return () => {
@@ -730,7 +732,7 @@ export default function JobDetailPage() {
                 applied || isEmployer ? "bg-[#C9C9C9]" : "bg-[#729A73]"
               } !text-white font-semibold`}
               onClick={onClickApplyCTA}
-              disabled={applied}
+              disabled={applied || isEmployer}
             >
               {applied ? "지원완료" : "지원하기"}
             </button>
