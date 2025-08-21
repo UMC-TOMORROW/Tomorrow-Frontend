@@ -57,28 +57,6 @@ const periodLabelMap: Record<WorkedPeriod, string> = {
   MORE_THAN_THREE_YEARS: "3년 이상",
 };
 
-const API_BASE =
-  axiosInstance?.defaults?.baseURL || import.meta.env.VITE_API_BASE_URL || "";
-
-const toAbsoluteUrl = (u?: string) => {
-  if (!u) return "";
-  if (
-    u.startsWith("http://") ||
-    u.startsWith("https://") ||
-    u.startsWith("blob:") ||
-    u.startsWith("data:")
-  ) {
-    return u;
-  }
-  if (!API_BASE) return u; // 개발 중 임시
-  return `${API_BASE.replace(/\/+$/, "")}/${u.replace(/^\/+/, "")}`;
-};
-
-const nameFromUrl = (url: string) => {
-  const last = url.split("/").pop() ?? "";
-  return decodeURIComponent(last.split("?")[0]) || "certificate";
-};
-
 // 저장 전 로컬 대기 항목(서버 미반영)
 type PendingCertificate = {
   file: File;
@@ -128,9 +106,9 @@ const ResumeManage = () => {
     }
 
     try {
-      await putMyProfileImage(file); // 1) 업로드 (응답 바디 없음)
-      const refreshed = await getMyInfo1(); // 2) 서버 상태 재조회
-      setMyInfo(refreshed); // 3) 서버 URL로 확정 반영
+      await putMyProfileImage(file);
+      const refreshed = await getMyInfo1();
+      setMyInfo(refreshed);
     } catch (err: any) {
       console.error("프로필 이미지 업로드 실패:", err);
       const status = err?.response?.status;
@@ -138,7 +116,7 @@ const ResumeManage = () => {
         alert("파일이 너무 커요. 더 작은 이미지를 올려주세요.");
       else alert("프로필 이미지 업로드에 실패했습니다.");
     } finally {
-      e.target.value = ""; // 같은 파일 다시 선택 가능
+      e.target.value = "";
     }
   };
 
@@ -164,12 +142,6 @@ const ResumeManage = () => {
     };
     fetchMyInfo();
   }, []);
-
-  // useEffect(() => {
-  //   if (!resumeId || Number.isNaN(rid)) {
-  //     console.error("잘못된 resumeId:", resumeId);
-  //   }
-  // }, [resumeId, rid]);
 
   // 유효성 로그: NaN 체크 대신 null 여부로만 확인
   useEffect(() => {
@@ -266,8 +238,8 @@ const ResumeManage = () => {
         setLicenseFile(
           (certs ?? []).map((c) => ({
             id: c.id,
-            fileUrl: toAbsoluteUrl(c.fileUrl),
-            filename: c.filename ?? nameFromUrl(c.fileUrl),
+            fileUrl: c.fileUrl,
+            filename: c.fileUrl,
           }))
         );
         setShowLicenseBox(certs.length > 0);
@@ -397,7 +369,6 @@ const ResumeManage = () => {
     ]);
 
     setLicenseForm((prev) => prev.filter((_, i) => i !== index));
-    //setShowLicenseBox(true);
   };
 
   // 서버에 저장된(기존) 항목 삭제
@@ -425,8 +396,8 @@ const ResumeManage = () => {
       setLicenseFile(
         certs2.map((c) => ({
           id: c.id,
-          fileUrl: toAbsoluteUrl(c.fileUrl),
-          filename: c.filename ?? nameFromUrl(c.fileUrl),
+          fileUrl: c.fileUrl,
+          filename: c.fileUrl,
         }))
       );
       setShowLicenseBox(certs2.length + pendingCertificates.length > 0);
@@ -546,7 +517,7 @@ const ResumeManage = () => {
         try {
           const { result } = await uploadCertificate(rid, p.file);
           newlyUploaded.push({
-            fileUrl: toAbsoluteUrl(result.fileUrl),
+            fileUrl: result.fileUrl,
             filename: p.filename,
           });
         } catch (e) {
@@ -590,8 +561,8 @@ const ResumeManage = () => {
       setLicenseFile(
         certs.map((c) => ({
           id: c.id,
-          fileUrl: toAbsoluteUrl(c.fileUrl),
-          filename: c.filename ?? nameFromUrl(c.fileUrl),
+          fileUrl: c.fileUrl,
+          filename: c.fileUrl,
         }))
       );
 
@@ -843,8 +814,7 @@ const ResumeManage = () => {
                 {licenseFile.map((item, idx) => (
                   <LicenseItem
                     key={item.id ?? idx}
-                    //fileUrl={item.fileUrl ?? ""}
-                    fileUrl={toAbsoluteUrl(item.fileUrl)}
+                    fileUrl={item.fileUrl}
                     filename={item.filename}
                     onDelete={() => handleDeleteSavedLicense(idx)}
                   />
@@ -910,7 +880,7 @@ const ResumeManage = () => {
               {licenseFile.map((item, idx) => (
                 <LicenseItem
                   key={item.id ?? idx}
-                  fileUrl={toAbsoluteUrl(item.fileUrl)}
+                  fileUrl={item.fileUrl}
                   filename={item.filename}
                   onDelete={() => handleDeleteSavedLicense(idx)}
                 />
