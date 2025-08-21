@@ -1,12 +1,36 @@
 // src/apis/applications.ts
 import { axiosInstance } from "../apis/axios";
-// import { authApi } from "../apis/authApi";
+
+export type MyApplication = {
+  jobId: number;
+  status: string;
+  postTitle?: string;
+  company?: string;
+  date?: string;
+};
 
 export class AuthRequiredError extends Error {
   constructor(msg = "로그인이 필요합니다.") {
     super(msg);
     this.name = "AuthRequiredError";
   }
+}
+// 전체/합격만 필터: type=all | pass
+export async function listMyApplications(type: "all" | "pass" = "all"): Promise<MyApplication[]> {
+  const { data } = await axiosInstance.get("/api/v1/applications", { params: { type } });
+  const arr = Array.isArray(data?.result) ? data.result : data?.result ? [data.result] : [];
+  return arr.map((r: any) => ({
+    jobId: Number(r.jobId),
+    status: String(r.status ?? ""),
+    postTitle: r.postTitle,
+    company: r.company,
+    date: r.date,
+  }));
+}
+// 내가 지원한 공고들의 jobId만 뽑기
+export async function fetchAppliedJobIdsFromServer(): Promise<number[]> {
+  const apps = await listMyApplications("all");
+  return apps.map((a) => Number(a.jobId)).filter((n) => Number.isFinite(n));
 }
 
 const isHtmlResponse = (data: any, headers?: any) => {

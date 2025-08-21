@@ -1,22 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import CareerForm from "../../components/CareerForm";
 import CareerItem from "../../components/CareerItem";
 import LicenseForm from "../../components/LicenseForm";
 import LicenseItem from "../../components/LicenseItem";
 import memberplus from "../../assets/memberplus.png";
-import {
-  getIntroduction,
-  postIntroduction,
-  putIntroduction,
-} from "../../apis/introduction";
+import { getIntroduction, postIntroduction, putIntroduction } from "../../apis/introduction";
 import type { WorkedPeriod } from "../../types/career";
 import { createCareer, getCareers, deleteCareer } from "../../apis/career";
-import {
-  listCertificate,
-  uploadCertificate,
-  deleteCertificate,
-} from "../../apis/license";
+import { listCertificate, uploadCertificate, deleteCertificate } from "../../apis/license";
 import { saveResume } from "../../apis/resume";
 import type { SaveResumeRequest } from "../../types/resume";
 import type { Certificate } from "../../types/license";
@@ -26,15 +18,7 @@ import type { MyInfo } from "../../types/member";
 import { getMyInfo } from "../../apis/employerMyPage";
 import { SlArrowLeft } from "react-icons/sl";
 
-const labels = [
-  "단기",
-  "3개월 이하",
-  "6개월 이하",
-  "6개월~1년",
-  "1년~2년",
-  "2년~3년",
-  "3년 이상",
-] as const;
+const labels = ["단기", "3개월 이하", "6개월 이하", "6개월~1년", "1년~2년", "2년~3년", "3년 이상"] as const;
 
 const periodMap: Record<string, WorkedPeriod> = {
   단기: "SHORT_TERM",
@@ -56,17 +40,11 @@ const periodLabelMap: Record<WorkedPeriod, string> = {
   MORE_THAN_THREE_YEARS: "3년 이상",
 };
 
-const API_BASE =
-  axiosInstance?.defaults?.baseURL || import.meta.env.VITE_API_BASE_URL || "";
+const API_BASE = axiosInstance?.defaults?.baseURL || import.meta.env.VITE_API_BASE_URL || "";
 
 const toAbsoluteUrl = (u?: string) => {
   if (!u) return "";
-  if (
-    u.startsWith("http://") ||
-    u.startsWith("https://") ||
-    u.startsWith("blob:") ||
-    u.startsWith("data:")
-  ) {
+  if (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("blob:") || u.startsWith("data:")) {
     return u;
   }
   if (!API_BASE) return u; // 개발 중 임시
@@ -89,6 +67,7 @@ const MAX_CERTS = 4;
 
 const ResumeManage = () => {
   const navigate = useNavigate();
+  const location = useLocation() as { state?: { from?: string; backTo?: string } };
   const [selfIntro, setSelfIntro] = useState("");
   const [hasIntro, setHasIntro] = useState(false);
   const [showSelfIntroBox, setShowSelfIntroBox] = useState(false);
@@ -97,12 +76,12 @@ const ResumeManage = () => {
   const [showLicenseBox, setShowLicenseBox] = useState(false);
   const [licenseForm, setLicenseForm] = useState<number[]>([0]);
   const { resumeId } = useParams<{ resumeId: string }>();
-  const [pendingCertificates, setPendingCertificates] = useState<
-    PendingCertificate[]
-  >([]);
+  const [pendingCertificates, setPendingCertificates] = useState<PendingCertificate[]>([]);
   const [myInfo, setMyInfo] = useState<MyInfo | null>(null);
 
-  const rid = Number(resumeId);
+  // const rid = Number(resumeId);
+  // [CHANGE] rid를 state로 관리(잘못된 param이거나 없는 경우 null로 시작)
+  const [rid, setRid] = useState<number | null>(resumeId && !Number.isNaN(Number(resumeId)) ? Number(resumeId) : null);
 
   useEffect(() => {
     const fetchMyInfo = async () => {
@@ -116,14 +95,72 @@ const ResumeManage = () => {
     fetchMyInfo();
   }, []);
 
+  // useEffect(() => {
+  //   if (!resumeId || Number.isNaN(rid)) {
+  //     console.error("잘못된 resumeId:", resumeId);
+  //   }
+  // }, [resumeId, rid]);
+
+  // 유효성 로그: NaN 체크 대신 null 여부로만 확인
   useEffect(() => {
-    if (!resumeId || Number.isNaN(rid)) {
-      console.error("잘못된 resumeId:", resumeId);
+    if (rid == null) {
+      console.warn("이력서 ID를 아직 확보하지 못했어요. (초안 생성/요약 조회 예정)");
     }
+  }, [rid]);
+
+  // 마운트/param 변경 시 이력서 ID 보장 로직 (요약→없으면 초안 생성)
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (rid !== null) return; // 이미 확보됨
+
+      try {
+        // 1) 요약 조회 ({} 빈 객체도 방어)
+        const { data } = await axiosInstance.get("/api/v1/resumes/summary");
+        const r = data?.result ?? data;
+        const idFromSummary = Number(r?.resumeId);
+        if (alive && Number.isFinite(idFromSummary)) {
+          setRid(idFromSummary);
+          return;
+        }
+
+        // 2) 없으면 초안 생성
+        const created = await axiosInstance.post("/api/v1/resumes", {
+          introduction: "",
+          careers: [],
+          certificates: [],
+        });
+        const c = created?.data?.result ?? created?.data;
+        const newId = Number(c?.resumeId ?? c?.id);
+        if (alive && Number.isFinite(newId)) {
+          setRid(newId);
+          return;
+        }
+
+        console.error("이력서 식별자 확보 실패(요약/초안)");
+      } catch (e: any) {
+        // 이미 존재(409) 등일 때 한 번 더 요약 재시도
+        if (e?.response?.status === 409) {
+          try {
+            const { data } = await axiosInstance.get("/api/v1/resumes/summary");
+            const r = data?.result ?? data;
+            const id2 = Number(r?.resumeId);
+            if (alive && Number.isFinite(id2)) setRid(id2);
+          } catch {
+            /* ignore */
+          }
+        } else {
+          console.debug("[ensure rid] error:", e?.response ?? e);
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
   }, [resumeId, rid]);
 
   useEffect(() => {
-    if (Number.isNaN(rid)) return;
+    if (rid == null) return;
     (async () => {
       try {
         const [introRes, certsRes, careersRes] = await Promise.all([
@@ -133,9 +170,10 @@ const ResumeManage = () => {
         ]);
 
         // 자기소개
-        const introContent = introRes?.result?.content ?? "";
+        const introRow = introRes?.result; // result 객체가 있으면 '레코드 존재'로 간주
+        const introContent = introRow?.content ?? "";
         setSelfIntro(introContent);
-        setHasIntro(!!introContent);
+        setHasIntro(!!introRow); // 내용이 비어있어도 '존재' = true
         setShowSelfIntroBox(!!introContent);
 
         // 경력
@@ -185,8 +223,12 @@ const ResumeManage = () => {
   });
 
   const handleAddCareer = async () => {
-    const { workPlace, workYear, workDescription, selectedLabel } =
-      currentCareer;
+    if (rid == null) {
+      alert("이력서 식별자가 준비되지 않았어요. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
+
+    const { workPlace, workYear, workDescription, selectedLabel } = currentCareer;
     if (!workPlace || !workYear || !workDescription || !selectedLabel) return;
 
     const yearNum = Number(workYear);
@@ -234,6 +276,10 @@ const ResumeManage = () => {
   };
 
   const handleDeleteCareer = async (id: number) => {
+    if (rid == null) {
+      alert("이력서 식별자가 준비되지 않았어요. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
     try {
       await deleteCareer(rid, id);
       setCareers((prev) => prev.filter((c) => c.id !== id));
@@ -261,10 +307,7 @@ const ResumeManage = () => {
     workedPeriod: toWorkedPeriod(c.selectedLabel),
   });
 
-  const handleLicenseFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-    index: number
-  ) => {
+  const handleLicenseFileChange = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -272,10 +315,7 @@ const ResumeManage = () => {
 
     const previewUrl = URL.createObjectURL(file);
 
-    setPendingCertificates((prev) => [
-      ...prev,
-      { file, previewUrl, filename: file.name },
-    ]);
+    setPendingCertificates((prev) => [...prev, { file, previewUrl, filename: file.name }]);
 
     setLicenseForm((prev) => prev.filter((_, i) => i !== index));
     //setShowLicenseBox(true);
@@ -283,6 +323,10 @@ const ResumeManage = () => {
 
   // 서버에 저장된(기존) 항목 삭제
   const handleDeleteSavedLicense = async (index: number) => {
+    if (rid == null) {
+      alert("이력서 식별자가 준비되지 않았어요. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
     const target = licenseFile[index];
     if (!target) return;
 
@@ -291,8 +335,7 @@ const ResumeManage = () => {
     const prev = [...licenseFile];
     const next = prev.filter((_, i) => i !== index);
     setLicenseFile(next);
-    if (next.length + pendingCertificates.length === 0)
-      setShowLicenseBox(false);
+    if (next.length + pendingCertificates.length === 0) setShowLicenseBox(false);
 
     try {
       await deleteCertificate(Number(rid), Number(target.id)); // 서버 삭제
@@ -312,8 +355,7 @@ const ResumeManage = () => {
       if (isAxiosError(err)) status = err.response?.status;
 
       if (status === 401) alert("로그인이 필요합니다.");
-      else if (status === 404)
-        alert("해당 이력서에 없는 자격증입니다. 목록을 새로고침합니다.");
+      else if (status === 404) alert("해당 이력서에 없는 자격증입니다. 목록을 새로고침합니다.");
       else alert("자격증 삭제에 실패했습니다.");
 
       setLicenseFile(prev);
@@ -339,6 +381,10 @@ const ResumeManage = () => {
   };
 
   const handleSaveResume = async () => {
+    if (rid == null) {
+      alert("이력서 ID가 아직 준비되지 않았어요. 잠시 후 다시 시도해 주세요.");
+      return;
+    }
     // 자기소개 유효성
     const intro = selfIntro.trim();
     if (intro.length > 100) {
@@ -351,14 +397,24 @@ const ResumeManage = () => {
       if (intro) {
         if (hasIntro) await putIntroduction(rid, { content: intro });
         else {
-          await postIntroduction(rid, { content: intro });
-          setHasIntro(true);
+          try {
+            await postIntroduction(rid, { content: intro });
+            setHasIntro(true);
+          } catch (err: any) {
+            // 이미 존재하면(409) 업데이트로 전환
+            if (isAxiosError(err) && err.response?.status === 409) {
+              await putIntroduction(rid, { content: intro });
+              setHasIntro(true);
+            } else {
+              throw err;
+            }
+          }
         }
         setShowSelfIntroBox(true);
       } else {
         setShowSelfIntroBox(false);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("자기소개 저장 실패:", err);
       alert("자기소개 저장에 실패했습니다.");
     }
@@ -394,14 +450,12 @@ const ResumeManage = () => {
 
       const serverCareers = (careersRes?.result ?? []) as CareerRowFromApi[];
 
-      const careersPayload: SaveResumeRequest["careers"] = serverCareers.map(
-        (d) => ({
-          company: d.company,
-          description: d.description,
-          workedYear: d.workedYear,
-          workedPeriod: d.workedPeriod as WorkedPeriod,
-        })
-      );
+      const careersPayload: SaveResumeRequest["careers"] = serverCareers.map((d) => ({
+        company: d.company,
+        description: d.description,
+        workedYear: d.workedYear,
+        workedPeriod: d.workedPeriod as WorkedPeriod,
+      }));
 
       // 아직 서버에 저장되지 않은 자격증 서버에 업로드
       const newlyUploaded: { fileUrl: string; filename: string }[] = [];
@@ -420,8 +474,7 @@ const ResumeManage = () => {
       }
 
       // certificatesPayload : 이번에 새로 올린 항목들
-      const certificatesPayload: SaveResumeRequest["certificates"] =
-        newlyUploaded;
+      const certificatesPayload: SaveResumeRequest["certificates"] = newlyUploaded;
 
       // saveResume 호출
       const payload: SaveResumeRequest = {
@@ -432,10 +485,7 @@ const ResumeManage = () => {
       await saveResume(payload);
 
       // 최신 동기화(경력/자격증 재조회) + 로컬 대기 초기화
-      const [refetchedCareers, certsRes] = await Promise.all([
-        getCareers(rid),
-        listCertificate(rid),
-      ]);
+      const [refetchedCareers, certsRes] = await Promise.all([getCareers(rid), listCertificate(rid)]);
 
       const list = (refetchedCareers?.result ?? []) as CareerRowFromApi[];
       setCareers(
@@ -470,6 +520,14 @@ const ResumeManage = () => {
 
       if (certs.length > 0) setShowLicenseBox(true);
       alert("이력서를 저장했어요.");
+
+      const fromJobDetail = location?.state?.from === "jobDetail";
+      const backToPath = location?.state?.backTo;
+
+      if (fromJobDetail && backToPath) {
+        navigate(backToPath, { replace: true }); // 상세 페이지로 복귀
+        return;
+      }
     } catch (err) {
       console.error("이력서 저장 실패:", err);
       alert("이력서 저장에 실패했습니다.");
@@ -480,11 +538,7 @@ const ResumeManage = () => {
     <div style={{ fontFamily: "Pretendard" }}>
       <div className="bg-white min-h-screen">
         <section className="relative flex justify-center items-center h-[52px] border-b border-[#DEDEDE]">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="absolute left-[15px]"
-          >
+          <button type="button" onClick={() => navigate(-1)} className="absolute left-[15px]">
             <SlArrowLeft />
           </button>
           <div
@@ -501,9 +555,7 @@ const ResumeManage = () => {
               <p className="text-[18px]" style={{ fontWeight: 800 }}>
                 {myInfo?.name ?? "이름을 등록해주세요"}
               </p>
-              <p className="text-[14px]">
-                {myInfo?.phoneNumber ?? "전화번호를 등록해주세요"}
-              </p>
+              <p className="text-[14px]">{myInfo?.phoneNumber ?? "전화번호를 등록해주세요"}</p>
             </div>
           </div>
         </section>
@@ -536,9 +588,7 @@ const ResumeManage = () => {
                     value={selfIntro}
                     onChange={(e) => setSelfIntro(e.target.value)}
                   ></textarea>
-                  <p className="text-[13px] text-[#EE0606CC]">
-                    100자 이내로 작성해주세요.
-                  </p>
+                  <p className="text-[13px] text-[#EE0606CC]">100자 이내로 작성해주세요.</p>
                 </div>
               </div>
             </div>
@@ -563,10 +613,7 @@ const ResumeManage = () => {
                     overflowWrap: "break-word",
                   }}
                 >
-                  <p
-                    className="text-[14px] p-[8px]"
-                    style={{ fontWeight: 400 }}
-                  >
+                  <p className="text-[14px] p-[8px]" style={{ fontWeight: 400 }}>
                     {selfIntro}
                   </p>
                 </div>
@@ -597,21 +644,13 @@ const ResumeManage = () => {
             ))}
             <CareerForm
               workPlace={currentCareer.workPlace}
-              setWorkPlace={(v) =>
-                setCurrentCareer((prev) => ({ ...prev, workPlace: v }))
-              }
+              setWorkPlace={(v) => setCurrentCareer((prev) => ({ ...prev, workPlace: v }))}
               workDescription={currentCareer.workDescription}
-              setWorkDescription={(v) =>
-                setCurrentCareer((prev) => ({ ...prev, workDescription: v }))
-              }
+              setWorkDescription={(v) => setCurrentCareer((prev) => ({ ...prev, workDescription: v }))}
               workYear={currentCareer.workYear}
-              setWorkYear={(v) =>
-                setCurrentCareer((prev) => ({ ...prev, workYear: v }))
-              }
+              setWorkYear={(v) => setCurrentCareer((prev) => ({ ...prev, workYear: v }))}
               selectedLabel={currentCareer.selectedLabel}
-              setSelectedLabel={(v) =>
-                setCurrentCareer((prev) => ({ ...prev, selectedLabel: v }))
-              }
+              setSelectedLabel={(v) => setCurrentCareer((prev) => ({ ...prev, selectedLabel: v }))}
               labels={[...labels]}
             />
             <button
@@ -674,9 +713,7 @@ const ResumeManage = () => {
                 <p className="text-[16px]" style={{ fontWeight: 700 }}>
                   자격증을 추가해주세요.
                 </p>
-                <p className="text-[14px]">
-                  필수는 아니지만, 구인자가 신뢰를 가질 수 있는 정보입니다.
-                </p>
+                <p className="text-[14px]">필수는 아니지만, 구인자가 신뢰를 가질 수 있는 정보입니다.</p>
               </div>
               <div className="flex flex-col gap-[7px]">
                 {licenseFile.map((item, idx) => (
@@ -698,21 +735,13 @@ const ResumeManage = () => {
                   />
                 ))}
                 {licenseForm.map((_, idx) => (
-                  <LicenseForm
-                    key={idx}
-                    onFileSelect={(e) => handleLicenseFileChange(e, idx)}
-                  />
+                  <LicenseForm key={idx} onFileSelect={(e) => handleLicenseFileChange(e, idx)} />
                 ))}
               </div>
             </div>
             <button
               onClick={() => {
-                if (
-                  licenseFile.length +
-                    pendingCertificates.length +
-                    licenseForm.length <
-                  MAX_CERTS
-                )
+                if (licenseFile.length + pendingCertificates.length + licenseForm.length < MAX_CERTS)
                   setLicenseForm((prev) => [...prev, prev.length]);
               }}
               className="h-[42px] border border-[#729A73] text-[#729A73] text-[14px] mt-[30px]"
