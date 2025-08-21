@@ -60,10 +60,15 @@ const isOnboardedBool = (me?: MeShape | null) =>
   Boolean(me && (me.isOnboarded ?? me.inOnboarded ?? false));
 
 // 탈퇴 상태 여부
-const isInactive = (me?: MeShape | null) =>
-  (me?.status || "").toUpperCase() === "INACTIVE";
-
-/* ───────────────── 라우트 보호 로더 ───────────────── */
+const isInactive = (me?: MeShape | null) => {
+  const s = String(me?.status || "").toUpperCase();
+  return (
+    s === "INACTIVE" ||
+    s === "DEACTIVATED" ||
+    s === "DELETED" ||
+    Boolean(me?.isDeactivated)
+  );
+};
 
 // 인증 필요
 const requireAuthLoader = async () => {
