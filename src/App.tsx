@@ -70,6 +70,18 @@ const isInactive = (me?: MeShape | null) => {
   );
 };
 
+// ✅ 온보딩 진입 허용 플래그 확인(세션 스토리지)
+const getAllowOnboarding = () => {
+  try {
+    if (typeof window !== "undefined") {
+      return window.sessionStorage.getItem("allowOnboarding") === "1";
+    }
+  } catch {
+    //
+  }
+  return false;
+};
+
 // 인증 필요
 const requireAuthLoader = async () => {
   const me = await getMeOrNull();
@@ -96,12 +108,16 @@ const requireUserInfoLoader = async () => {
   return null;
 };
 
-// 온보딩 화면: 로그인 必, 온보딩 전만 접근 허용
+// ✅ 온보딩 화면: 로그인 必, 온보딩 전 + 회원정보 저장을 거친 경우만 접근 허용
 const requireNeedsOnboardingLoader = async () => {
   const me = await getMeOrNull();
   if (!me) throw redirect("/auth");
   if (isInactive(me)) throw redirect("/auth/recover");
   if (isOnboardedBool(me)) throw redirect("/");
+
+  // 회원정보 저장을 거치지 않았다면 온보딩 입장 불가
+  if (!getAllowOnboarding()) throw redirect("/auth/user-info");
+
   return null;
 };
 
@@ -145,7 +161,7 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
 
-      // 온보딩: 로그인 + 온보딩 전 상태만
+      // 온보딩: 로그인 + 온보딩 전 상태만 (+ 세션 플래그)
       {
         path: "onboarding",
         element: <OnboardingScreen />,

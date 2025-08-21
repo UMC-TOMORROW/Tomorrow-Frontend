@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../../assets/logo/logo.png";
 import naverIcon from "../../assets/login/naver2.png";
 import kakaoIcon from "../../assets/login/kakao2.png";
@@ -9,8 +9,8 @@ import { getMe1 } from "../../apis/member";
 const BASE = import.meta.env.VITE_SERVER_API_URL as string;
 
 const startLogin = (provider: "kakao" | "google" | "naver") => {
-  // 로그인 성공 후에는 항상 홈("/")로만 돌아오게 고정
-  const afterAuth = `/auth?returnTo=${encodeURIComponent("/")}`;
+  // ✅ 무조건 로컬로 돌아오게 강제
+  const afterAuth = "http://localhost:5173/auth";
   const url = `${BASE}/oauth2/authorization/${provider}?returnTo=${encodeURIComponent(
     afterAuth
   )}`;
@@ -19,6 +19,10 @@ const startLogin = (provider: "kakao" | "google" | "naver") => {
 
 const AuthScreen = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const query = new URLSearchParams(location.search);
+  const returnTo = query.get("returnTo") || "/";
 
   const isDeactivated = (me: any) => {
     const s = String(me?.status || "").toUpperCase();
@@ -35,22 +39,20 @@ const AuthScreen = () => {
       try {
         const me = await getMe1();
 
-        // 탈퇴 계정이면 복구 플로우
         if (isDeactivated(me)) {
           navigate("/auth/recover", { replace: true });
           return;
         }
 
-        // 활성 계정이면 항상 홈으로 이동 (라우터 로더가 이후 분기 처리)
         if (me) {
-          navigate("/", { replace: true });
+          navigate(returnTo, { replace: true });
           return;
         }
       } catch {
-        // 비로그인 → 로그인 화면 유지
+        // 비로그인 상태 → 로그인 화면 유지
       }
     })();
-  }, [navigate]);
+  }, [navigate, returnTo]);
 
   return (
     <div className="h-screen w-full flex flex-col items-center bg-white px-6">

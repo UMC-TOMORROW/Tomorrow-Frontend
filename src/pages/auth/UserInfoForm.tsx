@@ -131,6 +131,13 @@ export default function UserInfoForm() {
         isOnboarded: false,
       });
 
+      // ✅ 온보딩 진입 허용 플래그 (세션 전용)
+      try {
+        sessionStorage.setItem("allowOnboarding", "1");
+      } catch {
+        //
+      }
+
       alert("회원 정보가 저장되었습니다.");
       navigate("/onboarding", { replace: true });
     } catch (e) {
