@@ -215,6 +215,28 @@ export default function JobDetailPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const isEmployer = userRole === "EMPLOYER";
+
+  // 내 정보(role) 조회 헬퍼 추가
+  async function fetchMyRole(): Promise<string | null> {
+    try {
+      const { data } = await axiosInstance.get("/api/v1/members/me");
+      // 스웨거 래퍼(result)와 직접 필드 둘 다 대응
+      return data?.result?.role ?? data?.role ?? null;
+    } catch {
+      // 비로그인(401) 등은 조용히 무시
+      return null;
+    }
+  }
+
+  // 역할 체크(로그인 안 되어 있으면 무시)
+  useEffect(() => {
+    (async () => {
+      const role = await fetchMyRole();
+      setUserRole(role);
+    })();
+  }, []);
 
   // 라우트/응답에서 안전하게 식별자 뽑기
   const effectivePostId = useMemo(() => {
@@ -312,6 +334,11 @@ export default function JobDetailPage() {
   async function onClickApplyCTA() {
     if (applied) return;
 
+    // 구인자면 지원 불가
+    if (isEmployer) {
+      alert("구인자는 공고에 지원할 수 없습니다.");
+      return;
+    }
     // 로그인 보장
     const authed = await ensureLoggedIn();
     if (!authed) {
@@ -700,7 +727,7 @@ export default function JobDetailPage() {
             </button>
             <button
               className={`flex-1 min-w-0 h-12 rounded-[10px] ${
-                applied ? "bg-[#C9C9C9]" : "bg-[#729A73]"
+                applied || isEmployer ? "bg-[#C9C9C9]" : "bg-[#729A73]"
               } !text-white font-semibold`}
               onClick={onClickApplyCTA}
               disabled={applied}
