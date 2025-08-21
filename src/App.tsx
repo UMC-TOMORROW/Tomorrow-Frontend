@@ -87,6 +87,18 @@ const isEmployerAsync = async (me?: MeShape | null) => {
   return fetched === "EMPLOYER";
 };
 
+// ✅ 온보딩 진입 허용 플래그 확인(세션 스토리지)
+const getAllowOnboarding = () => {
+  try {
+    if (typeof window !== "undefined") {
+      return window.sessionStorage.getItem("allowOnboarding") === "1";
+    }
+  } catch {
+    //
+  }
+  return false;
+};
+
 // 인증 필요
 const requireAuthLoader = async () => {
   const me = await getMeOrNull();
@@ -117,7 +129,7 @@ const requireUserInfoLoader = async () => {
   return null;
 };
 
-// 온보딩 화면: 로그인 必, 온보딩 전만 접근 허용
+// ✅ 온보딩 화면: 로그인 必, 온보딩 전 + 회원정보 저장을 거친 경우만 접근 허용
 const requireNeedsOnboardingLoader = async () => {
   const me = await getMeOrNull();
   if (!me) throw redirect("/auth");
@@ -126,26 +138,37 @@ const requireNeedsOnboardingLoader = async () => {
     if (await isEmployerAsync(me)) throw redirect("/MyPage/EmployerMyPage");
     throw redirect("/");
   }
+  // 회원정보 저장을 거치지 않았다면 온보딩 입장 불가
+  if (!getAllowOnboarding()) throw redirect("/auth/user-info");
   return null;
 };
 
 // ✅ 루트 섹션 공통 로더: 어떤 child로 진입하든 먼저 실행됨
-// EMPLOYER가 "/" 또는 "/MyPage"로 접근하면 선제 리다이렉트
+// 온보딩(/onboarding)으로 들어갈 때는 루트 가드가 막지 않도록 예외 처리
 const rootGuardLoader = async ({ request }: { request: Request }) => {
   const url = new URL(request.url);
   const pathname = url.pathname.replace(/\/+$/, "") || "/";
 
   const me = await getMeOrNull();
-  if (!me) return null; // 비로그인인 경우, 각 child의 로더에서 처리
+  if (!me) return null; // 비로그인: 각 child의 로더에서 처리
 
   if (isInactive(me)) throw redirect("/auth/recover");
+
+  // ✅ 온보딩 경로는 통과 (루트 가드에서 막지 않음)
+  if (pathname.startsWith("/onboarding")) {
+    return null;
+  }
+
+  // 온보딩 전이면 user-info로
   if (!isOnboardedBool(me)) throw redirect("/auth/user-info");
 
+  // EMPLOYER면 루트/마이페이지 루트 접근 시 고용자 마이페이지로
   if (await isEmployerAsync(me)) {
     if (pathname === "/" || pathname === "/MyPage") {
       throw redirect("/MyPage/EmployerMyPage");
     }
   }
+
   return null;
 };
 
@@ -189,13 +212,14 @@ const router = createBrowserRouter([
           if (isInactive(me)) throw redirect("/auth/recover");
           if (!isOnboardedBool(me)) throw redirect("/auth/user-info");
           // 여기선 rootGuardLoader가 한 번 더 걸러주지만, 이중안전망 유지
-          if (await isEmployerAsync(me)) throw redirect("/MyPage/EmployerMyPage");
+          if (await isEmployerAsync(me))
+            throw redirect("/MyPage/EmployerMyPage");
           return null;
         },
         element: <HomePage />,
       },
 
-      // 온보딩: 로그인 + 온보딩 전 상태만
+      // 온보딩: 로그인 + 온보딩 전 상태만 (+ 세션 플래그)
       {
         path: "onboarding",
         element: <OnboardingScreen />,
@@ -264,7 +288,8 @@ const router = createBrowserRouter([
           const me = await getMeOrNull();
           if (!me?.id) throw redirect("/auth");
           if (isInactive(me)) throw redirect("/auth/recover");
-          if (await isEmployerAsync(me)) throw redirect("/MyPage/EmployerMyPage");
+          if (await isEmployerAsync(me))
+            throw redirect("/MyPage/EmployerMyPage");
           return null;
         },
       },
