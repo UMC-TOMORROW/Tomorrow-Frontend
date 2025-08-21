@@ -371,7 +371,6 @@ const EmployerMyPage = () => {
         )}
       </div>
 
-      <BottomNavbar />
     </div>
   );
 };
