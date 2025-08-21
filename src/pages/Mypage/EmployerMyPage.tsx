@@ -1,4 +1,3 @@
-import BottomNavbar from "../../components/BottomNavbar";
 import Header from "../../components/Header";
 import { SlArrowRight } from "react-icons/sl";
 import resume from "../../assets/my/resume.png";
