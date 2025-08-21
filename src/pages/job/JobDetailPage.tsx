@@ -376,11 +376,11 @@ export default function JobDetailPage() {
     const { exists, id } = await resumeExists();
 
     if (!exists) {
-      // 모달은 열려있지만, 이력서 작성 페이지로 이동할 거라 시트를 닫아주는 게 안전
       alert("이력서가 없어요. 이력서를 작성해 주세요.");
       setAttachChecked(false);
       setApplyOpen(false);
-      navigate("/Mypage/ResumeManage");
+      // 첨부 체크에서 이력서 없다고 판단되어 이동할 때, 라우팅 state나 쿼리로 “create 모드”로 넘김
+      navigate("/Mypage/ResumeManage", { state: { forceCreate: true } });
       return;
     }
 
