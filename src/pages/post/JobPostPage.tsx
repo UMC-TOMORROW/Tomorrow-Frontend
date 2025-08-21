@@ -186,7 +186,7 @@ const JobPostForm = () => {
     return true;
   };
 
-  const buildPayloadV2 = (): JobDraftPayload => {
+  const buildPayloadV2 = (imageUrl?: string): JobDraftPayload => {
     const primaryKo = selectedTags[0];
     const job_category = categoryMap[primaryKo]; // 필수
 
@@ -200,7 +200,7 @@ const JobPostForm = () => {
 
       // 등록 주체 / 카테고리
       recruitment_type: registrantType, // "PERSONAL" | "BUSINESS"
-      job_category, // ★ 실제로 넣어주기
+      job_category,
 
       // 기간
       work_period: periodMap[periodLabel],
@@ -234,8 +234,8 @@ const JobPostForm = () => {
       // 환경 태그 (★ 오타 수정: work_environment)
       work_environment: buildEnvSnakeList(envCategoriesKo),
 
-      // 이미지 URL은 업로드 후 세팅 (undefined면 prune로 제거됨)
-      job_image_url: undefined as unknown as string,
+      // 업로드한 최종 URL
+      jobImageUrl: imageUrl,
 
       recruitment_limit: headCount,
       preferred_qualifications: preferenceText,
@@ -249,7 +249,46 @@ const JobPostForm = () => {
     console.log("[JobPostForm] 제출 시작");
     if (!validateForm()) return;
 
-    const body = buildPayloadV2(); // 네가 쓰는 빌더 그대로
+    const pickUploadUrl = (data: any): string | undefined => {
+      if (!data) return;
+      if (typeof data === "string") return data;
+      const box = data.result ?? data.data ?? data.payload ?? data.file ?? data;
+      if (typeof box === "string") return box;
+
+      const obj = box && typeof box === "object" ? box : {};
+      for (const k of ["url", "fileUrl", "publicUrl", "location", "path", "s3Url", "cdnUrl", "downloadUrl"]) {
+        if (typeof obj[k] === "string") return obj[k];
+      }
+      const key = obj.key ?? obj.fileKey ?? obj.objectKey;
+      const base = obj.baseUrl ?? obj.bucketUrl ?? data.baseUrl ?? data.bucketUrl;
+      if (key && base) return String(base).replace(/\/$/, "") + "/" + String(key).replace(/^\//, "");
+      return;
+    };
+    let uploadedUrl: string | undefined = undefined;
+    if (imageFile) {
+      try {
+        const fd = new FormData();
+        fd.append("file", imageFile);
+        const res = await axiosInstance.post("/api/files/upload", fd, {
+          params: { dir: "post" },
+          withCredentials: true,
+          // headers: { "Content-Type": "multipart/form-data", Accept: "application/json" },
+        });
+
+        console.log("[upload] raw:", res?.data);
+        uploadedUrl = pickUploadUrl(res?.data);
+        if (!uploadedUrl) throw new Error("업로드 URL 파싱 실패");
+        console.log("[JobPostForm] image uploaded:", uploadedUrl);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        const data = err?.response?.data;
+        console.error("[JobPostForm] image upload failed:", status, data || err);
+        alert(data?.message || data?.error || `이미지 업로드에 실패했습니다. (status ${status ?? "?"})`);
+        return;
+      }
+    }
+
+    const body = buildPayloadV2(uploadedUrl);
 
     try {
       setSubmitting(true);

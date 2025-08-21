@@ -1,8 +1,123 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Devider from "../common/Devider";
 import CommonButton from "../common/CommonButton";
 import { axiosInstance } from "../../apis/axios";
+import { Search } from "lucide-react";
+
+declare global {
+  interface Window {
+    kakao: any;
+    daum: any;
+  }
+}
+
+const KAKAO_KEY = import.meta.env.VITE_KAKAO_APP_KEY as string;
+
+const ensureKakao = () =>
+  new Promise<void>((resolve, reject) => {
+    if (typeof window === "undefined") return resolve();
+    if (window.kakao?.maps) return resolve();
+
+    const existed = document.querySelector('script[data-kakao-sdk="1"]') as HTMLScriptElement | null;
+    if (existed) {
+      const wait = () => (window.kakao?.maps ? resolve() : setTimeout(wait, 50));
+      return wait();
+    }
+
+    if (!KAKAO_KEY) return reject(new Error("VITE_KAKAO_APP_KEY가 설정되지 않았습니다."));
+
+    const s = document.createElement("script");
+    s.setAttribute("data-kakao-sdk", "1");
+    s.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_KEY}&libraries=services&autoload=false`;
+    s.onload = () => window.kakao.maps.load(() => resolve());
+    s.onerror = () => reject(new Error("카카오 SDK 로드 실패"));
+    document.head.appendChild(s);
+  });
+
+const ensureDaumPostcode = () =>
+  new Promise<void>((resolve, reject) => {
+    if (typeof window === "undefined") return resolve();
+    if (window.daum?.Postcode) return resolve();
+    const existed = document.querySelector('script[data-daum-postcode="1"]');
+    if (existed) return resolve();
+    const s = document.createElement("script");
+    s.setAttribute("data-daum-postcode", "1");
+    s.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Daum Postcode 로드 실패"));
+    document.head.appendChild(s);
+  });
+
+function AddressSearchModal({
+  open,
+  onClose,
+  onPick,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onPick: (v: { address: string; lat?: number; lng?: number }) => void;
+}) {
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    let canceled = false;
+
+    (async () => {
+      try {
+        await Promise.all([ensureKakao(), ensureDaumPostcode()]);
+      } catch (err: any) {
+        alert(err?.message ?? "지도 스크립트를 불러오지 못했습니다.");
+        onClose();
+        return;
+      }
+      if (canceled || !boxRef.current) return;
+
+      boxRef.current.innerHTML = "";
+
+      const pc = new window.daum.Postcode({
+        oncomplete: (data: any) => {
+          const addr = data.roadAddress || data.jibunAddress || "";
+          const geocoder = new window.kakao.maps.services.Geocoder();
+          geocoder.addressSearch(addr, (result: any, status: any) => {
+            let lat: number | undefined, lng: number | undefined;
+            if (status === window.kakao.maps.services.Status.OK && result?.[0]) {
+              lat = parseFloat(result[0].y);
+              lng = parseFloat(result[0].x);
+            }
+            onPick({ address: addr, lat, lng });
+            onClose();
+          });
+        },
+        onresize: (size: any) => {
+          if (boxRef.current) boxRef.current.style.height = size.height + "px";
+        },
+        width: "100%",
+        height: "100%",
+      });
+
+      pc.embed(boxRef.current, { autoClose: true });
+    })();
+
+    return () => {
+      canceled = true;
+    };
+  }, [open, onClose, onPick]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[1000] bg-black/40 flex items-center justify-center">
+      <div className="w-[360px] max-w-[95vw] h-[420px] bg-white rounded-[12px] shadow-lg overflow-hidden relative">
+        <button className="absolute right-3 top-3 text-xl leading-none" onClick={onClose} aria-label="닫기">
+          ✕
+        </button>
+        <div ref={boxRef} className="w-full h-full" />
+      </div>
+    </div>
+  );
+}
 
 // 전화번호 형식: 010-1234-5678
 const MOBILE_RE = /^01[016789]-(\d{3}|\d{4})-\d{4}$/;
@@ -31,6 +146,7 @@ export default function PersonalStep() {
   const [phone, setPhone] = useState("");
   const [request, setRequest] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [addrOpen, setAddrOpen] = useState(false);
   console.log(setLatitude, setLongitude);
   // 필수: name, address, contact(phone), registrationPurpose
 
@@ -60,14 +176,12 @@ export default function PersonalStep() {
     try {
       setSubmitting(true);
 
-      // 세션 기반: jobId path variable 사용 X
       await axiosInstance.post("/api/v1/jobs/personal_registrations", payload, {
         withCredentials: true,
         headers: { "Content-Type": "application/json", Accept: "application/json" },
       });
 
       alert("등록이 완료되었습니다.");
-      // 서버가 모든 절차 끝낸 뒤 자체적으로 jobId 부여. 응답 의존 X.
       navigate("/", { replace: true });
     } catch (e: any) {
       const status = e?.response?.status;
@@ -154,15 +268,41 @@ export default function PersonalStep() {
           />
         </div>
 
-        {/* 주소 → address */}
-        <div>
+        {/* 주소 + 모달 */}
+        <div className="relative">
           <label className="block text-[14px] font-semibold text-[#333] !mb-2">주소</label>
           <input
             type="text"
             placeholder="서울 강서구 oo로 ooo"
-            className="w-[336px] h-[52px] px-[10px] rounded-[10px] border border-[#729A73] !text-[14px]"
+            className="w-[336px] h-[52px] px-[10px] pr-10 rounded-[10px] border border-[#729A73] !text-[14px]"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setAddrOpen(true)}
+            className="absolute right-3 top-[66%] -translate-y-1/2 text-[#707070]"
+            aria-label="주소 검색"
+            title="주소 검색"
+          >
+            <Search size={18} />
+          </button>
+
+          {/* 위도 경도 테스트용 */}
+          {/* {latitude != null && longitude != null && (
+            <p className="text-[12px] text-[#888] mt-1">
+              위도 {latitude}, 경도 {longitude}
+            </p>
+          )} */}
+
+          <AddressSearchModal
+            open={addrOpen}
+            onClose={() => setAddrOpen(false)}
+            onPick={({ address, lat, lng }) => {
+              setAddress(address);
+              setLatitude(lat);
+              setLongitude(lng);
+            }}
           />
         </div>
 

@@ -96,7 +96,7 @@ const RecruitInfo = ({ deadlineISO, headCount, preferenceText, alwaysHiring, onC
               pushDate(v, month, day);
             }}
             disabled={isOngoing}
-            className={`w-[72px] h-[40px] px-3 rounded-[10px] border text-sm 
+            className={`w-[72px] h-[40px] !px-3 rounded-[10px] border text-sm 
               ${isOngoing ? "border-[#DEDEDE] bg-[#F7F7F7] text-[#999]" : "border-[#DEDEDE] bg-white text-[#333]"}`}
           />
           <span className="text-[#333] text-[12px]">년</span>
@@ -109,7 +109,7 @@ const RecruitInfo = ({ deadlineISO, headCount, preferenceText, alwaysHiring, onC
               pushDate(year, v, day);
             }}
             disabled={isOngoing}
-            className={`w-[56px] h-[40px] px-3 rounded-[10px] border text-sm
+            className={`w-[56px] h-[40px] !px-3 rounded-[10px] border text-sm
               ${isOngoing ? "border-[#DEDEDE] bg-[#F7F7F7] text-[#999]" : "border-[#DEDEDE] bg-white text-[#333]"}`}
           />
           <span className="text-[#333] text-[12px]">월</span>
@@ -122,7 +122,7 @@ const RecruitInfo = ({ deadlineISO, headCount, preferenceText, alwaysHiring, onC
               pushDate(year, month, v);
             }}
             disabled={isOngoing}
-            className={`w-[56px] h-[40px] px-3 rounded-[10px] border text-sm
+            className={`w-[56px] h-[40px] !px-3 rounded-[10px] border text-sm
               ${isOngoing ? "border-[#DEDEDE] bg-[#F7F7F7] text-[#999]" : "border-[#DEDEDE] bg-white text-[#333]"}`}
           />
           <span className="text-[#333] text-[12px]">일</span>
@@ -157,7 +157,7 @@ const RecruitInfo = ({ deadlineISO, headCount, preferenceText, alwaysHiring, onC
               onChange({ deadlineISO, headCount: v, preferenceText, alwaysHiring: isOngoing });
               console.log("[RecruitInfo] headCount ->", v);
             }}
-            className="w-[100px] h-[40px] px-3 rounded-[10px] border border-[#DEDEDE] text-sm"
+            className="w-[100px] h-[40px] !px-3 rounded-[10px] border border-[#DEDEDE] text-sm"
           />
           <span className="text-sm text-[#333]">명</span>
         </div>
@@ -174,7 +174,7 @@ const RecruitInfo = ({ deadlineISO, headCount, preferenceText, alwaysHiring, onC
             onChange({ deadlineISO, headCount, preferenceText: v, alwaysHiring: isOngoing });
             console.log("[RecruitInfo] preferenceText ->", v);
           }}
-          className="w-full h-[40px] px-3 rounded-[10px] border border-[#DEDEDE] "
+          className="w-full h-[40px] !px-3 rounded-[10px] border border-[#DEDEDE] "
         />
         <p className="text-[12px] text-[#555]/85 !mt-2">예) 유사 업무 경험, 인근 거주</p>
       </div>

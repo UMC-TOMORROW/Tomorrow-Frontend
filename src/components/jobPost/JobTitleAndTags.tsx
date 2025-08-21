@@ -122,7 +122,7 @@ export default function JobTitleAndTags(props: Props) {
         id="jobTitle"
         type="text"
         className=" w-full h-[39px] rounded-[10px] bg-white
-             border border-[#555555D9] px-3 outline-none
+             border border-[#555555D9] !px-3 outline-none
              focus:border-[#555555D9] focus:ring-2 focus:ring-[#555555D9]/20 transition"
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}

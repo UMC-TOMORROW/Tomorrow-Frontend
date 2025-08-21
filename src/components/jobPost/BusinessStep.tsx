@@ -13,15 +13,6 @@ export default function BusinessStep() {
   const [openDate, setOpenDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // 프리필 상태/초기값 저장 (사업자 등록을 한 이력이 있는 경우)
-  // const [hasExisting, setHasExisting] = useState(false);
-  // const [initial, setInitial] = useState<{
-  //   regNo: string;
-  //   corpName: string;
-  //   owner: string;
-  //   openDate: string;
-  // } | null>(null);
-
   // YYYY-MM-DD 형식으로 변환
   const toYMD = (v: any) => {
     const s = String(v ?? "");
@@ -35,38 +26,44 @@ export default function BusinessStep() {
     return `${d.getFullYear()}-${mm}-${dd}`;
   };
 
+  // 숫자 4자리 넘어가면 자르기(모바일 입력 보정)
+  const clampDateYear = (raw: string) => {
+    const [y = "", m = "", d = ""] = String(raw).split("-");
+    let year = y.replace(/\D/g, "");
+    if (year.length > 4) year = year.slice(0, 4);
+    if (year && Number(year) > 9999) year = "9999";
+    return [year, m, d].filter(Boolean).join("-");
+  };
+
   // ✅ 페이지 진입 시 기존 사업자 DB가 있으면 입력 칸을 채운다
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await axiosInstance.get("/api/v1/jobs/business-verifications/me", {
+        const { data } = await axiosInstance.post("/api/v1/jobs/business-verifications/checkPage", undefined, {
           withCredentials: true,
           headers: { Accept: "application/json" },
         });
 
-        // 서버 필드명 매핑에 맞춰 채움
-        setRegNo(
-          String(data?.bizNumber ?? "")
-            .replace(/\D+/g, "")
-            .slice(0, 10)
-        );
-        setCorpName(String(data?.companyName ?? ""));
-        setOwner(String(data?.ownerName ?? ""));
-        setOpenDate(toYMD(data?.openingDate));
+        // 스펙: { timestamp, code, message, result: { bizNumber, companyName, ownerName, openingDate } }
+        const r = data?.result ?? {};
+        if (r) {
+          setRegNo(
+            String(r.bizNumber ?? "")
+              .replace(/\D+/g, "")
+              .slice(0, 10)
+          );
+          setCorpName(String(r.companyName ?? ""));
+          setOwner(String(r.ownerName ?? ""));
+          setOpenDate(toYMD(r.openingDate));
+        }
       } catch {
         // 등록 이력 없으면 그대로 빈칸 유지
+        console.log("사업자 정보 없음");
       }
     })();
   }, []);
 
   const canSubmit = regNo && corpName && owner && openDate;
-  // 응답/헤더에서 jobId 추출 유틸
-  // const getJobIdFromHeaders = (headers: any) => {
-  //   const loc = headers?.location || headers?.Location;
-  //   if (!loc) return null;
-  //   const last = String(loc).split("/").filter(Boolean).pop();
-  //   return last && /^\d+$/.test(last) ? Number(last) : last ?? null;
-  // };
 
   const onSubmit = async () => {
     if (!canSubmit || submitting) return;
@@ -85,46 +82,28 @@ export default function BusinessStep() {
       try {
         await axiosInstance.post("/api/v1/jobs/business-verifications/only", payload, {
           withCredentials: true,
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
         });
       } catch (err: any) {
         const s = err?.response?.status;
         if (s === 405 || s === 409) {
           await axiosInstance.put("/api/v1/jobs/business-verifications/only", payload, {
             withCredentials: true,
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
           });
         } else {
           throw err;
         }
       }
 
-      // 2) 최종화/상태확인 (빈 바디! Content-Type 넣지 마세요)
-      // const res = await axiosInstance.post(
-      //   "/api/v1/jobs/business-verifications/register",
-      //   undefined, // 또는 {}도 가능하지만, 이 경우 Content-Type은 아예 빼는 게 안전
-      //   { withCredentials: true, headers: { Accept: "application/json" } }
-      // );
-
-      // 3) jobId 있으면 완료
-      // const body = res?.data?.result ?? res?.data ?? {};
-      // let jobId: number | null =
-      //   (typeof body?.jobId === "number" ? body.jobId : null) ??
-      //   (() => {
-      //     const loc = res?.headers?.location || res?.headers?.Location;
-      //     if (!loc) return null;
-      //     const last = String(loc).split("/").filter(Boolean).pop();
-      //     return last && /^\d+$/.test(last) ? Number(last) : null;
-      //   })();
-
-      // if (jobId != null) {
-      //   alert("등록이 완료되었습니다.");
-      //   navigate("/", { replace: true });
-      //   return;
-      // }
-
       alert("사업자 정보가 저장되었습니다.");
-      navigate("/mypage", { replace: true });
+      navigate("/Mypage/EmployerMyPage", { replace: true });
     } catch (e: any) {
       const s = e?.response?.status;
       const d = e?.response?.data;
@@ -217,7 +196,19 @@ export default function BusinessStep() {
             type="date"
             className="w-[336px] h-[52px] px-[10px] !text-[#555]/85 rounded-[10px] border border-[#729A73]"
             value={openDate}
-            onChange={(e) => setOpenDate(e.target.value)}
+            max="9999-12-31"
+            onInput={(e) => {
+              const t = e.currentTarget;
+              const fixed = clampDateYear(t.value);
+              if (fixed !== t.value) {
+                t.value = fixed; // 타이핑 중 즉시 교정 (사파리/크롬 모두 동작)
+              }
+            }}
+            onChange={(e) => {
+              // 최종 반영 시도 시에도 한 번 더 안전하게 클램프
+              const fixed = clampDateYear(e.target.value);
+              setOpenDate(fixed);
+            }}
           />
         </div>
       </div>

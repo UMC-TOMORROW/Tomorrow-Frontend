@@ -7,6 +7,7 @@ export interface MyPostItem {
   date: string;
   location: string;
   tags: string[];
+  imageUrl?: string;
 }
 
 export interface ApiEnvelope<T> {
