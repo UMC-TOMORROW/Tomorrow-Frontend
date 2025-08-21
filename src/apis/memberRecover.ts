@@ -1,24 +1,15 @@
-import { axiosInstance } from "../apis/axios";
+import { axiosInstance } from "./axios";
 
-export type RecoverResult = {
-  status: string;
-  recoveredAt: string;
-};
+export type RecoverResult = { status: string; recoveredAt: string };
 
 export async function recoverMember(
   memberId: string | number
 ): Promise<RecoverResult> {
   const id = String(memberId).trim();
-  if (!id) throw new Error("memberId가 비어 있습니다.");
-
   const { data } = await axiosInstance.patch(
-    `/members/${encodeURIComponent(id)}/recover`,
+    `/api/v1/members/${encodeURIComponent(id)}/recover`,
     undefined,
-    {
-      withCredentials: true,
-      headers: { Accept: "application/json" },
-    }
+    { headers: { Accept: "application/json" } }
   );
-
   return (data?.result ?? data) as RecoverResult;
 }

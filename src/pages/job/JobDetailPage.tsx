@@ -1,16 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
-import { getResumeSummary } from "../../apis/resumes";
-import { createApplication, AuthRequiredError } from "../../apis/applications";
-import {
-  fetchBookmarkedJobIds,
-  addJobBookmark,
-  deleteJobBookmark,
-} from "../../apis/jobBookmarks";
+import { createApplication, AuthRequiredError, fetchAppliedJobIdsFromServer } from "../../apis/applications";
+import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
 import { getMe } from "../../apis/mypage";
 import { authApi } from "../../apis/authApi";
+import { axiosInstance } from "../../apis/axios";
 
 import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
@@ -20,26 +16,17 @@ import bmFilled from "../../assets/bookmark/star_filled.png";
 
 /* ───────────────── 로컬 캐시 유틸 (파일 내부 인라인) ───────────────── */
 const BM_KEY = "bookmark.ids.v1";
-
 type CacheShape = { ids: number[]; updatedAt: number };
 
 function readBm(): CacheShape {
   try {
     const s = localStorage.getItem(BM_KEY);
     if (!s) return { ids: [], updatedAt: 0 };
-
     const p = JSON.parse(s) as Partial<CacheShape>;
-    const raw = Array.isArray((p as any)?.ids)
-      ? ((p as any).ids as unknown[])
-      : [];
-
-    const nums = raw
-      .map((x) => Number(x))
-      .filter((n): n is number => Number.isFinite(n));
-
+    const raw = Array.isArray((p as any)?.ids) ? ((p as any).ids as unknown[]) : [];
+    const nums = raw.map((x) => Number(x)).filter((n): n is number => Number.isFinite(n));
     const cleaned = Array.from(new Set(nums));
     const ts = Number((p as any)?.updatedAt) || 0;
-
     return { ids: cleaned, updatedAt: ts };
   } catch {
     return { ids: [], updatedAt: 0 };
@@ -69,6 +56,22 @@ function bmReplace(ids: number[]) {
   writeBm(ids.filter((n) => Number.isFinite(n)));
 }
 
+const APPLIED_KEY = "applied.job.ids.v1";
+const readApplied = () => {
+  try {
+    const s = localStorage.getItem(APPLIED_KEY);
+    const ids = s ? (JSON.parse(s).ids as number[]) : [];
+    return Array.isArray(ids) ? ids.filter((n) => Number.isFinite(n)) : [];
+  } catch {
+    return [];
+  }
+};
+const writeApplied = (ids: number[]) =>
+  localStorage.setItem(APPLIED_KEY, JSON.stringify({ ids: Array.from(new Set(ids)), updatedAt: Date.now() }));
+const appliedHas = (id: number) => readApplied().includes(id);
+const appliedAdd = (id: number) => writeApplied([...readApplied(), id]);
+const appliedReplace = (ids: number[]) => writeApplied(ids);
+
 /* ───────────────── UI 컴포넌트 ───────────────── */
 const Divider: React.FC = () => <div className="h-px bg-[#EAEAEA] -mx-4" />;
 
@@ -78,28 +81,17 @@ const Badge: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
-  title,
-  children,
-}) => (
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="space-y-3">
-    <h3 className="text-[16px] leading-[100%] !font-bold text-[#333] font-pretendard font-bold !pb-4">
-      {title}
-    </h3>
+    <h3 className="text-[16px] leading-[100%] !font-bold text-[#333] font-pretendard font-bold !pb-4">{title}</h3>
     {children}
   </section>
 );
 
-const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({
-  k,
-  v,
-  helper,
-}) => (
+const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({ k, v, helper }) => (
   <div className="!py-1 ">
     <div className="flex items-start gap-4 ">
-      <span className="w-[72px] shrink-0 text-[12px] text-[#666] whitespace-nowrap">
-        {k}
-      </span>
+      <span className="w-[72px] shrink-0 text-[12px] text-[#666] whitespace-nowrap">{k}</span>
       <div className="text-[14px] text-[#222] leading-5">{v}</div>
     </div>
     {helper ? (
@@ -111,15 +103,8 @@ const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({
   </div>
 );
 
-const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({
-  value = 0,
-  size = 17,
-  gap = 2,
-}) => {
-  const safe = Math.max(
-    0,
-    Math.min(5, Number.isFinite(value as number) ? (value as number) : 0)
-  );
+const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({ value = 0, size = 17, gap = 2 }) => {
+  const safe = Math.max(0, Math.min(5, Number.isFinite(value as number) ? (value as number) : 0));
   const full = Math.floor(safe);
   const frac = safe - full;
   const parts = Array.from({ length: 5 }, (_, i) => {
@@ -130,17 +115,9 @@ const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({
     }
     return "empty" as const;
   });
-  const srcMap = {
-    full: starFilled,
-    half: starHalf,
-    empty: starEmpty,
-  } as const;
+  const srcMap = { full: starFilled, half: starHalf, empty: starEmpty } as const;
   return (
-    <div
-      className="flex items-center"
-      style={{ gap }}
-      aria-label={`평점 ${safe.toFixed(1)} / 5`}
-    >
+    <div className="flex items-center" style={{ gap }} aria-label={`평점 ${safe.toFixed(1)} / 5`}>
       {parts.map((p, idx) => (
         <img key={idx} src={srcMap[p]} alt="" width={size} height={size} />
       ))}
@@ -149,15 +126,7 @@ const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({
 };
 
 /* ───────────────── 매핑 유틸 (응답 → 화면 모델) ───────────────── */
-const DAY_KO: Record<string, string> = {
-  mon: "월",
-  tue: "화",
-  wed: "수",
-  thu: "목",
-  fri: "금",
-  sat: "토",
-  sun: "일",
-};
+const DAY_KO: Record<string, string> = { mon: "월", tue: "화", wed: "수", thu: "목", fri: "금", sat: "토", sun: "일" };
 function periodLabel(p?: string) {
   if (p === "SHORT_TERM") return "단기";
   if (p === "OVER_ONE_MONTH") return "1개월 이상";
@@ -173,7 +142,6 @@ function paymentLabel(t?: string) {
   if (t === "PER_TASK") return "건별";
   return t ?? "-";
 }
-
 const JOB_CATEGORY_KO: Record<string, string> = {
   SERVING: "서빙",
   KITCHEN_HELP: "주방보조/설거지",
@@ -187,7 +155,6 @@ const JOB_CATEGORY_KO: Record<string, string> = {
   OFFICE_HELP: "사무보조",
   ETC: "기타",
 };
-
 const ENV_KO: Record<string, string> = {
   canWorkSitting: "앉아서 근무 중심",
   canWorkStanding: "서서 근무 중심",
@@ -195,7 +162,6 @@ const ENV_KO: Record<string, string> = {
   canCarryObjects: "가벼운 물건 운반",
   canCommunicate: "사람 응대 중심",
 };
-
 const hhmm = (s?: string) => (s ? s.slice(0, 5) : "");
 
 function mapSwaggerJobDetail(api: any) {
@@ -209,14 +175,10 @@ function mapSwaggerJobDetail(api: any) {
   const time = api?.isTimeNegotiable
     ? "시간협의"
     : api?.workStart || api?.workEnd
-    ? `${hhmm(api.workStart)}${api.workStart && api.workEnd ? " - " : ""}${hhmm(
-        api.workEnd
-      )}`
+    ? `${hhmm(api.workStart)}${api.workStart && api.workEnd ? " - " : ""}${hhmm(api.workEnd)}`
     : "-";
 
-  const envTags = Array.isArray(api?.workEnvironment)
-    ? api.workEnvironment.map((k: string) => ENV_KO[k] ?? k)
-    : [];
+  const envTags = Array.isArray(api?.workEnvironment) ? api.workEnvironment.map((k: string) => ENV_KO[k] ?? k) : [];
 
   return {
     jobId: api.jobId ?? api.id,
@@ -224,24 +186,19 @@ function mapSwaggerJobDetail(api: any) {
     title: api.title ?? "",
     companyName: api.companyName ?? "",
     place: undefined,
-    rating: 0,
+
+    // 백엔드가 주면 우선 사용 (없으면 0 → 아래 요약으로 덮어씀)
+    rating: api.avgRating ?? api.rating ?? 0,
     reviewCount: api.reviewCount ?? 0,
 
     paymentType: paymentLabel(api.paymentType),
     salary: api.salary ?? 0,
-    minWageNote:
-      api.paymentType === "HOURLY" ? "2025년 최저시급 10,030원" : undefined,
-    period: `${periodLabel(api.workPeriod)}${
-      api.isPeriodNegotiable ? " (협의가능)" : ""
-    }`,
+    minWageNote: api.paymentType === "HOURLY" ? "2025년 최저시급 10,030원" : undefined,
+    period: `${periodLabel(api.workPeriod)}${api.isPeriodNegotiable ? " (협의가능)" : ""}`,
     weekdays,
     time,
 
-    role: api.alwaysHiring
-      ? "상시모집"
-      : api.deadline
-      ? String(api.deadline).slice(0, 10)
-      : "상시모집",
+    role: api.alwaysHiring ? "상시모집" : api.deadline ? String(api.deadline).slice(0, 10) : "상시모집",
     headcount: api.recruitmentLimit ?? "-",
     preference: api.preferredQualifications ?? "-",
 
@@ -256,17 +213,12 @@ function mapSwaggerJobDetail(api: any) {
 export default function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true); // 사용: 로딩 표시
-  const [error, setError] = useState<any>(null); // 사용: 에러 표시
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
 
   // 라우트/응답에서 안전하게 식별자 뽑기
   const effectivePostId = useMemo(() => {
-    const cands = [
-      data?.jobId,
-      data?.id,
-      data?.postId,
-      jobId ? Number(jobId) : undefined,
-    ];
+    const cands = [data?.jobId, data?.id, data?.postId, jobId ? Number(jobId) : undefined];
     for (let i = 0; i < cands.length; i += 1) {
       const n = Number(cands[i]);
       if (Number.isFinite(n)) return n as number;
@@ -283,13 +235,15 @@ export default function JobDetailPage() {
   const [bookmarked, setBookmarked] = useState(initialBm);
   const [bookmarking, setBookmarking] = useState(false);
 
+  // 상세 불러오기 (랩퍼 언랩 후 매핑)
   useEffect(() => {
     const effectiveId = jobId ?? "10";
     (async () => {
       try {
         setLoading(true);
         const res = await getJobDetail(effectiveId);
-        setData(mapSwaggerJobDetail(res));
+        const api = (res as any)?.result ?? res; // ⬅️ 공통 랩퍼 언랩
+        setData(mapSwaggerJobDetail(api));
         setError(null);
       } catch (e: any) {
         setError(e);
@@ -330,10 +284,9 @@ export default function JobDetailPage() {
   useEffect(() => {
     if (effectivePostId == null) return;
     let alive = true;
-
     (async () => {
       try {
-        const ids = await fetchBookmarkedJobIds(); // result.bookmarks 파서 반영된 함수
+        const ids = await fetchBookmarkedJobIds();
         if (!alive) return;
         bmReplace(ids);
         setBookmarked(ids.includes(effectivePostId));
@@ -341,13 +294,14 @@ export default function JobDetailPage() {
         // 실패해도 캐시 기준으로 유지
       }
     })();
-
     return () => {
       alive = false;
     };
   }, [effectivePostId]);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const backTo = location.pathname + location.search + location.hash;
   const [applyOpen, setApplyOpen] = useState(false);
   const [applyContent, setApplyContent] = useState("");
   const [attachChecked, setAttachChecked] = useState(false);
@@ -355,9 +309,62 @@ export default function JobDetailPage() {
   const [applied, setApplied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  function onClickApplyCTA() {
+  async function onClickApplyCTA() {
     if (applied) return;
+
+    // 로그인 보장
+    const authed = await ensureLoggedIn();
+    if (!authed) {
+      alert("로그인이 필요합니다.");
+      gotoLogin();
+      return;
+    }
+
     setApplyOpen(true);
+    setAttachChecked(false);
+  }
+
+  // ✅ resume summary 존재 판단을 더 엄격하게
+  function hasMeaningfulResume(r: any): boolean {
+    if (!r || typeof r !== "object") return false;
+    // 빈 객체 {} 도 없음 처리
+    if (Object.keys(r).length === 0) return false;
+
+    const hasIntro = typeof r.introduction === "string" && r.introduction.trim().length > 0;
+
+    // career 항목 중 값이 있는 항목 하나라도 있으면 있음으로 인정
+    const hasCareer =
+      Array.isArray(r.career) &&
+      r.career.some(
+        (c: any) =>
+          (c?.companyName && String(c.companyName).trim().length > 0) ||
+          (c?.description && String(c.description).trim().length > 0)
+      );
+
+    const hasCerts = Array.isArray(r.certificates) && r.certificates.length > 0;
+
+    const hasEtc =
+      (Array.isArray(r.skills) && r.skills.length > 0) || (Array.isArray(r.education) && r.education.length > 0);
+
+    return hasIntro || hasCareer || hasCerts || hasEtc;
+  }
+
+  async function resumeExists(): Promise<{ exists: boolean; id?: number }> {
+    try {
+      const { data } = await axiosInstance.get("/api/v1/resumes/summary");
+      const r = data?.result;
+
+      const exists = hasMeaningfulResume(r);
+      const rawId = Number(r?.resumeId);
+      const id = Number.isFinite(rawId) ? rawId : undefined;
+
+      return { exists, id };
+    } catch (e: any) {
+      const status = e?.response?.status;
+      if (status === 404 || status === 204) return { exists: false };
+      console.debug("[ensureResumeExists] error, treat as no resume", e?.response ?? e);
+      return { exists: false };
+    }
   }
 
   async function handleToggleAttach(checked: boolean) {
@@ -365,19 +372,23 @@ export default function JobDetailPage() {
       setAttachChecked(false);
       return;
     }
-    try {
-      const { hasResume, resumeId: rid } = await getResumeSummary();
-      if (!hasResume || !rid) {
-        setApplyOpen(false);
-        setAttachChecked(false);
-        navigate("/Mypage/ResumeManage");
-        return;
-      }
-      setResumeId(rid);
-      setAttachChecked(true);
-    } catch (e: any) {
-      alert(e?.response?.data?.message ?? "이력서 확인 중 오류가 발생했어요.");
+
+    // 이력서 존재 확인
+    const { exists, id } = await resumeExists();
+
+    if (!exists) {
+      alert("이력서가 없어요. 이력서를 작성해 주세요.");
+      setAttachChecked(false);
+      setApplyOpen(false);
+      // 첨부 체크에서 이력서 없다고 판단되어 이동할 때, 라우팅 state나 쿼리로 “create 모드”로 넘김
+      navigate("/Mypage/ResumeManage", {
+        state: { from: "jobDetail", backTo },
+      }); // 현재 페이지로 돌아올 수 있게
+      return;
     }
+
+    if (id && Number.isFinite(id)) setResumeId(id); // 서버가 id를 줄 때만 세팅
+    setAttachChecked(true);
   }
 
   async function ensureLoggedIn(): Promise<boolean> {
@@ -390,9 +401,7 @@ export default function JobDetailPage() {
   }
 
   function gotoLogin() {
-    window.location.href = `https://umctomorrow.shop/login?redirect=${encodeURIComponent(
-      window.location.href
-    )}`;
+    window.location.href = `https://umctomorrow.shop/login?redirect=${encodeURIComponent(window.location.href)}`;
   }
 
   async function onSubmitApply() {
@@ -404,26 +413,22 @@ export default function JobDetailPage() {
         alert("공고 식별자가 올바르지 않습니다.");
         return;
       }
-
       const payload: any = { content: applyContent.trim() };
       if (attachChecked && resumeId) payload.resumeId = resumeId;
-
       await createApplication(postId, payload);
-
       alert("지원이 완료되었습니다.");
+      appliedAdd(postId);
       setApplied(true);
       setApplyOpen(false);
       setApplyContent("");
       setAttachChecked(false);
     } catch (e: any) {
       const status = e?.response?.status;
+      const code = e?.response?.data?.code;
       const msg = e?.response?.data?.message;
-
       if (e instanceof AuthRequiredError) {
         alert("로그인이 필요합니다.");
-        window.location.href = `/auth?next=${encodeURIComponent(
-          location.href
-        )}`;
+        navigate("/login", { state: { backTo } });
         return;
       }
       if (status === 400) {
@@ -432,14 +437,21 @@ export default function JobDetailPage() {
       }
       alert(msg || "지원 중 오류가 발생했어요.");
       console.error("[Apply] error ▶", e?.response ?? e);
+
+      if (status === 409 || msg?.includes("이미 지원") || code === "APPLICATION_ALREADY_APPLIED") {
+        appliedAdd(Number(data?.jobId ?? jobId));
+        setApplied(true);
+        setApplyOpen(false);
+        return;
+      }
     } finally {
       setSubmitting(false);
     }
   }
 
   const handleBack = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate("/");
+    // if (window.history.length > 1) navigate(-1);else
+    navigate("/");
   };
 
   async function onToggleBookmark() {
@@ -453,9 +465,7 @@ export default function JobDetailPage() {
 
     try {
       setBookmarking(true);
-
       if (!bookmarked) {
-        // 낙관적 반영 + 캐시 추가
         setBookmarked(true);
         bmAdd(Number(effectivePostId));
         try {
@@ -472,14 +482,11 @@ export default function JobDetailPage() {
           } else {
             setBookmarked(false);
             bmRemove(Number(effectivePostId));
-            alert(
-              e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요."
-            );
+            alert(e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요.");
             console.error("[Bookmark] add error ▶", e?.response ?? e);
           }
         }
       } else {
-        // 낙관적 반영 + 캐시 제거
         setBookmarked(false);
         bmRemove(Number(effectivePostId));
         try {
@@ -496,9 +503,7 @@ export default function JobDetailPage() {
           } else {
             setBookmarked(true);
             bmAdd(Number(effectivePostId));
-            alert(
-              e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요."
-            );
+            alert(e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요.");
             console.error("[Bookmark] delete error ▶", e?.response ?? e);
           }
         }
@@ -508,23 +513,67 @@ export default function JobDetailPage() {
     }
   }
 
-  // 간단한 로딩/에러 UI로 unused 경고 제거
+  // 후기(평균★, 개수) 갱신
+  async function refreshReviewSummary(postId: number) {
+    try {
+      const { data } = await axiosInstance.get(`/api/v1/reviews/${postId}`);
+      const arr = Array.isArray(data?.result) ? data.result : [];
+      const count = arr.length;
+      const sum = arr.reduce((s: number, r: any) => s + Number(r.stars ?? 0), 0);
+      const avg = count ? Number((sum / count).toFixed(1)) : 0;
+      setData((prev: any) => ({ ...(prev ?? {}), reviewCount: count, rating: avg }));
+    } catch (e) {
+      console.debug("[reviews] summary fetch skipped", e);
+    }
+  }
+
+  // id 확정 시 요약 호출 + 포커스 복귀 시 갱신
+  useEffect(() => {
+    if (effectivePostId == null) return;
+    const run = () => refreshReviewSummary(effectivePostId);
+    run(); // 최초 1회
+    const onFocus = () => run();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [effectivePostId]);
+
+  useEffect(() => {
+    if (effectivePostId == null) return;
+
+    // 1) 캐시로 즉시 반영(깜빡임 방지)
+    setApplied(appliedHas(effectivePostId));
+
+    // 2) 로그인 되어 있으면 서버에서 최신 이력 가져와 보정
+    (async () => {
+      try {
+        const authed = await ensureLoggedIn().catch(() => false);
+        if (!authed) return; // 비로그인: 캐시만 사용
+
+        const ids = await fetchAppliedJobIdsFromServer(); // /api/v1/applications?type=all
+        appliedReplace(ids); // 캐시 동기화
+        if (ids.includes(effectivePostId)) setApplied(true);
+      } catch (e) {
+        // 서버 실패 시 캐시 상태 유지
+        console.debug("[applied] sync skipped", e);
+      }
+    })();
+  }, [effectivePostId]);
+
+  // 간단한 로딩/에러 UI
   if (loading) {
     return (
-      <div
-        className="max-w-[375px] mx-auto p-6 text-[#333]"
-        style={{ fontFamily: "Pretendard" }}
-      >
+      <div className="max-w-[375px] mx-auto p-6 text-[#333]" style={{ fontFamily: "Pretendard" }}>
         로딩 중...
       </div>
     );
   }
   if (error) {
     return (
-      <div
-        className="max-w-[375px] mx-auto p-6 text-[#333]"
-        style={{ fontFamily: "Pretendard" }}
-      >
+      <div className="max-w-[375px] mx-auto p-6 text-[#333]" style={{ fontFamily: "Pretendard" }}>
         오류가 발생했어요. 다시 시도해 주세요.
       </div>
     );
@@ -542,20 +591,15 @@ export default function JobDetailPage() {
           >
             ✕
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-bold font-pretendard">
-            일자리 정보
-          </h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-bold font-pretendard">일자리 정보</h1>
         </div>
       </div>
+
       <div className="!px-4 !pt-4 !pb-28 !space-y-8">
         {/* Summary */}
         <section className="!space-y-2">
-          <p className="text-[14px] leading-[100%] text-[#729A73] font-pretendard font-normal">
-            {job.category}
-          </p>
-          <h2 className="text-[18px] font-extrabold leading-[100%] text-[#333] font-pretendard">
-            {job.title}
-          </h2>
+          <p className="text-[14px] leading-[100%] text-[#729A73] font-pretendard font-normal">{job.category}</p>
+          <h2 className="text-[18px] font-extrabold leading-[100%] text-[#333] font-pretendard">{job.title}</h2>
           <p className="text-[12px] leading-[100%] text-[#333] font-pretendard font-normal">
             {job.companyName ?? job.place}
           </p>
@@ -603,8 +647,7 @@ export default function JobDetailPage() {
 
           <div className="w-[335px] rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
             <p className="mb-3 font-bold text-[14px] text-[#333]">
-              <span className="text-[#729A73]">✨ 내 몸에 맞는 일,</span> 지금
-              추천해드릴게요.
+              <span className="text-[#729A73]">✨ 내 몸에 맞는 일,</span> 지금 추천해드릴게요.
             </p>
             <div className="flex flex-wrap gap-[10px]">
               {(job.envTags ?? []).map((t: string, i: number) => (
@@ -633,9 +676,7 @@ export default function JobDetailPage() {
         {/* 상세요강 */}
         <Section title="상세요강">
           <div className="rounded-[12px] !p-4 border border-[#555]/85 ">
-            <p className="text-[14px] text-[#333] leading-6 whitespace-pre-wrap">
-              {job.description}
-            </p>
+            <p className="text-[14px] text-[#333] leading-6 whitespace-pre-wrap">{job.description}</p>
           </div>
         </Section>
       </div>
@@ -652,11 +693,7 @@ export default function JobDetailPage() {
               onClick={onToggleBookmark}
               disabled={bookmarking}
             >
-              <img
-                src={bookmarked ? bmFilled : bmEmpty}
-                alt=""
-                className="w-[45px] h-[45px]"
-              />
+              <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-[45px] h-[45px]" />
             </button>
             <button className="flex-1 min-w-0 h-12 rounded-[10px] border border-[#729A73] text-[#729A73] font-semibold">
               전화하기
