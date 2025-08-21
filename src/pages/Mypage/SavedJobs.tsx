@@ -4,6 +4,7 @@ import { SlArrowLeft } from "react-icons/sl";
 import JobCard from "../../components/Homepage/JobCard";
 import { getSavedJobs } from "../../apis/mypage";
 import { getJobDetail } from "../../apis/jobs";
+import { axiosInstance } from "../../apis/axios";
 import type { BookmarkItem } from "../../types/mypage";
 import type { PaymentType } from "../../types/homepage";
 
@@ -108,7 +109,6 @@ const extractEnv = (d: any): Record<string, boolean> | undefined => {
   ["data", "details", "job", "work", "workInfo", "work_info"].forEach((k) =>
     scanOnce(d?.[k], out)
   );
-
   return Object.keys(out).length ? out : undefined;
 };
 
@@ -123,7 +123,6 @@ type JobDetailForCard = {
   workPeriod?: string;
   workEnvironment?: Record<string, boolean> | null;
   paymentType?: PaymentType | string;
-  review_count?: number;
 };
 
 const SavedJobs = () => {
@@ -131,6 +130,7 @@ const SavedJobs = () => {
   const [savedJobs, setSavedJobs] = useState<BookmarkItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [jobMap, setJobMap] = useState<Record<number, JobDetailForCard>>({});
+  const [reviewCounts, setReviewCounts] = useState<Record<number, number>>({}); // ⬅️ 추가
 
   // 1) 찜 목록
   useEffect(() => {
@@ -188,10 +188,6 @@ const SavedJobs = () => {
               paymentType: asPaymentType(
                 d?.paymentType ?? d?.payment_type ?? "HOURLY"
               ),
-              review_count:
-                typeof d?.review_count === "number"
-                  ? d.review_count
-                  : undefined,
             };
 
             return detail;
@@ -210,6 +206,46 @@ const SavedJobs = () => {
     };
 
     if (savedJobs.length > 0) fetchDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedJobs]);
+
+  useEffect(() => {
+    if (savedJobs.length === 0) {
+      setReviewCounts({});
+      return;
+    }
+
+    let alive = true;
+
+    (async () => {
+      try {
+        const targets = savedJobs
+          .map((b) => Number(b.jobId))
+          .filter((id) => Number.isFinite(id));
+
+        const base = { ...reviewCounts };
+        const tasks = targets.map(async (id) => {
+          // 이미 있으면 재요청 생략 (원하면 주석 처리)
+          if (base[id] != null) return;
+          try {
+            const { data } = await axiosInstance.get(`/api/v1/reviews/${id}`);
+            const arr = Array.isArray(data?.result) ? data.result : [];
+            base[id] = arr.length;
+          } catch {
+            if (base[id] == null) base[id] = 0;
+          }
+        });
+
+        await Promise.all(tasks);
+        if (alive) setReviewCounts(base);
+      } catch {
+        // 전체 실패해도 무시
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [savedJobs]);
 
@@ -274,11 +310,7 @@ const SavedJobs = () => {
                   jobId={d.jobId}
                   company={d.companyName}
                   title={d.title}
-                  review={
-                    typeof d.review_count === "number" && d.review_count > 0
-                      ? `${d.review_count}건`
-                      : ""
-                  }
+                  reviewCount={reviewCounts[d.jobId] ?? 0} // ⬅️ 숫자로 전달
                   location={d.location ?? ""}
                   wage={`${(d.salary ?? 0).toLocaleString()}원`}
                   image={d.jobImageUrl ?? ""}
