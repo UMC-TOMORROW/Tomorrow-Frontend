@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState, lazy, Suspense, startTransition } from "react";
+import React, { useEffect, useMemo, useState, lazy, Suspense, startTransition, useRef } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getJobDetail } from "../../apis/jobs";
-// import ApplySheet from "../../components/jobApply/ApplySheet";
 const ApplySheet = lazy(() => import("../../components/jobApply/ApplySheet"));
 
 import { createApplication, AuthRequiredError, fetchAppliedJobIdsFromServer } from "../../apis/applications";
@@ -39,10 +38,10 @@ function writeBm(ids: number[]) {
   const payload: CacheShape = { ids: unique, updatedAt: Date.now() };
   localStorage.setItem(BM_KEY, JSON.stringify(payload));
 }
-function bmHas(id: number): boolean {
-  if (!Number.isFinite(id)) return false;
-  return readBm().ids.includes(id);
-}
+// function bmHas(id: number): boolean {
+//   if (!Number.isFinite(id)) return false;
+//   return readBm().ids.includes(id);
+// }
 function bmAdd(id: number) {
   if (!Number.isFinite(id)) return;
   const cur = readBm().ids;
@@ -74,8 +73,61 @@ const appliedHas = (id: number) => readApplied().includes(id);
 const appliedAdd = (id: number) => writeApplied([...readApplied(), id]);
 const appliedReplace = (ids: number[]) => writeApplied(ids);
 
-/* ───────────────── UI 컴포넌트 ───────────────── */
+/* ───────────────── 리뷰 요약 SWR 캐시(+TTL) ───────────────── */
+const REV_SUM_KEY = "review.summary.v1";
+type RevSummary = { count: number; avg: number; updatedAt: number };
+const memSummary = new Map<number, RevSummary>(); // 메모리 캐시
+const inflight = new Map<number, Promise<RevSummary>>(); // 중복 요청 제거
+
+function readRevLS(): Record<string, RevSummary> {
+  try {
+    return JSON.parse(localStorage.getItem(REV_SUM_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+function writeRevLS(obj: Record<string, RevSummary>) {
+  localStorage.setItem(REV_SUM_KEY, JSON.stringify(obj));
+}
+function getCachedSummary(postId: number): RevSummary | null {
+  const m = memSummary.get(postId);
+  if (m) return m;
+  const all = readRevLS();
+  const v = all[String(postId)];
+  if (v) memSummary.set(postId, v);
+  return v ?? null;
+}
+function setCachedSummary(postId: number, s: RevSummary) {
+  memSummary.set(postId, s);
+  const all = readRevLS();
+  all[String(postId)] = s;
+  writeRevLS(all);
+}
+
+// 느린 기존 API를 사용하되, 최소 계산만 수행
+async function fetchReviewSummarySlowAPI(postId: number, signal?: AbortSignal): Promise<RevSummary> {
+  const { data } = await axiosInstance.get(`/api/v1/reviews/${postId}`, { signal });
+  const arr = Array.isArray(data?.result) ? data.result : [];
+  const count = arr.length;
+  const sum = arr.reduce((s: number, r: any) => s + Number(r?.stars ?? 0), 0);
+  const avg = count ? Number((sum / count).toFixed(1)) : 0;
+  return { count, avg, updatedAt: Date.now() };
+}
+async function withTimeout<T>(p: Promise<T>, ms = 2000, ctrl?: AbortController): Promise<T> {
+  return await Promise.race([
+    p,
+    new Promise<T>((_, rej) =>
+      setTimeout(() => {
+        ctrl?.abort();
+        rej(new Error("timeout"));
+      }, ms)
+    ),
+  ]);
+}
+
+/* ───────────────── UI 컴포넌트 (메모이제이션) ───────────────── */
 const Divider = React.memo(() => <div className="h-px bg-[#EAEAEA] -mx-4" />);
+
 const Badge = React.memo<{ children: React.ReactNode }>(({ children }) => (
   <span className="items-center !px-2 opacity-100 rounded-[8px] border border-[#EE0606CC]/80 text-[14px] bg-white text-[#EE0606CC]">
     {children}
@@ -131,7 +183,15 @@ const StarsImg = React.memo<{
 });
 
 /* ───────────────── 매핑 유틸 (응답 → 화면 모델) ───────────────── */
-const DAY_KO: Record<string, string> = { mon: "월", tue: "화", wed: "수", thu: "목", fri: "금", sat: "토", sun: "일" };
+const DAY_KO: Record<string, string> = {
+  mon: "월",
+  tue: "화",
+  wed: "수",
+  thu: "목",
+  fri: "금",
+  sat: "토",
+  sun: "일",
+};
 function periodLabel(p?: string) {
   if (p === "SHORT_TERM") return "단기";
   if (p === "OVER_ONE_MONTH") return "1개월 이상";
@@ -167,9 +227,9 @@ const ENV_KO: Record<string, string> = {
   canCarryObjects: "가벼운 물건 운반",
   canCommunicate: "사람 응대 중심",
 };
-
 const hhmm = (s?: string) => (s ? s.slice(0, 5) : "");
 
+// 상세 응답 → 화면 모델
 function mapSwaggerJobDetail(api: any) {
   let weekdays = "요일협의";
   if (api?.workDays && api.workDays.isDayNegotiable === false) {
@@ -193,6 +253,7 @@ function mapSwaggerJobDetail(api: any) {
     companyName: api.companyName ?? "",
     place: undefined,
 
+    // 상세의 rating/reviewCount는 참고용(렌더는 reviewMeta 사용)
     rating: api.avgRating ?? api.rating ?? 0,
     reviewCount: api.reviewCount,
 
@@ -213,13 +274,14 @@ function mapSwaggerJobDetail(api: any) {
     envTags,
   };
 }
+
+/* ───────────────── 고정 기본값 (재생성 방지) ───────────────── */
 const JOB_FALLBACK = {
   category: "",
   title: "",
   companyName: "",
   place: "",
   rating: 0,
-  reviewCount: "",
   paymentType: "",
   salary: 0,
   minWageNote: undefined as string | undefined,
@@ -242,19 +304,25 @@ export default function JobDetailPage() {
   const [error, setError] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // 내 정보(role) 조회 헬퍼 추가
+  // 리뷰 메타(요약) 전용 상태: 캐시 → 즉시 표시, 네트워크 → 조용히 갱신
+  const [reviewMeta, setReviewMeta] = useState<{ count: number | null; avg: number | null }>({
+    count: null,
+    avg: null,
+  });
+
+  // 북마크 캐시 메모리 사본(파싱 최소화)
+  const bmRef = useRef<CacheShape>({ ids: [], updatedAt: 0 });
+
+  // 내 정보(role) 조회
   async function fetchMyRole(): Promise<string | null> {
     try {
       const { data } = await axiosInstance.get("/api/v1/members/me");
-      // 스웨거 래퍼(result)와 직접 필드 둘 다 대응
       return data?.result?.role ?? data?.role ?? null;
     } catch {
-      // 비로그인(401) 등은 조용히 무시
       return null;
     }
   }
 
-  // 역할 체크(로그인 안 되어 있으면 무시)
   useEffect(() => {
     (async () => {
       const role = await fetchMyRole();
@@ -272,16 +340,7 @@ export default function JobDetailPage() {
     return null;
   }, [jobId, data]);
 
-  // 초기 북마크 상태를 캐시로 즉시 채우기(깜빡임 방지)
-  const initialBm = useMemo(() => {
-    if (effectivePostId == null) return false;
-    return bmHas(effectivePostId);
-  }, [effectivePostId]);
-
-  const [bookmarked, setBookmarked] = useState(initialBm);
-  const [bookmarking, setBookmarking] = useState(false);
-
-  // 상세 불러오기 (랩퍼 언랩 후 매핑)
+  // 상세 불러오기
   useEffect(() => {
     const effectiveId = jobId ?? "10";
     (async () => {
@@ -293,7 +352,6 @@ export default function JobDetailPage() {
           setData(mapSwaggerJobDetail(api));
           setError(null);
         });
-        setLoading(false);
       } catch (e: any) {
         setError(e);
       } finally {
@@ -304,13 +362,17 @@ export default function JobDetailPage() {
 
   const job = useMemo(() => (data ? data : JOB_FALLBACK), [data]);
 
-  // 1) id 결정되면 캐시 기준으로 UI를 즉시 고정
+  // 초기 북마크 상태(캐시 → 즉시)
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarking, setBookmarking] = useState(false);
+
   useEffect(() => {
     if (effectivePostId == null) return;
-    setBookmarked(bmHas(effectivePostId));
+    bmRef.current = readBm();
+    setBookmarked(bmRef.current.ids.includes(effectivePostId));
   }, [effectivePostId]);
 
-  // 2) 곧바로 서버 목록으로 동기화(한 번)
+  // 서버 북마크 동기화(1회)
   useEffect(() => {
     if (effectivePostId == null) return;
     let alive = true;
@@ -318,10 +380,11 @@ export default function JobDetailPage() {
       try {
         const ids = await fetchBookmarkedJobIds();
         if (!alive) return;
+        bmRef.current = { ids, updatedAt: Date.now() };
         bmReplace(ids);
         setBookmarked(ids.includes(effectivePostId));
       } catch {
-        // 실패해도 캐시 기준으로 유지
+        // 실패 시 캐시 유지
       }
     })();
     return () => {
@@ -343,7 +406,6 @@ export default function JobDetailPage() {
   async function onClickApplyCTA() {
     if (applied) return;
 
-    // 로그인 보장
     const authed = await ensureLoggedIn();
     if (!authed) {
       alert("로그인이 필요합니다.");
@@ -351,7 +413,6 @@ export default function JobDetailPage() {
       return;
     }
 
-    // role을 즉시 재확인 (초기 로딩 레이스 대비)
     const roleNow = userRole ?? (await fetchMyRole());
     if ((roleNow ?? "").toUpperCase() === "EMPLOYER") {
       alert("구인자는 공고에 지원할 수 없습니다.");
@@ -362,15 +423,12 @@ export default function JobDetailPage() {
     setAttachChecked(false);
   }
 
-  // ✅ resume summary 존재 판단을 더 엄격하게
+  // 이력서 존재 판단
   function hasMeaningfulResume(r: any): boolean {
     if (!r || typeof r !== "object") return false;
-    // 빈 객체 {} 도 없음 처리
     if (Object.keys(r).length === 0) return false;
 
     const hasIntro = typeof r.introduction === "string" && r.introduction.trim().length > 0;
-
-    // career 항목 중 값이 있는 항목 하나라도 있으면 있음으로 인정
     const hasCareer =
       Array.isArray(r.career) &&
       r.career.some(
@@ -378,9 +436,7 @@ export default function JobDetailPage() {
           (c?.companyName && String(c.companyName).trim().length > 0) ||
           (c?.description && String(c.description).trim().length > 0)
       );
-
     const hasCerts = Array.isArray(r.certificates) && r.certificates.length > 0;
-
     const hasEtc =
       (Array.isArray(r.skills) && r.skills.length > 0) || (Array.isArray(r.education) && r.education.length > 0);
 
@@ -411,21 +467,19 @@ export default function JobDetailPage() {
       return;
     }
 
-    // 이력서 존재 확인
     const { exists, id } = await resumeExists();
 
     if (!exists) {
       alert("이력서가 없어요. 이력서를 작성해 주세요.");
       setAttachChecked(false);
       setApplyOpen(false);
-      // 첨부 체크에서 이력서 없다고 판단되어 이동할 때, 라우팅 state나 쿼리로 “create 모드”로 넘김
       navigate("/Mypage/ResumeManage", {
         state: { from: "jobDetail", backTo },
-      }); // 현재 페이지로 돌아올 수 있게
+      });
       return;
     }
 
-    if (id && Number.isFinite(id)) setResumeId(id); // 서버가 id를 줄 때만 세팅
+    if (id && Number.isFinite(id)) setResumeId(id);
     setAttachChecked(true);
   }
 
@@ -488,7 +542,6 @@ export default function JobDetailPage() {
   }
 
   const handleBack = () => {
-    // if (window.history.length > 1) navigate(-1);else
     navigate("/");
   };
 
@@ -551,27 +604,56 @@ export default function JobDetailPage() {
     }
   }
 
-  // 후기(평균★, 개수) 갱신
-  async function refreshReviewSummary(postId: number) {
-    try {
-      const { data } = await axiosInstance.get(`/api/v1/reviews/${postId}`);
-      const arr = Array.isArray(data?.result) ? data.result : [];
-      const count = arr.length;
-      const sum = arr.reduce((s: number, r: any) => s + Number(r.stars ?? 0), 0);
-      const avg = count ? Number((sum / count).toFixed(1)) : 0;
-      setData((prev: any) => ({ ...(prev ?? {}), reviewCount: count, rating: avg }));
-    } catch (e) {
-      console.debug("[reviews] summary fetch skipped", e);
+  /* ───────────────── 리뷰 요약 SWR 호출 ───────────────── */
+  async function refreshReviewSummary(postId: number, { ttlMs = 60_000 } = {}) {
+    if (!Number.isFinite(postId)) return;
+
+    // 1) 캐시 즉시 표시
+    const cached = getCachedSummary(postId);
+    const isStale = !cached || Date.now() - cached.updatedAt > ttlMs;
+    if (cached) {
+      setReviewMeta((prev) =>
+        prev?.count === cached.count && prev?.avg === cached.avg ? prev : { count: cached.count, avg: cached.avg }
+      );
+      if (!isStale) return; // 신선하면 네트워크 스킵
     }
+
+    // 2) 중복 요청 제거
+    if (inflight.has(postId)) {
+      const s = await inflight.get(postId)!;
+      setReviewMeta({ count: s.count, avg: s.avg });
+      return;
+    }
+
+    // 3) 타임아웃 포함 네트워크(FG)
+    const ctrl = new AbortController();
+    const task = (async () => {
+      try {
+        const s = await withTimeout(fetchReviewSummarySlowAPI(postId, ctrl.signal), 2000, ctrl);
+        setCachedSummary(postId, s);
+        startTransition(() => setReviewMeta({ count: s.count, avg: s.avg }));
+        return s;
+      } catch (e) {
+        // 실패/타임아웃: 캐시가 없으면 '-' 유지
+        if (!cached) startTransition(() => setReviewMeta({ count: null, avg: null }));
+        throw e;
+      } finally {
+        inflight.delete(postId);
+      }
+    })();
+
+    inflight.set(postId, task);
+    await task.catch(() => {});
   }
 
+  // id 확정 시 요약 호출 + 포커스/가시성 복귀 시 디바운스 갱신
   useEffect(() => {
     if (effectivePostId == null) return;
 
     let t: ReturnType<typeof setTimeout> | null = null;
 
     const run = () => refreshReviewSummary(effectivePostId);
-    run(); // 최초 1회
+    run(); // 최초 1회 (캐시→즉시 표시, 필요 시 BG 갱신)
 
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
@@ -582,6 +664,9 @@ export default function JobDetailPage() {
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
 
+    // 아이들 타임에도 백그라운드 갱신 시도(체감 개선)
+    (window as any).requestIdleCallback?.(() => refreshReviewSummary(effectivePostId), { timeout: 1500 });
+
     return () => {
       if (t) clearTimeout(t);
       document.removeEventListener("visibilitychange", onVisible);
@@ -589,23 +674,22 @@ export default function JobDetailPage() {
     };
   }, [effectivePostId]);
 
+  // 지원 이력 캐시/서버 동기화
   useEffect(() => {
     if (effectivePostId == null) return;
 
-    // 1) 캐시로 즉시 반영(깜빡임 방지)
+    // 1) 캐시로 즉시 반영
     setApplied(appliedHas(effectivePostId));
 
-    // 2) 로그인 되어 있으면 서버에서 최신 이력 가져와 보정
+    // 2) 로그인 되어 있으면 서버에서 보정
     (async () => {
       try {
         const authed = await ensureLoggedIn().catch(() => false);
-        if (!authed) return; // 비로그인: 캐시만 사용
-
+        if (!authed) return;
         const ids = await fetchAppliedJobIdsFromServer(); // /api/v1/applications?type=all
-        appliedReplace(ids); // 캐시 동기화
+        appliedReplace(ids);
         if (ids.includes(effectivePostId)) setApplied(true);
       } catch (e) {
-        // 서버 실패 시 캐시 상태 유지
         console.debug("[applied] sync skipped", e);
       }
     })();
@@ -652,15 +736,18 @@ export default function JobDetailPage() {
             {job.companyName ?? job.place}
           </p>
           <div className="flex items-center gap-2 text-[12px] text-[#777]">
-            <StarsImg value={job.rating} />
+            <StarsImg value={reviewMeta.avg ?? 0} />
             <button
               type="button"
               onClick={() => navigate(`/jobs/${job.jobId ?? jobId}/reviews`)}
               className="inline-flex items-center gap-2 focus:outline-none"
-              aria-label={`후기 ${job.reviewCount}건 보기`}
+              aria-label={`후기 ${reviewMeta.count ?? 0}건 보기`}
             >
-              <span className="inline-flex items-center !px-2 !py-0.5 rounded-full border border-[#BFD6C0] text-[#557E59]">
-                후기 {job.reviewCount}건
+              <span
+                className="inline-flex items-center !px-2 !py-0.5 rounded-full border border-[#BFD6C0] text-[#557E59]"
+                style={{ minHeight: 20 }}
+              >
+                후기 {reviewMeta.count == null ? "-" : reviewMeta.count}건
               </span>
             </button>
           </div>
@@ -766,7 +853,7 @@ export default function JobDetailPage() {
           <ApplySheet
             open={applyOpen}
             content={applyContent}
-            setContent={(v) => startTransition(() => setApplyContent(v))} // 입력은 낮은 우선순위로
+            setContent={(v) => startTransition(() => setApplyContent(v))}
             attachChecked={attachChecked}
             onToggleAttach={handleToggleAttach}
             canSubmit={!submitting && applyContent.trim().length > 0}
