@@ -157,7 +157,7 @@ const ApplyStatus = () => {
               <li>
                 <div className="px-[15px] h-[18px] w-full bg-white"></div>
                 <div
-                  className="flex items-center justify-between h-[104px] px-[20px] cursor-pointer"
+                  className="flex items-start justify-between px-[20px] py-[12px] cursor-pointer"
                   role="button"
                   tabIndex={0}
                   onClick={() => goDetail(job.postId)}
@@ -168,13 +168,21 @@ const ApplyStatus = () => {
                     }
                   }}
                 >
-                  <div className="w-[250px]">
+                  <div className="w-[250px] break-words">
                     <p className="flex items-end text-[14px]">{job.date}</p>
                     <p className="text-[14px]">{job.company}</p>
-                    <p className="text-[16px]" style={{ fontWeight: 800 }}>
+                    <p
+                      className="text-[16px] leading-[20px]"
+                      style={{ fontWeight: 800 }}
+                    >
+                      {" "}
                       {job.title}
                     </p>
-                    <p className="text-[14px]" style={{ color: "#729A73" }}>
+                    <p
+                      className="text-[14px] leading-[18px] mt-[2px]"
+                      style={{ color: "#729A73" }}
+                    >
+                      {" "}
                       {job.envText || ""}
                     </p>
                   </div>
@@ -198,7 +206,7 @@ const ApplyStatus = () => {
               {activeTab === "합격" ? (
                 <div>
                   <button
-                    className="w-full px-[15px] mt-[7px]"
+                    className="w-full px-[15px] mt-[10px]"
                     onClick={() => goWriteReview(job)}
                   >
                     <div className="h-[13px] w-full bg-white border-t border-[#729A73]"></div>
