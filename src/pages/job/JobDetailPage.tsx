@@ -331,6 +331,27 @@ export default function JobDetailPage() {
     setApplyOpen(true);
   }
 
+  async function resumeExists(): Promise<{ exists: boolean; id?: number }> {
+    try {
+      const { data } = await axiosInstance.get("/api/v1/resumes/summary");
+      const r = data?.result;
+
+      // r이 null/undefined면 없음, 객체면 최소 한 필드라도 값이 있으면 있음으로 처리
+      const exists =
+        !!r &&
+        ((typeof r.introduction === "string" && r.introduction.trim().length > 0) ||
+          (Array.isArray(r.career) && r.career.length > 0) ||
+          (Array.isArray(r.certificates) && r.certificates.length > 0));
+
+      return { exists, id: Number(r?.resumeId) };
+    } catch (e: any) {
+      const status = e?.response?.status;
+      if (status === 404 || status === 204) return { exists: false };
+      console.debug("[ensureResumeExists] error, treat as no resume", e?.response ?? e);
+      return { exists: false };
+    }
+  }
+
   async function handleToggleAttach(checked: boolean) {
     if (!checked) {
       setAttachChecked(false);
@@ -338,16 +359,18 @@ export default function JobDetailPage() {
     }
 
     // 이력서 존재 확인
-    const hasResume = await resumeExists();
-    if (!hasResume) {
-      setApplyOpen(false);
+    const { exists, id } = await resumeExists();
+
+    if (!exists) {
+      // 모달은 열려있지만, 이력서 작성 페이지로 이동할 거라 시트를 닫아주는 게 안전
       setAttachChecked(false);
+      setApplyOpen(false);
       alert("이력서가 없어요. 먼저 이력서를 작성해 주세요.");
       navigate("/Mypage/ResumeManage");
       return;
     }
 
-    // 이력서가 있으면 첨부
+    if (id && Number.isFinite(id)) setResumeId(id); // 서버가 id를 줄 때만 세팅
     setAttachChecked(true);
   }
 
@@ -484,32 +507,6 @@ export default function JobDetailPage() {
       setData((prev: any) => ({ ...(prev ?? {}), reviewCount: count, rating: avg }));
     } catch (e) {
       console.debug("[reviews] summary fetch skipped", e);
-    }
-  }
-
-  // 이력서 요약 API 체크: 있으면 true, 없으면 false
-  async function resumeExists(): Promise<boolean> {
-    try {
-      const { data } = await axiosInstance.get("/api/v1/resumes/summary");
-      const result = data?.result;
-      // result가 null/undefined 이면 없음으로 판단
-      // 객체여도 내용이 모두 비어있는 경우를 방어적으로 처리
-      const exists =
-        !!result &&
-        (Array.isArray(result?.career)
-          ? result.career.length > 0
-          : true || Array.isArray(result?.certificates)
-          ? result.certificates.length > 0
-          : true || typeof result?.introduction === "string");
-
-      return !!exists;
-    } catch (e: any) {
-      // 404/204/빈 응답도 "없음"으로 처리
-      const status = e?.response?.status;
-      if (status === 404 || status === 204) return false;
-      // 기타 오류는 사용자에게 알리고 "없음"으로 취급
-      console.debug("[resumeExists] error → treat as no resume", e?.response ?? e);
-      return false;
     }
   }
 
