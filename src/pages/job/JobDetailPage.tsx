@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, lazy, Suspense, startTransition, useRef } from "react";
+import React, { useEffect, useMemo, useState, lazy, Suspense, startTransition } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getJobDetail } from "../../apis/jobs";
 // import ApplySheet from "../../components/jobApply/ApplySheet";
