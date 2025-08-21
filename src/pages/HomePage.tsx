@@ -8,6 +8,7 @@ import SearchBar from "../components/search/SearchBar";
 import JobCard from "../components/Homepage/JobCard";
 import HomepageTopBar from "../components/Homepage/HomepageTopBar";
 import { getJobsDefault } from "../apis/HomePage";
+import { axiosInstance } from "../apis/axios";
 
 type JobLike = JobsView & {
   jobCategory?: string;
@@ -45,6 +46,8 @@ const HomePage = () => {
     end?: string;
   }>({});
 
+  const [reviewCounts, setReviewCounts] = useState<Record<number, number>>({});
+
   useEffect(() => {
     const toMin = (t?: string | null) => {
       if (!t) return undefined;
@@ -76,20 +79,20 @@ const HomePage = () => {
     const applyAllFilters = async (baseJobs: JobsView[]) => {
       let jobs = [...baseJobs];
 
-      // 1) 요일 필터
+      // 1) 요일
       if (selectedDays.length > 0) {
         const want = selectedDays.map((d) => dayKey[d]).filter(Boolean);
         jobs = jobs.filter((j) => hasAllWantedDays(j.workDays, want));
       }
 
-      // 2) 지역 필터
+      // 2) 지역
       if (selectedRegion.length > 0) {
         jobs = jobs.filter((j) =>
           selectedRegion.every((kw) => (j.location ?? "").includes(kw))
         );
       }
 
-      // 3) 유형 필터
+      // 3) 유형
       if (selectedType.length > 0) {
         jobs = jobs.filter((j: JobLike) => {
           const raw = (j as any).job_category ?? j.jobCategory;
@@ -98,7 +101,7 @@ const HomePage = () => {
         });
       }
 
-      // 4) 시간 필터
+      // 4) 시간
       if (selectedTime.start || selectedTime.end) {
         const startMin = toMin(selectedTime.start ?? "00:00")!;
         const endMin = toMin(selectedTime.end ?? "23:59")!;
@@ -137,6 +140,47 @@ const HomePage = () => {
     selectedDays,
     selectedTime,
   ]);
+
+  useEffect(() => {
+    if (!Array.isArray(jobList) || jobList.length === 0) {
+      setReviewCounts({});
+      return;
+    }
+
+    let alive = true;
+
+    (async () => {
+      try {
+        const VISIBLE_LIMIT = 30;
+        const targets = jobList
+          .slice(0, VISIBLE_LIMIT)
+          .map((j) => Number(j.jobId))
+          .filter(Number.isFinite);
+
+        const base = { ...reviewCounts };
+
+        const tasks = targets.map(async (id) => {
+          try {
+            const { data } = await axiosInstance.get(`/api/v1/reviews/${id}`);
+            const arr = Array.isArray(data?.result) ? data.result : [];
+            base[id] = arr.length;
+          } catch {
+            if (base[id] == null) base[id] = 0;
+          }
+        });
+
+        await Promise.all(tasks);
+        if (alive) setReviewCounts(base);
+      } catch {
+        // 전체 실패해도 무시
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobList]);
 
   const asPaymentType = (v: string): PaymentType => {
     if (v === "HOURLY" || v === "DAILY" || v === "MONTHLY" || v === "PER_TASK")
@@ -179,7 +223,7 @@ const HomePage = () => {
 
         <div className="h-2 bg-white" />
 
-        {/* 모달 */}
+        {/* 필터 모달 */}
         <HomepageTopBar
           selectedRegion={selectedRegion}
           selectedType={selectedType}
@@ -223,16 +267,11 @@ const HomePage = () => {
               company={jobCard.companyName}
               location={jobCard.location}
               wage={`${(jobCard.salary ?? 0).toLocaleString()}원`}
-              review={
-                typeof jobCard.review_count === "number" &&
-                jobCard.review_count > 0
-                  ? `${jobCard.review_count}건`
-                  : ""
-              }
+              reviewCount={reviewCounts[jobCard.jobId] ?? 0}
               image={
                 (jobCard as any).job_image_url ?? jobCard.jobImageUrl ?? ""
               }
-              isTime={Boolean(jobCard.isTimeNegotiable)}
+              isTime={Boolean((jobCard as any).isTimeNegotiable)}
               workPeriod={jobCard.workPeriod}
               environment={
                 typeof (jobCard as any).workEnvironment === "object" &&

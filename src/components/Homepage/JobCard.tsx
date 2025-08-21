@@ -18,12 +18,10 @@ const buildS3Candidates = (url?: string) => {
   try {
     const u = new URL(raw);
     const p = u.pathname;
-
     if (p.includes("+")) {
       const u20 = new URL(raw);
       u20.pathname = p.replace(/\+/g, "%20");
       out.add(u20.toString());
-
       const u2b = new URL(raw);
       u2b.pathname = p.replace(/\+/g, "%2B");
       out.add(u2b.toString());
@@ -38,11 +36,11 @@ const buildS3Candidates = (url?: string) => {
   return Array.from(out);
 };
 
-interface JobCardProps {
+export interface JobCardProps {
   jobId: number;
   company: string;
   title: string;
-  review: string;
+  reviewCount?: number;
   location: string;
   wage: string;
   image: string;
@@ -56,7 +54,7 @@ const JobCard = ({
   jobId,
   company,
   title,
-  review,
+  reviewCount = 0,
   location,
   wage,
   image,
@@ -88,7 +86,6 @@ const JobCard = ({
     canLiftHeavyObjects: "무거운 물건 운반",
     canMoveActively: "신체 활동 중심",
     canCommunicate: "사람 응대 중심",
-
     can_work_standing: "서서 근무 중심",
     can_work_sitting: "앉아서 근무 중심",
     can_carry_objects: "가벼운 물건 운반",
@@ -146,9 +143,9 @@ const JobCard = ({
               <span style={{ color: palette.gray.default }}>
                 {timeText}, {periodText}
               </span>
-              {review && (
+              {reviewCount > 0 && (
                 <>
-                  &nbsp; ★ <span>{review}</span>
+                  &nbsp; ★ 후기 <span>{reviewCount}</span>건
                 </>
               )}
             </p>

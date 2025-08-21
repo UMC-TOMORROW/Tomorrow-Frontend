@@ -17,6 +17,7 @@ export interface MemberMe {
   createdAt: string;
   updatedAt: string;
   resumeId: number;
+  profileImageUrl: string | null;
 }
 export type MemberType = "EMPLOYER" | "JOB_SEEKER";
 
