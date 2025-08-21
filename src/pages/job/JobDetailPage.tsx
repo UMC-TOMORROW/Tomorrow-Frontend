@@ -319,16 +319,33 @@ export default function JobDetailPage() {
       return;
     }
 
-    // 이력서 존재 여부 확인
-    const hasResume = await resumeExists();
-    if (!hasResume) {
-      alert("이력서가 없어요. 이력서를 작성해 주세요.");
-      navigate("/Mypage/ResumeManage");
-      return;
-    }
-
-    setAttachChecked(true);
     setApplyOpen(true);
+    setAttachChecked(false);
+  }
+
+  // ✅ resume summary 존재 판단을 더 엄격하게
+  function hasMeaningfulResume(r: any): boolean {
+    if (!r || typeof r !== "object") return false;
+    // 빈 객체 {} 도 없음 처리
+    if (Object.keys(r).length === 0) return false;
+
+    const hasIntro = typeof r.introduction === "string" && r.introduction.trim().length > 0;
+
+    // career 항목 중 값이 있는 항목 하나라도 있으면 있음으로 인정
+    const hasCareer =
+      Array.isArray(r.career) &&
+      r.career.some(
+        (c: any) =>
+          (c?.companyName && String(c.companyName).trim().length > 0) ||
+          (c?.description && String(c.description).trim().length > 0)
+      );
+
+    const hasCerts = Array.isArray(r.certificates) && r.certificates.length > 0;
+
+    const hasEtc =
+      (Array.isArray(r.skills) && r.skills.length > 0) || (Array.isArray(r.education) && r.education.length > 0);
+
+    return hasIntro || hasCareer || hasCerts || hasEtc;
   }
 
   async function resumeExists(): Promise<{ exists: boolean; id?: number }> {
@@ -336,14 +353,11 @@ export default function JobDetailPage() {
       const { data } = await axiosInstance.get("/api/v1/resumes/summary");
       const r = data?.result;
 
-      // r이 null/undefined면 없음, 객체면 최소 한 필드라도 값이 있으면 있음으로 처리
-      const exists =
-        !!r &&
-        ((typeof r.introduction === "string" && r.introduction.trim().length > 0) ||
-          (Array.isArray(r.career) && r.career.length > 0) ||
-          (Array.isArray(r.certificates) && r.certificates.length > 0));
+      const exists = hasMeaningfulResume(r);
+      const rawId = Number(r?.resumeId);
+      const id = Number.isFinite(rawId) ? rawId : undefined;
 
-      return { exists, id: Number(r?.resumeId) };
+      return { exists, id };
     } catch (e: any) {
       const status = e?.response?.status;
       if (status === 404 || status === 204) return { exists: false };
@@ -363,9 +377,9 @@ export default function JobDetailPage() {
 
     if (!exists) {
       // 모달은 열려있지만, 이력서 작성 페이지로 이동할 거라 시트를 닫아주는 게 안전
+      alert("이력서가 없어요. 이력서를 작성해 주세요.");
       setAttachChecked(false);
       setApplyOpen(false);
-      alert("이력서가 없어요. 먼저 이력서를 작성해 주세요.");
       navigate("/Mypage/ResumeManage");
       return;
     }
