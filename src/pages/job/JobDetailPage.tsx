@@ -4,13 +4,10 @@ import { getJobDetail } from "../../apis/jobs";
 import ApplySheet from "../../components/jobApply/ApplySheet";
 import { getResumeSummary } from "../../apis/resumes";
 import { createApplication, AuthRequiredError } from "../../apis/applications";
-import {
-  fetchBookmarkedJobIds,
-  addJobBookmark,
-  deleteJobBookmark,
-} from "../../apis/jobBookmarks";
+import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../apis/jobBookmarks";
 import { getMe } from "../../apis/mypage";
 import { authApi } from "../../apis/authApi";
+import { axiosInstance } from "../../apis/axios";
 
 import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
@@ -20,26 +17,17 @@ import bmFilled from "../../assets/bookmark/star_filled.png";
 
 /* ───────────────── 로컬 캐시 유틸 (파일 내부 인라인) ───────────────── */
 const BM_KEY = "bookmark.ids.v1";
-
 type CacheShape = { ids: number[]; updatedAt: number };
 
 function readBm(): CacheShape {
   try {
     const s = localStorage.getItem(BM_KEY);
     if (!s) return { ids: [], updatedAt: 0 };
-
     const p = JSON.parse(s) as Partial<CacheShape>;
-    const raw = Array.isArray((p as any)?.ids)
-      ? ((p as any).ids as unknown[])
-      : [];
-
-    const nums = raw
-      .map((x) => Number(x))
-      .filter((n): n is number => Number.isFinite(n));
-
+    const raw = Array.isArray((p as any)?.ids) ? ((p as any).ids as unknown[]) : [];
+    const nums = raw.map((x) => Number(x)).filter((n): n is number => Number.isFinite(n));
     const cleaned = Array.from(new Set(nums));
     const ts = Number((p as any)?.updatedAt) || 0;
-
     return { ids: cleaned, updatedAt: ts };
   } catch {
     return { ids: [], updatedAt: 0 };
@@ -78,28 +66,17 @@ const Badge: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
-  title,
-  children,
-}) => (
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="space-y-3">
-    <h3 className="text-[16px] leading-[100%] !font-bold text-[#333] font-pretendard font-bold !pb-4">
-      {title}
-    </h3>
+    <h3 className="text-[16px] leading-[100%] !font-bold text-[#333] font-pretendard font-bold !pb-4">{title}</h3>
     {children}
   </section>
 );
 
-const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({
-  k,
-  v,
-  helper,
-}) => (
+const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({ k, v, helper }) => (
   <div className="!py-1 ">
     <div className="flex items-start gap-4 ">
-      <span className="w-[72px] shrink-0 text-[12px] text-[#666] whitespace-nowrap">
-        {k}
-      </span>
+      <span className="w-[72px] shrink-0 text-[12px] text-[#666] whitespace-nowrap">{k}</span>
       <div className="text-[14px] text-[#222] leading-5">{v}</div>
     </div>
     {helper ? (
@@ -111,15 +88,8 @@ const KV: React.FC<{ k: string; v: React.ReactNode; helper?: string }> = ({
   </div>
 );
 
-const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({
-  value = 0,
-  size = 17,
-  gap = 2,
-}) => {
-  const safe = Math.max(
-    0,
-    Math.min(5, Number.isFinite(value as number) ? (value as number) : 0)
-  );
+const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({ value = 0, size = 17, gap = 2 }) => {
+  const safe = Math.max(0, Math.min(5, Number.isFinite(value as number) ? (value as number) : 0));
   const full = Math.floor(safe);
   const frac = safe - full;
   const parts = Array.from({ length: 5 }, (_, i) => {
@@ -130,17 +100,9 @@ const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({
     }
     return "empty" as const;
   });
-  const srcMap = {
-    full: starFilled,
-    half: starHalf,
-    empty: starEmpty,
-  } as const;
+  const srcMap = { full: starFilled, half: starHalf, empty: starEmpty } as const;
   return (
-    <div
-      className="flex items-center"
-      style={{ gap }}
-      aria-label={`평점 ${safe.toFixed(1)} / 5`}
-    >
+    <div className="flex items-center" style={{ gap }} aria-label={`평점 ${safe.toFixed(1)} / 5`}>
       {parts.map((p, idx) => (
         <img key={idx} src={srcMap[p]} alt="" width={size} height={size} />
       ))}
@@ -149,15 +111,7 @@ const StarsImg: React.FC<{ value?: number; size?: number; gap?: number }> = ({
 };
 
 /* ───────────────── 매핑 유틸 (응답 → 화면 모델) ───────────────── */
-const DAY_KO: Record<string, string> = {
-  mon: "월",
-  tue: "화",
-  wed: "수",
-  thu: "목",
-  fri: "금",
-  sat: "토",
-  sun: "일",
-};
+const DAY_KO: Record<string, string> = { mon: "월", tue: "화", wed: "수", thu: "목", fri: "금", sat: "토", sun: "일" };
 function periodLabel(p?: string) {
   if (p === "SHORT_TERM") return "단기";
   if (p === "OVER_ONE_MONTH") return "1개월 이상";
@@ -173,7 +127,6 @@ function paymentLabel(t?: string) {
   if (t === "PER_TASK") return "건별";
   return t ?? "-";
 }
-
 const JOB_CATEGORY_KO: Record<string, string> = {
   SERVING: "서빙",
   KITCHEN_HELP: "주방보조/설거지",
@@ -187,7 +140,6 @@ const JOB_CATEGORY_KO: Record<string, string> = {
   OFFICE_HELP: "사무보조",
   ETC: "기타",
 };
-
 const ENV_KO: Record<string, string> = {
   canWorkSitting: "앉아서 근무 중심",
   canWorkStanding: "서서 근무 중심",
@@ -195,7 +147,6 @@ const ENV_KO: Record<string, string> = {
   canCarryObjects: "가벼운 물건 운반",
   canCommunicate: "사람 응대 중심",
 };
-
 const hhmm = (s?: string) => (s ? s.slice(0, 5) : "");
 
 function mapSwaggerJobDetail(api: any) {
@@ -209,14 +160,10 @@ function mapSwaggerJobDetail(api: any) {
   const time = api?.isTimeNegotiable
     ? "시간협의"
     : api?.workStart || api?.workEnd
-    ? `${hhmm(api.workStart)}${api.workStart && api.workEnd ? " - " : ""}${hhmm(
-        api.workEnd
-      )}`
+    ? `${hhmm(api.workStart)}${api.workStart && api.workEnd ? " - " : ""}${hhmm(api.workEnd)}`
     : "-";
 
-  const envTags = Array.isArray(api?.workEnvironment)
-    ? api.workEnvironment.map((k: string) => ENV_KO[k] ?? k)
-    : [];
+  const envTags = Array.isArray(api?.workEnvironment) ? api.workEnvironment.map((k: string) => ENV_KO[k] ?? k) : [];
 
   return {
     jobId: api.jobId ?? api.id,
@@ -224,24 +171,19 @@ function mapSwaggerJobDetail(api: any) {
     title: api.title ?? "",
     companyName: api.companyName ?? "",
     place: undefined,
-    rating: 0,
+
+    // 백엔드가 주면 우선 사용 (없으면 0 → 아래 요약으로 덮어씀)
+    rating: api.avgRating ?? api.rating ?? 0,
     reviewCount: api.reviewCount ?? 0,
 
     paymentType: paymentLabel(api.paymentType),
     salary: api.salary ?? 0,
-    minWageNote:
-      api.paymentType === "HOURLY" ? "2025년 최저시급 10,030원" : undefined,
-    period: `${periodLabel(api.workPeriod)}${
-      api.isPeriodNegotiable ? " (협의가능)" : ""
-    }`,
+    minWageNote: api.paymentType === "HOURLY" ? "2025년 최저시급 10,030원" : undefined,
+    period: `${periodLabel(api.workPeriod)}${api.isPeriodNegotiable ? " (협의가능)" : ""}`,
     weekdays,
     time,
 
-    role: api.alwaysHiring
-      ? "상시모집"
-      : api.deadline
-      ? String(api.deadline).slice(0, 10)
-      : "상시모집",
+    role: api.alwaysHiring ? "상시모집" : api.deadline ? String(api.deadline).slice(0, 10) : "상시모집",
     headcount: api.recruitmentLimit ?? "-",
     preference: api.preferredQualifications ?? "-",
 
@@ -256,17 +198,12 @@ function mapSwaggerJobDetail(api: any) {
 export default function JobDetailPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true); // 사용: 로딩 표시
-  const [error, setError] = useState<any>(null); // 사용: 에러 표시
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
 
   // 라우트/응답에서 안전하게 식별자 뽑기
   const effectivePostId = useMemo(() => {
-    const cands = [
-      data?.jobId,
-      data?.id,
-      data?.postId,
-      jobId ? Number(jobId) : undefined,
-    ];
+    const cands = [data?.jobId, data?.id, data?.postId, jobId ? Number(jobId) : undefined];
     for (let i = 0; i < cands.length; i += 1) {
       const n = Number(cands[i]);
       if (Number.isFinite(n)) return n as number;
@@ -283,13 +220,15 @@ export default function JobDetailPage() {
   const [bookmarked, setBookmarked] = useState(initialBm);
   const [bookmarking, setBookmarking] = useState(false);
 
+  // 상세 불러오기 (랩퍼 언랩 후 매핑)
   useEffect(() => {
     const effectiveId = jobId ?? "10";
     (async () => {
       try {
         setLoading(true);
         const res = await getJobDetail(effectiveId);
-        setData(mapSwaggerJobDetail(res));
+        const api = (res as any)?.result ?? res; // ⬅️ 공통 랩퍼 언랩
+        setData(mapSwaggerJobDetail(api));
         setError(null);
       } catch (e: any) {
         setError(e);
@@ -330,10 +269,9 @@ export default function JobDetailPage() {
   useEffect(() => {
     if (effectivePostId == null) return;
     let alive = true;
-
     (async () => {
       try {
-        const ids = await fetchBookmarkedJobIds(); // result.bookmarks 파서 반영된 함수
+        const ids = await fetchBookmarkedJobIds();
         if (!alive) return;
         bmReplace(ids);
         setBookmarked(ids.includes(effectivePostId));
@@ -341,7 +279,6 @@ export default function JobDetailPage() {
         // 실패해도 캐시 기준으로 유지
       }
     })();
-
     return () => {
       alive = false;
     };
@@ -390,9 +327,7 @@ export default function JobDetailPage() {
   }
 
   function gotoLogin() {
-    window.location.href = `https://umctomorrow.shop/login?redirect=${encodeURIComponent(
-      window.location.href
-    )}`;
+    window.location.href = `https://umctomorrow.shop/login?redirect=${encodeURIComponent(window.location.href)}`;
   }
 
   async function onSubmitApply() {
@@ -404,12 +339,9 @@ export default function JobDetailPage() {
         alert("공고 식별자가 올바르지 않습니다.");
         return;
       }
-
       const payload: any = { content: applyContent.trim() };
       if (attachChecked && resumeId) payload.resumeId = resumeId;
-
       await createApplication(postId, payload);
-
       alert("지원이 완료되었습니다.");
       setApplied(true);
       setApplyOpen(false);
@@ -418,12 +350,9 @@ export default function JobDetailPage() {
     } catch (e: any) {
       const status = e?.response?.status;
       const msg = e?.response?.data?.message;
-
       if (e instanceof AuthRequiredError) {
         alert("로그인이 필요합니다.");
-        window.location.href = `/auth?next=${encodeURIComponent(
-          location.href
-        )}`;
+        window.location.href = `/auth?next=${encodeURIComponent(location.href)}`;
         return;
       }
       if (status === 400) {
@@ -453,9 +382,7 @@ export default function JobDetailPage() {
 
     try {
       setBookmarking(true);
-
       if (!bookmarked) {
-        // 낙관적 반영 + 캐시 추가
         setBookmarked(true);
         bmAdd(Number(effectivePostId));
         try {
@@ -472,14 +399,11 @@ export default function JobDetailPage() {
           } else {
             setBookmarked(false);
             bmRemove(Number(effectivePostId));
-            alert(
-              e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요."
-            );
+            alert(e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요.");
             console.error("[Bookmark] add error ▶", e?.response ?? e);
           }
         }
       } else {
-        // 낙관적 반영 + 캐시 제거
         setBookmarked(false);
         bmRemove(Number(effectivePostId));
         try {
@@ -496,9 +420,7 @@ export default function JobDetailPage() {
           } else {
             setBookmarked(true);
             bmAdd(Number(effectivePostId));
-            alert(
-              e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요."
-            );
+            alert(e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요.");
             console.error("[Bookmark] delete error ▶", e?.response ?? e);
           }
         }
@@ -508,23 +430,45 @@ export default function JobDetailPage() {
     }
   }
 
-  // 간단한 로딩/에러 UI로 unused 경고 제거
+  // 후기(평균★, 개수) 갱신
+  async function refreshReviewSummary(postId: number) {
+    try {
+      const { data } = await axiosInstance.get(`/api/v1/reviews/${postId}`);
+      const arr = Array.isArray(data?.result) ? data.result : [];
+      const count = arr.length;
+      const sum = arr.reduce((s: number, r: any) => s + Number(r.stars ?? 0), 0);
+      const avg = count ? Number((sum / count).toFixed(1)) : 0;
+      setData((prev: any) => ({ ...(prev ?? {}), reviewCount: count, rating: avg }));
+    } catch (e) {
+      console.debug("[reviews] summary fetch skipped", e);
+    }
+  }
+
+  // id 확정 시 요약 호출 + 포커스 복귀 시 갱신
+  useEffect(() => {
+    if (effectivePostId == null) return;
+    const run = () => refreshReviewSummary(effectivePostId);
+    run(); // 최초 1회
+    const onFocus = () => run();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [effectivePostId]);
+
+  // 간단한 로딩/에러 UI
   if (loading) {
     return (
-      <div
-        className="max-w-[375px] mx-auto p-6 text-[#333]"
-        style={{ fontFamily: "Pretendard" }}
-      >
+      <div className="max-w-[375px] mx-auto p-6 text-[#333]" style={{ fontFamily: "Pretendard" }}>
         로딩 중...
       </div>
     );
   }
   if (error) {
     return (
-      <div
-        className="max-w-[375px] mx-auto p-6 text-[#333]"
-        style={{ fontFamily: "Pretendard" }}
-      >
+      <div className="max-w-[375px] mx-auto p-6 text-[#333]" style={{ fontFamily: "Pretendard" }}>
         오류가 발생했어요. 다시 시도해 주세요.
       </div>
     );
@@ -542,20 +486,15 @@ export default function JobDetailPage() {
           >
             ✕
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-bold font-pretendard">
-            일자리 정보
-          </h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-[18px] font-bold font-pretendard">일자리 정보</h1>
         </div>
       </div>
+
       <div className="!px-4 !pt-4 !pb-28 !space-y-8">
         {/* Summary */}
         <section className="!space-y-2">
-          <p className="text-[14px] leading-[100%] text-[#729A73] font-pretendard font-normal">
-            {job.category}
-          </p>
-          <h2 className="text-[18px] font-extrabold leading-[100%] text-[#333] font-pretendard">
-            {job.title}
-          </h2>
+          <p className="text-[14px] leading-[100%] text-[#729A73] font-pretendard font-normal">{job.category}</p>
+          <h2 className="text-[18px] font-extrabold leading-[100%] text-[#333] font-pretendard">{job.title}</h2>
           <p className="text-[12px] leading-[100%] text-[#333] font-pretendard font-normal">
             {job.companyName ?? job.place}
           </p>
@@ -603,8 +542,7 @@ export default function JobDetailPage() {
 
           <div className="w-[335px] rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
             <p className="mb-3 font-bold text-[14px] text-[#333]">
-              <span className="text-[#729A73]">✨ 내 몸에 맞는 일,</span> 지금
-              추천해드릴게요.
+              <span className="text-[#729A73]">✨ 내 몸에 맞는 일,</span> 지금 추천해드릴게요.
             </p>
             <div className="flex flex-wrap gap-[10px]">
               {(job.envTags ?? []).map((t: string, i: number) => (
@@ -633,9 +571,7 @@ export default function JobDetailPage() {
         {/* 상세요강 */}
         <Section title="상세요강">
           <div className="rounded-[12px] !p-4 border border-[#555]/85 ">
-            <p className="text-[14px] text-[#333] leading-6 whitespace-pre-wrap">
-              {job.description}
-            </p>
+            <p className="text-[14px] text-[#333] leading-6 whitespace-pre-wrap">{job.description}</p>
           </div>
         </Section>
       </div>
@@ -652,11 +588,7 @@ export default function JobDetailPage() {
               onClick={onToggleBookmark}
               disabled={bookmarking}
             >
-              <img
-                src={bookmarked ? bmFilled : bmEmpty}
-                alt=""
-                className="w-[45px] h-[45px]"
-              />
+              <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-[45px] h-[45px]" />
             </button>
             <button className="flex-1 min-w-0 h-12 rounded-[10px] border border-[#729A73] text-[#729A73] font-semibold">
               전화하기
