@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import logo from "../../assets/logo/logo.png";
 import naverIcon from "../../assets/login/naver2.png";
 import kakaoIcon from "../../assets/login/kakao2.png";
@@ -8,11 +8,9 @@ import { getMe1 } from "../../apis/member";
 
 const BASE = import.meta.env.VITE_SERVER_API_URL as string;
 
-const startLogin = (
-  provider: "kakao" | "google" | "naver",
-  returnToDest = "/"
-) => {
-  const afterAuth = `/auth?returnTo=${encodeURIComponent(returnToDest)}`;
+const startLogin = (provider: "kakao" | "google" | "naver") => {
+  // ✅ 로그인 성공 후에는 항상 홈("/")로만 돌아오게 고정
+  const afterAuth = `/auth?returnTo=${encodeURIComponent("/")}`;
   const url = `${BASE}/oauth2/authorization/${provider}?returnTo=${encodeURIComponent(
     afterAuth
   )}`;
@@ -21,10 +19,6 @@ const startLogin = (
 
 const AuthScreen = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const query = new URLSearchParams(location.search);
-  const returnTo = query.get("returnTo") || "/";
 
   const isDeactivated = (me: any) => {
     const s = String(me?.status || "").toUpperCase();
@@ -47,16 +41,16 @@ const AuthScreen = () => {
           return;
         }
 
-        // 활성 계정이면 returnTo로
+        // 활성 계정이면 항상 홈으로 이동 (라우터 로더가 이후 분기 처리)
         if (me) {
-          navigate(returnTo, { replace: true });
+          navigate("/", { replace: true });
           return;
         }
       } catch {
         // 비로그인 → 로그인 화면 유지
       }
     })();
-  }, [navigate, returnTo]);
+  }, [navigate]);
 
   return (
     <div className="h-screen w-full flex flex-col items-center bg-white px-6">
@@ -74,7 +68,7 @@ const AuthScreen = () => {
           <div className="flex flex-col items-center gap-5">
             {/* 네이버 */}
             <button
-              onClick={() => startLogin("naver", returnTo)}
+              onClick={() => startLogin("naver")}
               className="flex items-center justify-center w-[300px] h-[50px] rounded-[10px] bg-[#03C75A] text-white font-semibold text-sm px-[30px] gap-[20px]"
             >
               <img src={naverIcon} alt="Naver" className="w-5 h-5" />
@@ -83,7 +77,7 @@ const AuthScreen = () => {
 
             {/* 카카오 */}
             <button
-              onClick={() => startLogin("kakao", returnTo)}
+              onClick={() => startLogin("kakao")}
               className="flex items-center justify-center w-[300px] h-[50px] rounded-[10px] bg-[#FEE500] text-[#3C1E1E] font-semibold text-sm px-[30px] gap-[20px]"
             >
               <img src={kakaoIcon} alt="Kakao" className="w-5 h-5" />
@@ -92,7 +86,7 @@ const AuthScreen = () => {
 
             {/* 구글 */}
             <button
-              onClick={() => startLogin("google", returnTo)}
+              onClick={() => startLogin("google")}
               className="flex items-center justify-center w-[300px] h-[50px] rounded-[10px] bg-white border border-[#eee] text-[#3C4043] font-semibold text-sm px-[30px] gap-[20px]"
             >
               <img src={googleIcon} alt="Google" className="w-5 h-5" />
