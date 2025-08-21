@@ -16,7 +16,7 @@ const MemberRecover = () => {
       setSubmitting(true);
 
       const me = await getMyInfo();
-      const memberId = Number(me?.id);
+      const memberId = me?.id;
       if (!memberId) {
         alert("계정 정보를 확인할 수 없습니다. 다시 로그인해 주세요.");
         navigate("/auth", { replace: true });
@@ -25,15 +25,26 @@ const MemberRecover = () => {
 
       await recoverMember(memberId);
 
-      const memberType = String(me?.role || "").toUpperCase();
-      if (memberType === "EMPLOYER") {
+      // 복구 성공 → 역할에 따라 라우팅
+      const role = String(me?.role || "").toUpperCase();
+      if (role === "EMPLOYER") {
         navigate("/MyPage/EmployerMyPage", { replace: true });
       } else {
         navigate("/", { replace: true });
       }
-    } catch (e) {
-      console.error("계정 복구 실패:", e);
-      alert("계정 복구에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    } catch (e: any) {
+      // 디버깅 메시지 (원인 파악에 도움)
+      const status = e?.response?.status;
+      const url = e?.config?.baseURL
+        ? `${e.config.baseURL}${e.config.url}`
+        : e?.config?.url;
+      console.error("계정 복구 실패:", status, url, e?.response?.data ?? e);
+
+      if (status === 404) {
+        alert("복구 API 경로 확인이 필요합니다. 잠시 후 다시 시도해 주세요.");
+      } else {
+        alert("계정 복구에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      }
     } finally {
       setSubmitting(false);
     }
