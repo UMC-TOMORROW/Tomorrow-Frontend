@@ -8,6 +8,7 @@ import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../
 import { getMe } from "../../apis/mypage";
 import { authApi } from "../../apis/authApi";
 import { axiosInstance } from "../../apis/axios";
+import Modal from "../../components/common/Modal";
 
 import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
@@ -302,6 +303,10 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMsg, setAlertMsg] = useState("");
+  const [alertVariant, setAlertVariant] = useState<"success" | "warning" | "error" | "default">("default");
+  const alertConfirmRef = useRef<(() => void) | null>(null);
 
   // 리뷰 메타(요약) 전용 상태: 캐시 → 즉시 표시, 네트워크 → 갱신
   const [reviewMeta, setReviewMeta] = useState<{ count: number | null; avg: number | null }>({
@@ -320,6 +325,18 @@ export default function JobDetailPage() {
     } catch {
       return null;
     }
+  }
+
+  // alert -> modal
+  function showAlert(
+    msg: string,
+    variant: "success" | "warning" | "error" | "default" = "default",
+    onConfirm?: () => void
+  ) {
+    setAlertMsg(msg);
+    setAlertVariant(variant);
+    alertConfirmRef.current = onConfirm ?? null;
+    setAlertOpen(true);
   }
 
   useEffect(() => {
@@ -401,20 +418,22 @@ export default function JobDetailPage() {
   const [applied, setApplied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const isEmployer = (userRole ?? "").toUpperCase() === "EMPLOYER";
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMsg, setModalMsg] = useState("");
 
   async function onClickApplyCTA() {
     if (applied) return;
 
     const authed = await ensureLoggedIn();
     if (!authed) {
-      alert("로그인이 필요합니다.");
+      showAlert("로그인이 필요합니다.", "warning");
       gotoLogin();
       return;
     }
 
     const roleNow = userRole ?? (await fetchMyRole());
     if ((roleNow ?? "").toUpperCase() === "EMPLOYER") {
-      alert("구인자는 공고에 지원할 수 없습니다.");
+      showAlert("구인자는 공고에 지원할 수 없습니다.", "warning");
       return;
     }
 
@@ -469,12 +488,11 @@ export default function JobDetailPage() {
     const { exists, id } = await resumeExists();
 
     if (!exists) {
-      alert("이력서가 없어요. 이력서를 작성해 주세요.");
       setAttachChecked(false);
       setApplyOpen(false);
-      navigate("/Mypage/ResumeManage", {
-        state: { from: "jobDetail", backTo },
-      });
+      showAlert("이력서가 없어요. \n이력서를 작성해 주세요.", "warning", () =>
+        navigate("/Mypage/ResumeManage", { state: { from: "jobDetail", backTo } })
+      );
       return;
     }
 
@@ -501,13 +519,13 @@ export default function JobDetailPage() {
     try {
       const postId = Number(data?.jobId ?? jobId);
       if (!Number.isFinite(postId)) {
-        alert("공고 식별자가 올바르지 않습니다.");
+        showAlert("공고 식별자가 올바르지 않습니다.", "error");
         return;
       }
       const payload: any = { content: applyContent.trim() };
       if (attachChecked && resumeId) payload.resumeId = resumeId;
       await createApplication(postId, payload);
-      alert("지원이 완료되었습니다.");
+      showAlert("지원이 완료되었습니다.", "success");
       appliedAdd(postId);
       setApplied(true);
       setApplyOpen(false);
@@ -518,15 +536,15 @@ export default function JobDetailPage() {
       const code = e?.response?.data?.code;
       const msg = e?.response?.data?.message;
       if (e instanceof AuthRequiredError) {
-        alert("로그인이 필요합니다.");
+        showAlert("로그인이 필요합니다.", "error");
         navigate("/login", { state: { backTo } });
         return;
       }
       if (status === 400) {
-        alert(msg || "요청을 처리할 수 없습니다.");
+        showAlert(msg || "요청을 처리할 수 없습니다.", "error");
         return;
       }
-      alert(msg || "지원 중 오류가 발생했어요.");
+      showAlert(msg || "지원 중 오류가 발생했어요.", "error");
       console.error("[Apply] error ▶", e?.response ?? e);
 
       if (status === 409 || msg?.includes("이미 지원") || code === "APPLICATION_ALREADY_APPLIED") {
@@ -547,7 +565,7 @@ export default function JobDetailPage() {
   async function onToggleBookmark() {
     const authed = await ensureLoggedIn();
     if (!authed) {
-      alert("로그인이 필요합니다.");
+      showAlert("로그인이 필요합니다.", "error");
       gotoLogin();
       return;
     }
@@ -568,11 +586,11 @@ export default function JobDetailPage() {
           } else if (status === 401) {
             setBookmarked(false);
             bmRemove(Number(effectivePostId));
-            alert("로그인이 필요합니다.");
+            showAlert("로그인이 필요합니다.", "error");
           } else {
             setBookmarked(false);
             bmRemove(Number(effectivePostId));
-            alert(e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요.");
+            showAlert(e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요.", "error");
             console.error("[Bookmark] add error ▶", e?.response ?? e);
           }
         }
@@ -589,11 +607,11 @@ export default function JobDetailPage() {
           } else if (status === 401) {
             setBookmarked(true);
             bmAdd(Number(effectivePostId));
-            alert("로그인이 필요합니다.");
+            showAlert("로그인이 필요합니다.", "error");
           } else {
             setBookmarked(true);
             bmAdd(Number(effectivePostId));
-            alert(e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요.");
+            showAlert(e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요.", "error");
             console.error("[Bookmark] delete error ▶", e?.response ?? e);
           }
         }
@@ -867,6 +885,24 @@ export default function JobDetailPage() {
           />
         </Suspense>
       ) : null}
+
+      <Modal
+        open={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        message={alertMsg}
+        variant={alertVariant}
+        actions={
+          <button
+            className="!px-4 !py-2 !mb-5 rounded-[10px] bg-[#729A73] !text-white !font-semibold"
+            onClick={() => {
+              setAlertOpen(false);
+              alertConfirmRef.current?.();
+            }}
+          >
+            확인
+          </button>
+        }
+      />
     </div>
   );
 }
