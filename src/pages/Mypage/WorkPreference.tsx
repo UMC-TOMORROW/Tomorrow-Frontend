@@ -14,6 +14,24 @@ const PREFERENCE_MAP: Record<string, WorkPreferenceType> = {
   "사람 응대 중심": "HUMAN",
 };
 
+const LS_KEY = "workPref.selected";
+
+const loadSelected = (): string[] => {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+const saveSelected = (arr: string[]) => {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(arr));
+  } catch {
+    //
+  }
+};
+
 const WorkPreference = () => {
   const navigate = useNavigate();
   const options = [
@@ -24,14 +42,16 @@ const WorkPreference = () => {
     "사람 응대 중심",
   ];
 
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(() => loadSelected());
 
   const toggleOption = (option: string) => {
-    setSelected((prev) =>
-      prev.includes(option)
+    setSelected((prev) => {
+      const next = prev.includes(option)
         ? prev.filter((o) => o !== option)
-        : [...prev, option]
-    );
+        : [...prev, option];
+      saveSelected(next);
+      return next;
+    });
   };
 
   const handleSubmit = async () => {
@@ -41,6 +61,7 @@ const WorkPreference = () => {
 
     try {
       const saved = await patchPreferences(preferences);
+      saveSelected(selected);
       if (saved) {
         alert("희망 조건이 저장되었습니다!");
       }
