@@ -1,13 +1,36 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import MemverRecover from "../../assets/recover.png";
 import palette from "../../styles/theme";
 import { getMyInfo } from "../../apis/employerMyPage";
 import { recoverMember } from "../../apis/memberRecover";
+import { axiosInstance } from "../../apis/axios";
 
 const MemberRecover = () => {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+
+  const handleCancel = async () => {
+    if (submitting) return;
+    try {
+      // 백엔드 호스트로 로그아웃 (쿠키 삭제)
+      await axiosInstance
+        .post("/api/v1/auth/logout", null, {
+          withCredentials: true,
+        })
+        .catch((e) => {
+          // 401이어도 신경쓰지 말고 로컬 정리 후 진행
+          console.warn("logout ignored:", e?.response?.status);
+        });
+
+      sessionStorage.clear();
+      localStorage.removeItem("Authorization");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+    } finally {
+      navigate("/auth", { replace: true });
+    }
+  };
 
   const handleRecover = async () => {
     if (submitting) return;
@@ -77,15 +100,14 @@ const MemberRecover = () => {
       </div>
 
       <div className="flex flex-row gap-4 mt-[120px]">
-        <Link to={"/auth"}>
-          <button
-            className="w-[140px] h-[48px] rounded-[10px] text-[18px] text-[#EE0606CC] !font-bold flex items-center justify-center border transition duration-200"
-            style={{ borderColor: "#EE0606CC", fontFamily: "Pretendard" }}
-            disabled={submitting}
-          >
-            취소
-          </button>
-        </Link>
+        <button
+          onClick={handleCancel}
+          className="w-[140px] h-[48px] rounded-[10px] text-[18px] text-[#EE0606CC] !font-bold flex items-center justify-center border transition duration-200"
+          style={{ borderColor: "#EE0606CC", fontFamily: "Pretendard" }}
+          disabled={submitting}
+        >
+          취소
+        </button>
 
         <button
           onClick={handleRecover}

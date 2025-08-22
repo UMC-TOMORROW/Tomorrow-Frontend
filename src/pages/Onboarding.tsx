@@ -538,7 +538,7 @@ function Onboarding() {
           className="flex flex-col items-center justify-center px-4 h-screen bg-white gap-10"
         >
           <img src={logoWhite} className="w-[233px] h-[153px]" />
-          <img src={formingTeam} className="w/[340px] h/[300px]" />
+          <img src={formingTeam} className="w-[340px] h-[300px]" />
           <p
             className="text-[20px] !font-semibold text-white text-center"
             style={{ fontFamily: "Pretendard" }}
@@ -550,7 +550,7 @@ function Onboarding() {
           <div className="w-full max-w-[320px] font-bold items-center flex flex-col gap-3">
             <CommonButton
               label="시작하기"
-              className="!w/[315px] !h/[52px] !rounded/[10px] !bg-white !text-[#729A73]"
+              className="!w-[315px] !h-[52px] !rounded/[10px] !bg-white !text-[#729A73]"
               onClick={async () => {
                 if (isSavingRef.current) return;
 
