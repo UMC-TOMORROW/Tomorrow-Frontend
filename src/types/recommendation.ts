@@ -13,10 +13,11 @@ export interface Recommendation {
   location: string;
   workPeriod: WorkPeriod;
   isPeriodNegotiable: boolean;
-  workStart?: string | null; 
-  workEnd?: string | null;  
+  workStart: string | null;
+  workEnd: string | null;
   isTimeNegotiable: boolean;
-  salary: number;
+  isSalaryNegotiable: boolean;
+  salary: number | null;
   paymentType: PaymentType;
   reviewCount: number;
 }
