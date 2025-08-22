@@ -829,7 +829,12 @@ export default function JobDetailPage() {
             >
               <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-[45px] h-[45px]" />
             </button>
-            <button className="flex-1 min-w-0 h-12 rounded-[10px] border border-[#729A73] text-[#729A73] font-semibold">
+            <button
+              className="flex-1 min-w-0 h-12 rounded-[10px] border border-[#729A73] text-[#729A73] font-semibold"
+              onClick={() => {
+                window.location.href = `tel:01012345678`; // 전화번호는 예시입니다.
+              }}
+            >
               전화하기
             </button>
             <button
