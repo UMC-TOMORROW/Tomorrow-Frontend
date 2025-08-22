@@ -22,23 +22,25 @@ function CareerTalkCard({ id, category, title, content }: CareerTalkCardProps) {
       : fullText;
 
   return (
-    <div
-      onClick={() => navigate(`/career-talk/${id}`)}
-      className="rounded-xl p-[10px] text-[15px] leading-[22px] shadow-sm cursor-pointer"
-      style={{
-        backgroundColor: shouldFill
-          ? palette.primary.primaryLight75
-          : palette.gray.light,
-        color: palette.gray.dark,
-        border: `1px solid ${palette.primary.primary}`,
-      }}
-    >
-      <strong>[{category}]</strong>
-      {trimmedText}
-      {fullText.length > maxLength && (
-        <span className="font-semibold"> 더보기</span>
-      )}
-    </div>
+<div
+  onClick={() => navigate(`/career-talk/${id}`)}
+  className="w-[320px] h-[75px] rounded-xl px-[10px] text-[16px] leading-[22px] shadow-sm cursor-pointer flex items-center"
+  style={{
+    backgroundColor: shouldFill
+      ? palette.primary.primaryLight75
+      : palette.gray.light,
+    color: palette.gray.dark,
+    border: `1px solid ${palette.primary.primary}`,
+  }}
+>
+  <span>
+    <strong>[{category}]</strong> {trimmedText}
+    {fullText.length > maxLength && (
+      <span className="font-semibold"> 더보기</span>
+    )}
+  </span>
+</div>
+
   );
 }
 

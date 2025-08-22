@@ -4,7 +4,11 @@ import Header from "../../components/Header";
 import CommonButton from "../../components/common/CommonButton";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
 import palette from "../../styles/theme";
-import { postCareerTalk, putCareerTalk, getCareerTalkDetail } from "../../apis/careerTalk";
+import {
+  postCareerTalk,
+  putCareerTalk,
+  getCareerTalkDetail,
+} from "../../apis/careerTalk";
 
 const categoryOptions = [
   "무료 자격증 추천",
@@ -96,24 +100,23 @@ const CareerTalkWritePage = () => {
     <div className="relative min-h-screen pb-[110px] px-4 font-[Pretendard]">
       <Header title="내일" />
 
-
       <div className="absolute top-[18px] left-4 right-0 mt-[40px] flex items-center justify-between px-4">
+        <button className="cursor-pointer" onClick={() => navigate(-1)}>
+          <X size={24} />
+        </button>
 
-  <button className="cursor-pointer" onClick={() => navigate(-1)}>
-    <X size={24} />
-  </button>
+        <strong
+          className="absolute left-1/2 transform -translate-x-1/2 text-[20px] font-bold leading-none"
+          style={{ color: palette.gray.dark }}
+        >
+          커리어톡 작성
+        </strong>
+      </div>
 
-  <strong
-    className="absolute left-1/2 transform -translate-x-1/2 text-[20px] font-bold leading-none"
-    style={{ color: palette.gray.dark }}
-  >
-    커리어톡 작성
-  </strong>
-
-</div>
-
-
-      <div className="border-b" style={{ borderColor: palette.gray.default, marginTop: "90px" }} />
+      <div
+        className="border-b"
+        style={{ borderColor: palette.gray.default, marginTop: "90px" }}
+      />
 
       {/* 드롭다운 */}
       <div className="relative">
@@ -126,7 +129,8 @@ const CareerTalkWritePage = () => {
               className="absolute left-1/2 transform -translate-x-1/2 text-[16px]"
               style={{
                 color:
-                  selectedCategory === "무료 자격증 추천" || selectedCategory === "커리어 준비 루트"
+                  selectedCategory === "무료 자격증 추천" ||
+                  selectedCategory === "커리어 준비 루트"
                     ? palette.primary.primary
                     : palette.gray.default,
               }}
@@ -138,7 +142,11 @@ const CareerTalkWritePage = () => {
               카테고리를 선택해주세요.
             </span>
           )}
-          {isOpen ? <ChevronUp size={18} className="ml-auto" /> : <ChevronDown size={18} className="ml-auto" />}
+          {isOpen ? (
+            <ChevronUp size={18} className="ml-auto" />
+          ) : (
+            <ChevronDown size={18} className="ml-auto" />
+          )}
         </button>
 
         {isOpen && (
@@ -147,7 +155,8 @@ const CareerTalkWritePage = () => {
             style={{ borderColor: "#ccc" }}
           >
             {categoryOptions.map((option) => {
-              const isGreen = option === "무료 자격증 추천" || option === "커리어 준비 루트";
+              const isGreen =
+                option === "무료 자격증 추천" || option === "커리어 준비 루트";
               const isSelected = selectedCategory === option;
 
               return (
@@ -157,7 +166,9 @@ const CareerTalkWritePage = () => {
                     isSelected ? "underline font-semibold" : ""
                   }`}
                   style={{
-                    color: isGreen ? palette.primary.primary : palette.gray.default,
+                    color: isGreen
+                      ? palette.primary.primary
+                      : palette.gray.default,
                   }}
                   onClick={() => handleSelectCategory(option)}
                 >
@@ -194,8 +205,13 @@ const CareerTalkWritePage = () => {
       />
 
       {/* 버튼 */}
-      <div className="fixed bottom-6 left-0 w-full px-4">
-        <CommonButton label={isEditMode ? "수정하기" : "등록하기"} onClick={handleSubmit} />
+      <div className="fixed bottom-6 left-0 w-full flex justify-center px-4">
+        <div className="w-[360px]">
+          <CommonButton
+            label={isEditMode ? "수정하기" : "등록하기"}
+            onClick={handleSubmit}
+          />
+        </div>
       </div>
     </div>
   );

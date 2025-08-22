@@ -224,15 +224,13 @@ function CareerTalkListPage() {
         className="flex-1 px-4 pt-5 pb-32 mt-[60px]"
         style={{ backgroundColor: palette.gray.light }}
       >
-        <div className="mb-[10px] flex justify-center">
+        <div className="mb-[35px] flex justify-center">
           <div onInputCapture={handleInputCapture} className="w-full flex justify-center">
             <SearchBar onSearch={handleSearch} />
           </div>
         </div>
 
-        <div className="h-[1px] bg-[#555555D9] mb-[25px]" />
-
-        <div className="flex flex-col gap-[20px] items-center max-w-[340px] mx-auto">
+        <div className="flex flex-col gap-[20px] items-center w-[340px] mx-auto">
           {talks.map((item) => (
             <CareerTalkCard
               key={item.id}
