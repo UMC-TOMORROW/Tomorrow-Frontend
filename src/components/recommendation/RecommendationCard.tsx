@@ -41,7 +41,7 @@ const formatTime = (time?: string | null): string => {
 
 const RecommendationCard = ({ job, variant = "default", userName }: Props) => {
   const [isApplied, setIsApplied] = useState(false);
-  console.log(setIsApplied)
+  console.log(setIsApplied);
   const navigate = useNavigate();
 
   const backgroundColor =
@@ -117,7 +117,8 @@ const RecommendationCard = ({ job, variant = "default", userName }: Props) => {
           className="text-[14px] font-[Pretendard]"
           style={{ color: palette.gray.dark }}
         >
-          {PAYMENT_TYPE_KOR[job.paymentType]} {job.salary.toLocaleString()}원
+          {PAYMENT_TYPE_KOR[job.paymentType]}{" "}
+          {job.salary != null ? job.salary.toLocaleString() : "0"}원
         </p>
 
         <p
