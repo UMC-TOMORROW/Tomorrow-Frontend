@@ -418,8 +418,6 @@ export default function JobDetailPage() {
   const [applied, setApplied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const isEmployer = (userRole ?? "").toUpperCase() === "EMPLOYER";
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalMsg, setModalMsg] = useState("");
 
   async function onClickApplyCTA() {
     if (applied) return;
