@@ -1,6 +1,6 @@
 import { axiosInstance } from "./axios";
 import type { GetRecommendationListResponse } from "../types/recommendation";
-import type { UpdatePreferencesRequest, UpdatePreferencesResponse, WorkPreferenceType } from "../types/workPreference";
+import type { GetPreferencesResponse, UpdatePreferencesRequest, UpdatePreferencesResponse, WorkPreferenceType } from "../types/workPreference";
 
 export const getRecommendations = async (
   size = 8,
@@ -33,4 +33,10 @@ export const patchPreferences = async (
   );
 
   return response.data.result.saved;
+};
+
+// 희망 조건 조회
+export const getPreferences = async (): Promise<WorkPreferenceType[]> => {
+  const res = await axiosInstance.get<GetPreferencesResponse>("/api/v1/preferences");
+  return res.data.result?.preferences ?? [];
 };
