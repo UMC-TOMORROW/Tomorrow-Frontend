@@ -130,7 +130,12 @@ function AddressSearchModal({
         <button className="absolute right-3 top-3 text-xl leading-none" onClick={onClose} aria-label="닫기">
           ✕
         </button>
-        <div ref={boxRef} className="w-full h-full" />
+        <div
+          className="w-full h-full overflow-y-auto overscroll-contain"
+          style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-y" }}
+        >
+          <div ref={boxRef} className="w-full h-full" />
+        </div>
       </div>
     </div>
   );

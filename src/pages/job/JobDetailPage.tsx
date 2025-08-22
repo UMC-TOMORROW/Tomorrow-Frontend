@@ -8,6 +8,7 @@ import { fetchBookmarkedJobIds, addJobBookmark, deleteJobBookmark } from "../../
 import { getMe } from "../../apis/mypage";
 import { authApi } from "../../apis/authApi";
 import { axiosInstance } from "../../apis/axios";
+import Modal from "../../components/common/Modal";
 
 import starEmpty from "../../assets/star/star_empty.png";
 import starFilled from "../../assets/star/star_filled.png";
@@ -302,6 +303,10 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMsg, setAlertMsg] = useState("");
+  const [alertVariant, setAlertVariant] = useState<"success" | "warning" | "error" | "default">("default");
+  const alertConfirmRef = useRef<(() => void) | null>(null);
 
   // 리뷰 메타(요약) 전용 상태: 캐시 → 즉시 표시, 네트워크 → 갱신
   const [reviewMeta, setReviewMeta] = useState<{ count: number | null; avg: number | null }>({
@@ -320,6 +325,18 @@ export default function JobDetailPage() {
     } catch {
       return null;
     }
+  }
+
+  // alert -> modal
+  function showAlert(
+    msg: string,
+    variant: "success" | "warning" | "error" | "default" = "default",
+    onConfirm?: () => void
+  ) {
+    setAlertMsg(msg);
+    setAlertVariant(variant);
+    alertConfirmRef.current = onConfirm ?? null;
+    setAlertOpen(true);
   }
 
   useEffect(() => {
@@ -407,14 +424,14 @@ export default function JobDetailPage() {
 
     const authed = await ensureLoggedIn();
     if (!authed) {
-      alert("로그인이 필요합니다.");
+      showAlert("로그인이 필요합니다.", "warning");
       gotoLogin();
       return;
     }
 
     const roleNow = userRole ?? (await fetchMyRole());
     if ((roleNow ?? "").toUpperCase() === "EMPLOYER") {
-      alert("구인자는 공고에 지원할 수 없습니다.");
+      showAlert("구인자는 공고에 지원할 수 없습니다.", "warning");
       return;
     }
 
@@ -469,12 +486,11 @@ export default function JobDetailPage() {
     const { exists, id } = await resumeExists();
 
     if (!exists) {
-      alert("이력서가 없어요. 이력서를 작성해 주세요.");
       setAttachChecked(false);
       setApplyOpen(false);
-      navigate("/Mypage/ResumeManage", {
-        state: { from: "jobDetail", backTo },
-      });
+      showAlert("이력서가 없어요. \n이력서를 작성해 주세요.", "warning", () =>
+        navigate("/Mypage/ResumeManage", { state: { from: "jobDetail", backTo } })
+      );
       return;
     }
 
@@ -501,13 +517,13 @@ export default function JobDetailPage() {
     try {
       const postId = Number(data?.jobId ?? jobId);
       if (!Number.isFinite(postId)) {
-        alert("공고 식별자가 올바르지 않습니다.");
+        showAlert("공고 식별자가 올바르지 않습니다.", "error");
         return;
       }
       const payload: any = { content: applyContent.trim() };
       if (attachChecked && resumeId) payload.resumeId = resumeId;
       await createApplication(postId, payload);
-      alert("지원이 완료되었습니다.");
+      showAlert("지원이 완료되었습니다.", "success");
       appliedAdd(postId);
       setApplied(true);
       setApplyOpen(false);
@@ -518,15 +534,15 @@ export default function JobDetailPage() {
       const code = e?.response?.data?.code;
       const msg = e?.response?.data?.message;
       if (e instanceof AuthRequiredError) {
-        alert("로그인이 필요합니다.");
+        showAlert("로그인이 필요합니다.", "error");
         navigate("/login", { state: { backTo } });
         return;
       }
       if (status === 400) {
-        alert(msg || "요청을 처리할 수 없습니다.");
+        showAlert(msg || "요청을 처리할 수 없습니다.", "error");
         return;
       }
-      alert(msg || "지원 중 오류가 발생했어요.");
+      showAlert(msg || "지원 중 오류가 발생했어요.", "error");
       console.error("[Apply] error ▶", e?.response ?? e);
 
       if (status === 409 || msg?.includes("이미 지원") || code === "APPLICATION_ALREADY_APPLIED") {
@@ -547,7 +563,7 @@ export default function JobDetailPage() {
   async function onToggleBookmark() {
     const authed = await ensureLoggedIn();
     if (!authed) {
-      alert("로그인이 필요합니다.");
+      showAlert("로그인이 필요합니다.", "error");
       gotoLogin();
       return;
     }
@@ -568,11 +584,11 @@ export default function JobDetailPage() {
           } else if (status === 401) {
             setBookmarked(false);
             bmRemove(Number(effectivePostId));
-            alert("로그인이 필요합니다.");
+            showAlert("로그인이 필요합니다.", "error");
           } else {
             setBookmarked(false);
             bmRemove(Number(effectivePostId));
-            alert(e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요.");
+            showAlert(e?.response?.data?.message ?? "찜 처리 중 오류가 발생했어요.", "error");
             console.error("[Bookmark] add error ▶", e?.response ?? e);
           }
         }
@@ -589,11 +605,11 @@ export default function JobDetailPage() {
           } else if (status === 401) {
             setBookmarked(true);
             bmAdd(Number(effectivePostId));
-            alert("로그인이 필요합니다.");
+            showAlert("로그인이 필요합니다.", "error");
           } else {
             setBookmarked(true);
             bmAdd(Number(effectivePostId));
-            alert(e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요.");
+            showAlert(e?.response?.data?.message ?? "찜 취소 중 오류가 발생했어요.", "error");
             console.error("[Bookmark] delete error ▶", e?.response ?? e);
           }
         }
@@ -711,7 +727,7 @@ export default function JobDetailPage() {
   }
 
   return (
-    <div className="max-w-[375px] mx-auto bg-white">
+    <div className="w-full mx-auto bg-white">
       <div className="sticky top-0 z-10 bg-white">
         <div className="-mx-4 px-4 w-full flex items-center justify-between h-14 border-b border-[#DEDEDE] relative">
           <button
@@ -728,7 +744,7 @@ export default function JobDetailPage() {
 
       <div className="!px-4 !pt-4 !pb-28 !space-y-8">
         {/* Summary */}
-        <section className="!space-y-2">
+        <section className="!space-y-2 ">
           <p className="text-[14px] leading-[100%] text-[#729A73] font-pretendard font-normal">{job.category}</p>
           <h2 className="text-[18px] font-extrabold leading-[100%] text-[#333] font-pretendard">{job.title}</h2>
           <p className="text-[12px] leading-[100%] text-[#333] font-pretendard font-normal">
@@ -779,7 +795,7 @@ export default function JobDetailPage() {
           <KV k="모집인원" v={<span>{job.headcount}명</span>} />
           <KV k="우대사항" v={<span>{job.preference}</span>} />
 
-          <div className="w-[335px] rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
+          <div className="w-full rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
             <p className="mb-3 font-bold text-[14px] text-[#333]">
               <span className="text-[#729A73]">✨ 내 몸에 맞는 일,</span> 지금 추천해드릴게요.
             </p>
@@ -817,7 +833,7 @@ export default function JobDetailPage() {
 
       {/* 하단 고정 CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[375px] bg-white border-t border-[#E5E7EB]">
-        <div className="px-4 !pt-4 !pb-[max(16px,env(safe-area-inset-bottom))]">
+        <div className="!px-4 !pt-4 !pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-3">
             <button
               aria-label={bookmarked ? "찜 취소" : "찜하기"}
@@ -829,7 +845,12 @@ export default function JobDetailPage() {
             >
               <img src={bookmarked ? bmFilled : bmEmpty} alt="" className="w-[45px] h-[45px]" />
             </button>
-            <button className="flex-1 min-w-0 h-12 rounded-[10px] border border-[#729A73] text-[#729A73] font-semibold">
+            <button
+              className="flex-1 min-w-0 h-12 rounded-[10px] border border-[#729A73] text-[#729A73] font-semibold"
+              onClick={() => {
+                window.location.href = `tel:01012345678`; // 전화번호는 예시입니다.
+              }}
+            >
               전화하기
             </button>
             <button
@@ -862,6 +883,24 @@ export default function JobDetailPage() {
           />
         </Suspense>
       ) : null}
+
+      <Modal
+        open={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        message={alertMsg}
+        variant={alertVariant}
+        actions={
+          <button
+            className="!px-4 !py-2 !mb-5 rounded-[10px] bg-[#729A73] !text-white !font-semibold"
+            onClick={() => {
+              setAlertOpen(false);
+              alertConfirmRef.current?.();
+            }}
+          >
+            확인
+          </button>
+        }
+      />
     </div>
   );
 }

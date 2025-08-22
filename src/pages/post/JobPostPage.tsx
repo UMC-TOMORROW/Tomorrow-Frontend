@@ -359,7 +359,7 @@ const JobPostForm = () => {
   };
 
   return (
-    <div className="max-w-[375px] mx-auto px-4 py-8">
+    <div className="mx-auto px-4 py-8 w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl">
       <div className="-mx-4 !px-4 w-full flex items-center justify-between h-14 border-b border-[#DEDEDE] relative pb-5">
         <button className="text-[20px]" onClick={() => navigate(-1)}>
           ✕
