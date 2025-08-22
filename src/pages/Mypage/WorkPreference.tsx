@@ -1,9 +1,9 @@
 import { SlArrowLeft } from "react-icons/sl";
 import check_active from "../../assets/check_active.png";
 import check_inactive from "../../assets/check_inactive.png";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { WorkPreferenceType } from "../../types/workPreference";
-import { patchPreferences } from "../../apis/recommendation";
+import { getPreferences, patchPreferences } from "../../apis/recommendation";
 import { Link, useNavigate } from "react-router-dom";
 
 const PREFERENCE_MAP: Record<string, WorkPreferenceType> = {
@@ -12,6 +12,15 @@ const PREFERENCE_MAP: Record<string, WorkPreferenceType> = {
   "물건 운반": "DELIVERY",
   "활동 중심": "PHYSICAL",
   "사람 응대 중심": "HUMAN",
+};
+
+// 역매핑: 코드 → 라벨
+const CODE_TO_LABEL: Record<WorkPreferenceType, string> = {
+  SIT: "앉아서 근무 중심",
+  STAND: "서서 근무 중심",
+  DELIVERY: "물건 운반",
+  PHYSICAL: "활동 중심",
+  HUMAN: "사람 응대 중심",
 };
 
 const LS_KEY = "workPref.selected";
@@ -42,7 +51,28 @@ const WorkPreference = () => {
     "사람 응대 중심",
   ];
 
-  const [selected, setSelected] = useState<string[]>(() => loadSelected());
+  const [selected, setSelected] = useState<string[]>([]);
+
+  // 최초 마운트 시 서버에서 조회해 미리 선택
+  useEffect(() => {
+    (async () => {
+      try {
+        const prefs = await getPreferences(); // e.g. ["SIT", "HUMAN"]
+        if (prefs && prefs.length > 0) {
+          const labels = prefs
+            .map((code) => CODE_TO_LABEL[code])
+            .filter(Boolean) as string[];
+          setSelected(labels);
+          saveSelected(labels); // 로컬도 동기화
+          return;
+        }
+      } catch (e) {
+        console.error("희망 조건 조회 실패", e);
+      }
+      // 서버 값이 없거나 실패하면 로컬스토리지 사용
+      setSelected(loadSelected());
+    })();
+  }, []);
 
   const toggleOption = (option: string) => {
     setSelected((prev) => {
@@ -57,7 +87,7 @@ const WorkPreference = () => {
   const handleSubmit = async () => {
     const preferences: WorkPreferenceType[] = selected
       .map((option) => PREFERENCE_MAP[option])
-      .filter(Boolean);
+      .filter(Boolean) as WorkPreferenceType[];
 
     try {
       const saved = await patchPreferences(preferences);

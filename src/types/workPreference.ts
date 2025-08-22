@@ -17,3 +17,12 @@ export interface UpdatePreferencesResponse {
     saved: boolean;
   };
 }
+
+export interface GetPreferencesResponse {
+  timestamp: string;
+  code: string;
+  message: string;
+  result: {
+    preferences: WorkPreferenceType[];
+  };
+}
