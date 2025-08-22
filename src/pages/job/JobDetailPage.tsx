@@ -711,7 +711,7 @@ export default function JobDetailPage() {
   }
 
   return (
-    <div className="max-w-[375px] mx-auto bg-white">
+    <div className="w-full mx-auto bg-white">
       <div className="sticky top-0 z-10 bg-white">
         <div className="-mx-4 px-4 w-full flex items-center justify-between h-14 border-b border-[#DEDEDE] relative">
           <button
@@ -728,7 +728,7 @@ export default function JobDetailPage() {
 
       <div className="!px-4 !pt-4 !pb-28 !space-y-8">
         {/* Summary */}
-        <section className="!space-y-2">
+        <section className="!space-y-2 ">
           <p className="text-[14px] leading-[100%] text-[#729A73] font-pretendard font-normal">{job.category}</p>
           <h2 className="text-[18px] font-extrabold leading-[100%] text-[#333] font-pretendard">{job.title}</h2>
           <p className="text-[12px] leading-[100%] text-[#333] font-pretendard font-normal">
@@ -779,7 +779,7 @@ export default function JobDetailPage() {
           <KV k="모집인원" v={<span>{job.headcount}명</span>} />
           <KV k="우대사항" v={<span>{job.preference}</span>} />
 
-          <div className="w-[335px] rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
+          <div className="w-full rounded-[10px] p-[15px] flex flex-col gap-[15px] bg-[#B8CDB959] text-[#3F5A41] !mt-7">
             <p className="mb-3 font-bold text-[14px] text-[#333]">
               <span className="text-[#729A73]">✨ 내 몸에 맞는 일,</span> 지금 추천해드릴게요.
             </p>
@@ -817,7 +817,7 @@ export default function JobDetailPage() {
 
       {/* 하단 고정 CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[375px] bg-white border-t border-[#E5E7EB]">
-        <div className="px-4 !pt-4 !pb-[max(16px,env(safe-area-inset-bottom))]">
+        <div className="!px-4 !pt-4 !pb-[max(16px,env(safe-area-inset-bottom))]">
           <div className="flex items-center gap-3">
             <button
               aria-label={bookmarked ? "찜 취소" : "찜하기"}
