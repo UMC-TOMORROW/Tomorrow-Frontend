@@ -136,7 +136,7 @@ export default function BusinessStep() {
   };
 
   return (
-    <div className="max-w-[375px] !px-5 !space-y-6">
+    <div className="w-full !px-5 !space-y-6 sm:max-w-sm md:max-w-md lg:max-w-lg">
       <div className="-mx-4 px-4 w-full flex items-center justify-between h-14 border-b border-[#DEDEDE] relative pb-5">
         <button className="text-[20px]" onClick={() => navigate(-1)}>
           ✕
@@ -159,13 +159,13 @@ export default function BusinessStep() {
 
       <Devider />
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 sm:gap-6 md:gap-8">
         <div>
           <label className="block text-[14px] font-semibold text-[#333] !mb-2">사업자 등록 번호</label>
           <input
             type="text"
             placeholder="1234567890"
-            className="w-[336px] h-[52px] px-[10px] rounded-[10px] border border-[#729A73]"
+            className="w-full h-[52px] px-[10px] rounded-[10px] border border-[#729A73]"
             value={regNo}
             onChange={(e) => setRegNo(e.target.value.replace(/\D+/g, "").slice(0, 10))}
           />
@@ -175,7 +175,7 @@ export default function BusinessStep() {
           <input
             type="text"
             placeholder="(주) 내일"
-            className="w-[336px] h-[52px] px-[10px] rounded-[10px] border border-[#729A73]"
+            className="w-full h-[52px] px-[10px] rounded-[10px] border border-[#729A73]"
             value={corpName}
             onChange={(e) => setCorpName(e.target.value)}
           />
@@ -185,7 +185,7 @@ export default function BusinessStep() {
           <input
             type="text"
             placeholder="이내일"
-            className="w-[336px] h-[52px] px-[10px] rounded-[10px] border border-[#729A73]"
+            className="w-full h-[52px] px-[10px] rounded-[10px] border border-[#729A73]"
             value={owner}
             onChange={(e) => setOwner(e.target.value)}
           />
@@ -194,7 +194,7 @@ export default function BusinessStep() {
           <label className="block text-[14px] font-semibold text-[#333] !mb-2">개업연월일</label>
           <input
             type="date"
-            className="w-[336px] h-[52px] px-[10px] !text-[#555]/85 rounded-[10px] border border-[#729A73]"
+            className="w-full h-[52px] px-[10px] !text-[#555]/85 rounded-[10px] border border-[#729A73]"
             value={openDate}
             max="9999-12-31"
             onInput={(e) => {
