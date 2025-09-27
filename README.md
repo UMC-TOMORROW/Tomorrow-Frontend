@@ -53,7 +53,7 @@
     </tr>
     <tr>
       <td align="center">커리어톡 및 채팅<br>내일 추천<br>구인자 마이페이지<br>배포<br></td>
-      <td align="center">일자리 등록<br>일자리 지원</td>
+      <td align="center">일자리 등록<br>일자리 지원<br>상세 페이지<br>후기 페이지</td>
       <td align="center">온보딩<br>홈페이지<br>구직자 마이페이지</td>
       <td align="center">이력서<br>마이페이지UI</td>
     </tr>
